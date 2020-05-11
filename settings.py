@@ -1,4 +1,4 @@
-PROD =  False # if ktulu_serwer
+PROD =  True# if ktulu_serwer
 
 
 if PROD:
