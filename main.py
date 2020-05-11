@@ -4,7 +4,6 @@ import datetime
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 import asyncio
-from discord import opus
 import inspect
 
 import duels_commands
@@ -16,7 +15,7 @@ import roles_commands
 import roles_calling_commands
 import start_commands
 import search_hang_commands
-from keep_alive import keep_alive
+#from keep_alive import keep_alive
 from utility import *
 import utility
 import settings
@@ -215,6 +214,6 @@ async def on_command_error(ctx, error):
 #async def role_change(before, after):
 
 
-keep_alive()
+#keep_alive()
 token = os.environ.get("TOKEN")
 bot.run(token)
