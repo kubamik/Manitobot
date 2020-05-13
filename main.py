@@ -38,13 +38,12 @@ async def on_ready():
   except discord.errors.ClientException:
     pass
 
-
+  
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
   print(isinstance(ctx.channel, discord.DMChannel))
   await ctx.send("nie mogę ci pomóc, jestem botem")
-  await ctx.message.add_reaction('✅')
   await ctx.message.add_reaction('✅')
 
 
@@ -103,7 +102,7 @@ async def przegrałeś(ctx):
 @commands.dm_only()
 async def my_message(m):
 	try:
-		if m.type != discord.MessageType.default or m.author.id == BOT_ID or m.content.strip()[0] == '&':
+		if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
 			return
 	except:
 		pass
@@ -134,6 +133,10 @@ async def on_command_error(ctx, error):
   if isinstance(error, CommandNotFound):
     await ctx.send("HONK?", delete_after=5)
   elif isinstance(error, commands.MissingRole):
+    await ctx.send("You have no power here!", delete_after=5)
+  elif isinstance(error, commands.CheckAnyFailure):
+    await ctx.send("You have no power here!", delete_after=5)
+  elif isinstance(error, commands.NotOwner):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)

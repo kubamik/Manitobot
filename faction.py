@@ -52,6 +52,10 @@ class Faction(Activity):
         counter += 1
         if self.leader is None:
           self.leader = role.player
+          try:
+            await self.channel.set_permissions(role.player.member, read_messages=True, send_messages=True)
+          except discord.errors.Forbidden:
+            pass
         await role.player.member.send("Rozpoczynamy rundę twojej frakcji. Wejdź na <#{}>".format(self.channel.id))
       elif role.player.sleeped or (role.player.member in get_dead_role().members and not role.revealed):
         awake = False
@@ -88,6 +92,11 @@ class Faction(Activity):
       await self.channel.send("Idziecie spać")
       globals.current_game.nights[-1].active_faction = None
       globals.current_game.nights[-1].active_role = None
+      for role in self.roles.values():
+        try:
+          await self.channel.set_permissions(role.player.member, overwrite=None)
+        except discord.errors.Forbidden:
+          pass
       raise NoEffect("{} idą spać".format(self.name))
     self.act_number += 1
     try:

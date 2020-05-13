@@ -53,41 +53,27 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     """Zwraca informacje o postaci podanej jako argument"""
     await postacie.role_details(ctx, role)
 
-  '''@commands.command(name='gram')
-  async def register(self, ctx):
-    """Służy do zarejestrowania się do gry."""
-    #global globals.current_game
-    guild = get_guild()
-    member = get_member(ctx.author.id)
-    if not globals.current_game==None:
-      await ctx.send("Gra została rozpoczęta, nie możesz grać")
+  @commands.command(name='adminuj')
+  async def adminate(self, ctx, member):
+    '''Mianuje nowego admina'''
+    author = get_member(ctx.author.id)
+    member = await converter(ctx, member)
+    if author not in get_admin_role().members:
+      raise commands.MissingRole
+    if member is None:
+      await ctx.send("Nie ma takiej osoby")
       return
-    if czy_gram(ctx):
-      await ctx.send("Już jesteś zarejestrowany {}".format(get_nickname(ctx.author.id)))
-      return
-    await clear_nickname(member,ctx)
-    await member.remove_roles(get_spectator_role())
-    await member.remove_roles(get_dead_role())
-    await member.add_roles(get_player_role())
-    await ctx.send("Zostałeś zarejestrowany {}".format(get_nickname(ctx.author.id)))
+    await member.add_roles(get_admin_role())
 
-
-  @commands.command(name='nie_gram')
-  async def deregister(self, ctx):
-    """Służy do wyrejestrowania się z gry."""
-    #global globals.current_game
-    guild = get_guild()
-    member = get_member(ctx.author.id)
-    if not globals.current_game==None:
-      await ctx.send("Gra została rozpoczęta, nie możesz nie grać")
+  @commands.command(name='nie_adminuj', hidden=True)
+  @commands.is_owner()
+  async def not_adminate(self, ctx, member):
+    '''Usuwa admina'''
+    member = await converter(ctx, member)
+    if member is None:
+      await ctx.send("Nie ma takiej osoby")
       return
-    if not czy_gram(ctx) and not czy_trup(ctx):
-      await ctx.send("Już jesteś wyrejestrowany {}".format(get_nickname(ctx.author.id)))
-      return
-    await member.remove_roles(get_player_role())
-    await member.remove_roles(get_dead_role())
-    await ctx.send("Zostałeś wyrejestrowany {}".format(get_nickname(ctx.author.id)))'''
-
+    await member.remove_roles(get_admin_role())
 
   @commands.command(name='czy_gram')
   async def if_registered(command, ctx):
