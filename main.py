@@ -4,7 +4,6 @@ import datetime
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 import asyncio
-from discord import opus
 import inspect
 
 import duels_commands
@@ -27,15 +26,6 @@ from f_database import factions_roles
 
 PRZEGRALEM_COOLDOWN = datetime.timedelta(minutes=30)
 ostatnio_przegralem = datetime.datetime.now() - PRZEGRALEM_COOLDOWN
-#TODO argument ctx w funkcjach get_guild, get_manitou, get_player jest trochę niepotrzebny przez to jak to robimy, a fajnie by było mieć dostępną funkcję do wysyłania wszystkim manitou wiadomości bez potrzeby ctx (bo ) - gotowe ~Kuba
-#TODO kontrola głosowania dla Manitou, kontrola ilości głosów, kończenie, gdy wszyscy zagłosowali,
-#TODO sprawdzenie czy głosowanie jest rozpoczęte, aby je zakończyć
-#TODO szeryf, pastor, upicie
-#usunięcie alivów, resume - rozpoczyna pustą grę, zmiana nicków
-
-#HONK!
-
-#wyniki głosowania na priv
 
 
 @bot.event
@@ -43,50 +33,18 @@ async def on_ready():
   print("Hello world!")
   try:
     bot.add_cog(player_commands.DlaGraczy(bot))
-    #bot.add_cog(voting_commands.Glosowania(bot))
     bot.add_cog(manitou_commands.DlaManitou(bot))
-    #bot.add_cog(roles_commands.PoleceniaPostaci(bot))
-    #bot.add_cog(roles_calling_commands.WywolywaniePostaci(bot))
-    #bot.add_cog(duels_commands.Pojedynki(bot))
-    #bot.add_cog(search_hang_commands.Przeszukania(bot))
-    #bot.add_cog(search_hang_commands.Wieszanie(bot))
     bot.add_cog(start_commands.Starting(bot))
   except discord.errors.ClientException:
     pass
-  c = '''Teraz jest dobrze?\n'''
-  for key,value in factions_roles.items():
-    c += "**{}**: {}\n".format(key,", ".join(value))
-  #await bot.get_guild(691953007461662741).get_channel(691953007461662745).send(r"=tex \sin(\frac{\pi}{2} + \alpha) = - \cos(\alpha)")
-  #await get_guild().get_channel(694111942729662477).send(c)
-  #await bot.get_guild(691953007461662741).get_channel(691953007461662745).send("")
-  #print(bot.cogs)
-  '''for role,sth in get_guild().by_category()[2][0].overwrites.items():
-    print(role)
-    for a in sth:
-      print(a)'''
-  #print(get_guild().by_category()[2][0].overwrites)
-  #688087497988898823
-  #for item in bot.get_guild(GUILD_ID).get_channel(688089712094740542).overwrites[get_manitou_role()]:
-    #print(item)
-  #for pair in get_town_channel().overwrites:
-    #print(pair)
-  #await get_town_channel().set_permissions(bot.get_guild(GUILD_ID).get_role(693506243402268742),manage_channels=True,manage_roles=True)
 
 
-
-'''@bot.command(name='play',hidden=True)
-async def play(ctx):
-  opus._load_default()
-  vc = await get_voice_channel().connect()
-  audio = discord.FFmpegPCMAudio('*plik*')
-  vc.play(source=audio)'''
 
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
   print(isinstance(ctx.channel, discord.DMChannel))
   await ctx.send("nie mogę ci pomóc, jestem botem")
-  await ctx.message.add_reaction('✅')
   await ctx.message.add_reaction('✅')
 
 
@@ -147,9 +105,8 @@ async def mess(m):
 @bot.listen('on_message')
 @commands.dm_only()
 async def my_message(m):
-	#global globals.current_game
 	try:
-		if m.type != discord.MessageType.default or m.author.id == BOT_ID or m.content.strip()[0] == '&':
+		if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
 			return
 	except:
 		pass
@@ -180,6 +137,10 @@ async def on_command_error(ctx, error):
   if isinstance(error, CommandNotFound):
     await ctx.send("HONK?", delete_after=5)
   elif isinstance(error, commands.MissingRole):
+    await ctx.send("You have no power here!", delete_after=5)
+  elif isinstance(error, commands.CheckAnyFailure):
+    await ctx.send("You have no power here!", delete_after=5)
+  elif isinstance(error, commands.NotOwner):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)

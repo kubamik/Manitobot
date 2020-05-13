@@ -4,10 +4,10 @@ from random import SystemRandom
 
 help = commands.DefaultHelpCommand(
   no_category = 'Pozostałe',
-  verify_checks = False
+  verify_checks = False,
 )
 
-bot=commands.Bot(command_prefix = '&', help_command = help)
+bot=commands.Bot(command_prefix = '&', help_command = help, owner_id=388764073191538688)
 current_game = None
 
 

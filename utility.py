@@ -39,6 +39,9 @@ def get_spectator_role():
   guild=get_guild()
   return discord.utils.get(guild.roles,id=SPECTATOR_ROLE_ID)
 
+def get_admin_role():
+  return bot.get_guild(GUILD_ID).get_role(ADMIN_ROLE_ID)
+
 def get_duel_winner_role():
   return bot.get_guild(GUILD_ID).get_role(DUEL_WINNER_ID)
 
