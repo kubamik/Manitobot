@@ -64,6 +64,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   @manitou_cmd
   async def nuke(self, ctx):
     """ⓂOdbiera rolę gram i preparat anatomiczny wszystkim userom"""
+    p = discord.Permissions().all()
+    try:
+      await get_admin_role().edit(permissions = p)
+    except NameError:
+      pass
     if if_game():
       await ctx.send("Najpierw zakończ grę!")
       return
@@ -219,6 +224,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     except ValueError:
         await ctx.send("Należy podać liczbę naturalną dodatnią")
 
+
   @commands.command(name='revive',aliases=['resetuj','reset'])
   @manitou_cmd
   async def resetuj_grajacych(self, ctx):
@@ -232,11 +238,17 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     loser_role = get_duel_loser_role()
     searched_role = get_searched_role()
     hanged_role = get_hanged_role()
+    p = discord.Permissions().all()
+    try:
+      await get_admin_role().edit(permissions = p)
+    except NameError:
+      pass
     async with ctx.typing():
       for member in dead_role.members + player_role.members:
         await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         await member.add_roles(player_role)
     await ctx.send("Wszystkim z rolą 'preparat anatomiczny' nadano rolę 'gram'")
+
 
   @commands.command(name="alives")
   @manitou_cmd

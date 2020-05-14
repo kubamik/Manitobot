@@ -39,7 +39,6 @@ async def on_ready():
     pass
 
 
-
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
@@ -131,7 +130,7 @@ async def my_message(m):
 
 @bot.event
 async def on_command_error(ctx, error):
-  utility.lock = False
+  
   if not (isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd)):
     await ctx.message.delete(delay=5)
   if isinstance(error, CommandNotFound):
@@ -144,13 +143,14 @@ async def on_command_error(ctx, error):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
-    await ctx.send_help(ctx.command, delete_after=5)
+    await ctx.send_help(ctx.command)
   elif isinstance(error, ValueError):
     await ctx.send(str(error), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send("Błędny parametr", delete_after=5)
     await ctx.send_help(ctx.command)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
+    utility.lock = False
     await ctx.send("Gra nie została rozpoczęta", delete_after=5)
     raise error
   elif isinstance(error, commands.CheckFailure):
@@ -158,6 +158,7 @@ async def on_command_error(ctx, error):
   elif isinstance(error, commands.PrivateMessageOnly):
     pass
   elif isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd):
+    utility.lock = False
     error = error.original
     c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
     await globals.current_game.winning(error.reason, error.winner)
@@ -166,6 +167,7 @@ async def on_command_error(ctx, error):
       if channel.category_id == FRAKCJE_CATEGORY_ID:
         await channel.send(c)
   else:
+    utility.lock = False
     print(type(error.original))
     await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)
     print(ctx.command, type(error))
