@@ -143,12 +143,14 @@ async def on_command_error(ctx, error):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
-    await ctx.send_help(ctx.command)
+    mess  = await ctx.send_help(ctx.command)
+    await mess.delete(delay=10)
   elif isinstance(error, ValueError):
     await ctx.send(str(error), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send("Błędny parametr", delete_after=5)
-    await ctx.send_help(ctx.command)
+    mess  = await ctx.send_help(ctx.command)
+    await mess.delete(delay=10)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
     utility.lock = False
     await ctx.send("Gra nie została rozpoczęta", delete_after=5)
