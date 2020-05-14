@@ -42,6 +42,11 @@ class Starting(commands.Cog, name='Początkowe'):
     #await resetuj_grajacych(ctx) #dopisałem resetowanie nicku w pętli wysyłaniu graczom roli na PM
     async with ctx.typing():
       await start_game(ctx,*lista)
+    bot.add_cog(voting_commands.Glosowania(bot))
+    bot.add_cog(roles_commands.PoleceniaPostaci(bot))
+    bot.add_cog(duels_commands.Pojedynki(bot))
+    bot.add_cog(search_hang_commands.Przeszukania(bot))
+    bot.add_cog(search_hang_commands.Wieszanie(bot))
       
 
   @commands.command(name='startset',aliases=['start_skład'])
