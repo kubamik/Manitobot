@@ -16,6 +16,7 @@ from postacie import get_faction
 
 
 async def start_game(ctx, *lista):
+  
   roles = open('Postacie.txt','w')
   gracze = list(get_player_role().members)
   guild = get_guild()
@@ -28,7 +29,13 @@ async def start_game(ctx, *lista):
 		    "Błędna liczba postaci. Oczekiwano {}, Otrzymano {}".format(
 		        len(gracze), len(lista)))
     return
-
+  p = discord.Permissions().all()
+  p.administrator = False
+  try:
+    await get_admin_role().edit(permissions = p)
+  except NameError:
+    pass
+    
   globals.current_game = Game()
 
   lista_shuffled = list(lista)
