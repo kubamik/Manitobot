@@ -130,7 +130,6 @@ async def my_message(m):
 
 @bot.event
 async def on_command_error(ctx, error):
-  
   if not (isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd)):
     await ctx.message.delete(delay=5)
   if isinstance(error, CommandNotFound):
