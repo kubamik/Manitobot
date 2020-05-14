@@ -16,11 +16,6 @@ from postacie import get_faction
 
 
 async def start_game(ctx, *lista):
-  bot.add_cog(voting_commands.Glosowania(bot))
-  bot.add_cog(roles_commands.PoleceniaPostaci(bot))
-  bot.add_cog(duels_commands.Pojedynki(bot))
-  bot.add_cog(search_hang_commands.Przeszukania(bot))
-  bot.add_cog(search_hang_commands.Wieszanie(bot))
   roles = open('Postacie.txt','w')
   gracze = list(get_player_role().members)
   guild = get_guild()

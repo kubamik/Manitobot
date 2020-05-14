@@ -51,6 +51,11 @@ class Starting(commands.Cog, name='Początkowe'):
     Argumentami są:
         -Nazwa predefiniowanego składu (patrz komenda składy)
         -opcjonalnie dodatkowe postacie oddzielone białymi znakami"""
+    bot.add_cog(voting_commands.Glosowania(bot))
+    bot.add_cog(roles_commands.PoleceniaPostaci(bot))
+    bot.add_cog(duels_commands.Pojedynki(bot))
+    bot.add_cog(search_hang_commands.Przeszukania(bot))
+    bot.add_cog(search_hang_commands.Wieszanie(bot))
     if not sklady.set_exists(nazwa_składu):
       await ctx.send("Nie ma takiego składu")
       return
