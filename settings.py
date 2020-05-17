@@ -1,6 +1,4 @@
-PROD =  False # if ktulu_serwer
-
-
+PROD =  None # if ktulu_serwer
 
 if PROD:
   GUILD_ID=687959069277028382

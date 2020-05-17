@@ -15,7 +15,7 @@ import roles_commands
 import roles_calling_commands
 import start_commands
 import search_hang_commands
-from keep_alive import keep_alive
+#from keep_alive import keep_alive
 from utility import *
 import utility
 import settings
@@ -95,9 +95,6 @@ async def przegrałeś(ctx):
 			await ctx.send("Nie można wysłać wiadomości do {}".format(
 			    get_nickname(i.id)))
 
-'''@bot.listen('on_message')
-async def mess(m):
-  print(m.content)'''
 
 
 @bot.listen('on_message')
@@ -174,10 +171,7 @@ async def on_command_error(ctx, error):
     raise error
 
 
-#@bot.listen('on_member_update')
-#async def role_change(before, after):
 
-
-keep_alive()
+#keep_alive()
 token = os.environ.get("TOKEN")
 bot.run(token)
