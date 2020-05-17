@@ -55,6 +55,9 @@ class Activity:
     await globals.current_game.nights[-1].bishop_back()
     await self.channel.send("Możecie kontynuować wcześniejszą akcję")
 
+  def inqui_alone_win(self):
+    if globals.current_game.stats["Inkwizycja"] == len(get_player_role().members):
+      raise GameEnd("Zostali sami Inkwizytorzy", "Inkiwzycja")
 
   async def statue_none(self):
     if globals.current_game.statue.holder is None:
@@ -322,7 +325,7 @@ class Activity:
   
   async def hang_win(self):
     if self.die_reason == 'hang':
-      reason = "Powieszony został {}, czyli {}".fomat(self.player.member.display_name, self.name)
+      reason = "Powieszony został {}, czyli {}".format(self.player.member.display_name, self.name)
       raise GameEnd(reason, self.name)
 
   async def peace_make(self):

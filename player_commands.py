@@ -59,11 +59,13 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     author = get_member(ctx.author.id)
     member = await converter(ctx, member)
     if author not in get_admin_role().members:
-      raise commands.MissingRole
+      raise commands.MissingRole(get_admin_role())
     if member is None:
-      await ctx.send("Nie ma takiej osoby")
+      await ctx.message.delete(delay=5)
+      await ctx.send("Nie ma takiej osoby", delete_after=5)
       return
     await member.add_roles(get_admin_role())
+    await ctx.message.add_reaction('✅')
 
   @commands.command(name='nie_adminuj', hidden=True)
   @commands.is_owner()
@@ -91,24 +93,29 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     if not globals.current_game==None and member in get_player_role().members + get_dead_role().members:
       await ctx.send("Gra została rozpoczęta, nie możesz nie grać")
       return
-    await member.remove_roles(get_player_role())
-    await member.remove_roles(get_dead_role())
+    await member.remove_roles(get_player_role(), get_dead_role())
     await member.add_roles(get_spectator_role())
-    nickname = get_nickname(ctx.author.id)
-    await ctx.send("Zostałeś obserwatorem {}".format(get_nickname(ctx.author.id)))
-    if nickname[0] != '!':
+    nickname = member.display_name
+    await ctx.message.add_reaction('✅')
+    if not nickname.startswith('!'):
       try:
-        await get_member(member.id).edit(nick="!" + nickname)
+        await get_member(member.id).edit(nick = "!" + nickname)
       except discord.errors.Forbidden:
-        await ctx.send("Nie mam uprawnień aby zmienić nick")
+        await ctx.send("Dodaj sobie '!' przed nickiem")
 
-  @commands.command(name='nie_obserwuję')
+  @commands.command(name='nie_obserwuję', aliases=['nie_obs'])
   async def not_spectate(self, ctx):
     """/&nie_obs/Usuwa userowi rolę spectator."""
     guild = get_guild()
     member = get_member(ctx.author.id)
     await member.remove_roles(get_spectator_role())
-    await ctx.send("Nie zostałeś obserwatorem {}".format(get_nickname(ctx.author.id)))
+    nickname = member.display_name
+    if nickname.startswith('!'):
+      try:
+        await get_member(member.id).edit(nick=nickname[1:])
+      except discord.errors.Forbidden:
+        pass
+    await ctx.message.add_reaction('✅')
 
   @commands.command(name='bunt',aliases=['riot'])
   async def riot(self, ctx):

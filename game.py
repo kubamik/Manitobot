@@ -44,22 +44,27 @@ class Game(Vote):
     self.night = False
     for player in self.player_map.values():
       player.new_day()
-    if self.statue.faction_holder == "Miasto":
-      role = self.player_map[self.statue.holder].role
-      raise utility.GameEnd("{} posiada posążek o poranku".format(role.replace("_"," ")),"Miasto")
-    if self.statue.faction_holder == "Bandyci" and (self.day > self.bandit_night or (self.bandit_morning and self.day == self.bandit_night)):
-      raise utility.GameEnd("Bandyci odpływają z posążkiem", "Bandyci")
+    self.town_win()
+    self.inqui_win()
+    self.morning_bandits_win()
+    
+    
 
   def new_night(self):
     self.nights.append(Night())
-    if self.day == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == "Bandyci":
-      raise utility.GameEnd("Bandyci odpływają z posążkiem","Bandyci")
+    self.night = True
+    self.evening_bandits_win()
+    
 
   def make_factions(self, roles):
     for role in roles:
       faction = get_faction(role)
       if faction != 'Miasto' and not faction in self.faction_map:
-        self.faction_map[faction] = Faction(faction)
+        try:
+          self.faction_map[faction] = Faction(faction)
+        except KeyError:
+          pass
+        
 
   def add_pair(self, member, role):
     try:
@@ -86,3 +91,23 @@ class Game(Vote):
     self.player_map[second].role_class = self.role_map[frole]
     self.player_map[first].role_class = self.role_map[srole]
     return (srole, frole)
+  
+  def inqui_win(self):
+    d = self.stats
+    if not (d["Indianie"] or d["Ufoki"] or d["Janosik"] or d["Lusterko"] or d["Murzyni"] or d["Bogowie"] or not d["Inkwizycja"]):
+      raise utility.GameEnd("Wszyscy heretycy nie żyją","Inkwizycja")
+    
+  def town_win(self):
+    if self.statue.faction_holder == "Miasto":
+      role = self.player_map[self.statue.holder].role
+      raise utility.GameEnd("{} posiada posążek o poranku".format(role.replace("_"," ")),"Miasto")
+
+  def evening_bandits_win(self):
+    if self.day == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == "Bandyci":
+      raise utility.GameEnd("Bandyci odpływają z posążkiem","Bandyci")
+
+  def morning_bandits_win(self):
+    if self.statue.faction_holder == "Bandyci" and (self.day > self.bandit_night or (self.bandit_morning and self.day == self.bandit_night)):
+      raise utility.GameEnd("Bandyci odpływają z posążkiem", "Bandyci")
+
+    

@@ -21,6 +21,19 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   def __init__(self, bot):
     self.bot = bot
 
+  async def remove_cogs(self):
+    bot.remove_cog("Głosowania")
+    bot.remove_cog("Polecenia postaci i frakcji")
+    bot.remove_cog("Pojedynki")
+    bot.remove_cog("Przeszukania")
+    bot.remove_cog("Wieszanie")
+    p = discord.Permissions().all()
+    try:
+      await get_admin_role().edit(permissions = p)
+    except (NameError, discord.errors.Forbidden):
+      pass
+    
+
   @commands.command(name='tea')
   @manitou_cmd
   async def tea(self, ctx):
@@ -34,7 +47,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       return
     await get_town_channel().send("Ktoś robi się zielony(-a) na twarzy :sick: i...")
     await asyncio.sleep(3)
-    await herb.die()
+    await herb.die("herbs")
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='next',aliases=['n'])
@@ -63,12 +76,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   @commands.command(name='nuke')
   @manitou_cmd
   async def nuke(self, ctx):
-    """ⓂOdbiera rolę gram i preparat anatomiczny wszystkim userom"""
-    p = discord.Permissions().all()
-    try:
-      await get_admin_role().edit(permissions = p)
-    except NameError:
-      pass
+    """ⓂOdbiera rolę Gram i Trup wszystkim userom"""
     if if_game():
       await ctx.send("Najpierw zakończ grę!")
       return
@@ -76,6 +84,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     dead_role = get_dead_role()
     spec_role = get_spectator_role()
     async with ctx.typing():
+      await self.remove_cogs()
       for member in dead_role.members:
         await member.remove_roles(dead_role)
         await clear_nickname(member, ctx)
@@ -84,13 +93,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await clear_nickname(member, ctx)
       for member in spec_role.members:
         await member.remove_roles(spec_role)
-        await clear_nickname(member, ctx)
-    bot.remove_cog("Głosowania")
-    bot.remove_cog("Polecenia postaci i frakcji")
-    bot.remove_cog("Pojedynki")
-    bot.remove_cog("Przeszukania")
-    bot.remove_cog("Wieszanie")
-    await ctx.send("Usunięto wszystkim rolę 'gram', 'preparat anatomiczny' i 'spectator'")
+        await clear_nickname(member, ctx)  
+    await ctx.send("Usunięto wszystkim role Gram, Trup i Obserwator")
 
 
   @commands.command(name='kill')
@@ -197,6 +201,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         if not role.revealed:
           await role.reveal()
       globals.current_game = None
+      await self.remove_cogs()
       await bot.change_presence(activity = None)
       await ctx.send("Gra została zakończona")
 
@@ -241,12 +246,13 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     p = discord.Permissions().all()
     try:
       await get_admin_role().edit(permissions = p)
-    except NameError:
+    except (NameError, discord.errors.Forbidden):
       pass
     async with ctx.typing():
       for member in dead_role.members + player_role.members:
         await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         await member.add_roles(player_role)
+      await self.remove_cogs()
     await ctx.send("Wszystkim z rolą 'preparat anatomiczny' nadano rolę 'gram'")
 
 

@@ -28,12 +28,7 @@ async def start_game(ctx, *lista):
 		    "Błędna liczba postaci. Oczekiwano {}, Otrzymano {}".format(
 		        len(gracze), len(lista)))
     return
-  p = discord.Permissions().all()
-  p.administrator = False
-  try:
-    await get_admin_role().edit(permissions = p)
-  except NameError:
-    pass
+  
     
   globals.current_game = Game()
 
@@ -50,7 +45,6 @@ async def start_game(ctx, *lista):
       await member.dm_channel.send(
 			    """{}\nWitaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. Jako gracz masz dostęp m.in. do następujących komend:
 `&help` pokazuje wszystkie dostępne komendy
-`&stop` przekazuje Manitou i wszystkim grającym twoją prośbę o zatrzymanie gry
 `&postać <nazwa postaci>` pokazuje opis danej postaci
 `&żywi` przedstawia postaci, które biorą udział w grze
 {}

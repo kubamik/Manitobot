@@ -42,7 +42,6 @@ class Vote:
     self.voting_results[player.id]=votes_std
     self.players_voted.add(player)
     not_voted=list(set(utility.get_player_role().members) - set(list(utility.get_dead_role().members)) - self.players_voted - set(self.not_voting))
-    print(list(self.not_voting))
     return (votes_std,not_voted)
 
   def summarize_votes(self):
