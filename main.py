@@ -42,7 +42,6 @@ async def on_ready():
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
-  print(isinstance(ctx.channel, discord.DMChannel))
   await ctx.send("nie mogę ci pomóc, jestem botem")
   await ctx.message.add_reaction('✅')
 

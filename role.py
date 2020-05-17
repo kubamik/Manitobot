@@ -117,7 +117,7 @@ class Role(Activity):
     self.die_reason = reason
     try:
       actions = self.my_activities["die"]
-      for f in permissions.get_activitiy(actions, self):
+      for f in permissions.get_activity(actions, self):
         if inspect.iscoroutinefunction(f):
           await f()
         else:
@@ -126,8 +126,6 @@ class Role(Activity):
       pass
     except InvalidRequest:
       pass
-    if not globals.current_game.night:
-      globals.current_game.statue.day_search(self.player.member)
     try:
       globals.current_game.stats[give_faction(self.name)] -= 1
       if self.faction.leader == self.player and globals.current_game.nights[-1].active_faction == self.faction:
@@ -136,9 +134,7 @@ class Role(Activity):
             self.faction.leader = role.player
             await self.faction.channel.send("Ginie {}\nNowym liderem zostaje {}".format(self.player.member.display_name, self.faction.leader.role))
             break
-    except KeyError:
-      pass
-    except AttributeError:
+    except (KeyError, AttributeError):
       pass
     if nickname[0] != '+':
       try:
@@ -147,8 +143,15 @@ class Role(Activity):
         await gracz.send("Dodaj sobie '+' przed nickiem")
     if not globals.current_game.night and not self.revealed:
       await self.reveal()
+    if self.die_reason == "herbs":
+      globals.current_game.statue.day_search(self.player.member)
     self.indian_win()
-    self.inqui_win()
+    if not globals.current_game.night:
+      self.inqui_win()
+      if self.die_reason != "herbs":
+        globals.current_game.statue.day_search(self.player.member)
+    else:
+      self.inqui_alone_win()
     self.unfollow()
     try:
       await globals.current_game.days[-1].if_next()

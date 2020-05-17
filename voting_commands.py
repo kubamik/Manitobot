@@ -100,17 +100,22 @@ class Glosowania(commands.Cog, name="Głosowania"):
   @manitou_cmd
   async def revote(self, ctx):
     '''Ⓜ/&vre/Uruchamia głosowanie uzupełniające'''
-    hrevote = globals.current_game.days[-1].to_hang
-    srevote = globals.current_game.days[-1].to_revote
-    if len(hrevote) > 0:
-      kandydaci = hrevote
-      options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-      await votings.glosowanie(ctx, "**Głosowanie uzupełniające na wieszanie\nGłosujecie na osobę, która ma zginąć**", 1, options_parsed)
-    elif len(srevote) > 0:
-      kandydaci = srevote
-      options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-      await votings.glosowanie(ctx, "**Głosowanie uzupełniające na przeszukanie\nGłosujecie na osoby, które mają być przeszukane**", globals.current_game.searches - len(globals.current_game.days[-1].to_search), options_parsed)
-    else:
+    revote = False
+    try:
+      hrevote = globals.current_game.days[-1].to_hang
+      if len(hrevote) > 0:
+        revote = True
+        kandydaci = hrevote
+        options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
+        await votings.glosowanie(ctx, "**Głosowanie uzupełniające na wieszanie\nGłosujecie na osobę, która ma zginąć**", 1, options_parsed)
+    except AttributeError:
+      srevote = globals.current_game.days[-1].to_revote
+      if len(srevote) > 0:
+        kandydaci = srevote
+        revote = True
+        options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
+        await votings.glosowanie(ctx, "**Głosowanie uzupełniające na przeszukanie\nGłosujecie na osoby, które mają być przeszukane**", globals.current_game.searches - len(globals.current_game.days[-1].to_search), options_parsed)
+    if not revote:
       await ctx.send("Nie ma kandydatur na takie głosowanie")
 
   @commands.command(name='hangif', aliases=['vhif'])
@@ -118,9 +123,14 @@ class Glosowania(commands.Cog, name="Głosowania"):
   async def czy_wieszamy(self, ctx):
     """Ⓜ/&vhif/Rozpoczyna głosowanie: czy powiesić?"""
     if not globals.current_game.days[-1].hang_time:
-      await ctx.send("Najpierw przeszukania")
-      print(globals.current_game.days[-1].hang_time)
+      await ctx.send("Najpierw przeszukania. Jeżeli chcesz wymusić głosowanie użyj `&fhangif`")
       return
+    await votings.glosowanie(ctx, "**Czy wieszamy?**", 1, [["t", "Tak"], ["n", "Nie"]])
+
+  @commands.command(name='force_hangif', aliases=['fhangif'])
+  @manitou_cmd
+  async def hanging(self, ctx):
+    """Ⓜ/&fhangif/Rozpoczyna głosowanie: czy powiesić?"""
     await votings.glosowanie(ctx, "**Czy wieszamy?**", 1, [["t", "Tak"], ["n", "Nie"]])
 
   @commands.command(name='hang')

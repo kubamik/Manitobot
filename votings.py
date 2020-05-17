@@ -63,14 +63,16 @@ Liczba głosujących: {}\n""".format(summary_readable,votes_count,votes_count//g
     await get_glosowania_channel().send(message)
     for member in get_player_role().members:
       await member.send(message)
-    if globals.current_game.days[-1].duel:
-      await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
-    elif globals.current_game.days[-1].hang:
-      await globals.current_game.days[-1].hang_sumarize(ctx, voing_summary.items())
-    elif globals.current_game.days[-1].hang_time:
-      await globals.current_game.days[-1].if_hang(ctx, voing_summary)
-    elif globals.current_game.days[-1].search:
-      await globals.current_game.days[-1].search_summary(ctx, voing_summary.items())
+    try:
+      if globals.current_game.days[-1].duel:
+        await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
+      elif globals.current_game.days[-1].hang:
+        await globals.current_game.days[-1].hang_sumarize(ctx, voing_summary.items())
+      elif globals.current_game.days[-1].hang_time:
+        await globals.current_game.days[-1].if_hang(ctx, voing_summary)
+    except AttributeError:
+      if globals.current_game.days[-1].search:
+        await globals.current_game.days[-1].search_summary(ctx, voing_summary.items())
   else:
     not_voted=list(set(get_player_role().members) - set(list(get_dead_role().members)) - globals.current_game.players_voted - set(globals.current_game.not_voting))
     if len(not_voted) == 0:

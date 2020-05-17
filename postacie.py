@@ -208,14 +208,14 @@ factions = {
 "wikary":"Inkwizycja"
 }
 
-def get_role_details(role,no):
+def get_role_details(role, no):
   c="".join(role)
   c=c.replace("_","")
   c=c.replace("-","")
   c=c.lower()
-  return roles.get(c,no)
+  return roles.get(c, f"**{no}**")
 
-async def role_details(ctx,role):
+async def role_details(ctx, role):
   await ctx.send(get_role_details(role, "Nie ma takiej postaci"))
 
 def give_faction(role):

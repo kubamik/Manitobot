@@ -1,6 +1,7 @@
 import postacie
 
 SETS={
+  "1" : ["Sędzia"],
   "11" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Mściciel", "Złodziej", "Zły_Rew", "Szaman", "Szamanka", "Wojownik"],
   "12" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Mściciel", "Złodziej", "Zły_Rew", "Szaman", "Szamanka", "Wojownik", "Janosik"],
   "13" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Burmistrz", "Mściciel", "Szuler", "Zły_Rew", "Szaman", "Szamanka", "Wojownik", "Janosik"],

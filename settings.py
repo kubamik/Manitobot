@@ -1,4 +1,3 @@
-
 PROD =  None # if ktulu_serwer
 
 if PROD:
@@ -72,6 +71,6 @@ else:
   "Ufoki":706155509069381733,
   "Inkwizycja":706155539788202107
   }
-  ADMIN_ROLE_ID=694114435375300658
+  ADMIN_ROLE_ID=711161677642596352
 
 RULLER="="*48
