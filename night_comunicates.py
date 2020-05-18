@@ -96,11 +96,14 @@ async def operation_send(operation, author, role, member):
       for person in funk().members:
         await person.send(mess_det[0].format(subject = member.display_name, role = role.replace('_',' ')))
   except AttributeError:
-    for channel in mess_det[1]:
-      await channel().send(mess_det[0].format(role = role.replace('_',' ')))
-    for funk in mess_det[2]:
-      for person in funk().members:
-        await person.send(mess_det[0].format(role = role.replace('_',' ')))
+    try:
+      for channel in mess_det[1]:
+        await channel().send(mess_det[0].format(role = role.replace('_',' ')))
+      for funk in mess_det[2]:
+        for person in funk().members:
+          await person.send(mess_det[0].format(role = role.replace('_',' ')))
+    except KeyError:
+      pass
   except KeyError:
     pass
   try:
