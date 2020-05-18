@@ -70,6 +70,7 @@ class Role(Activity):
       raise InvalidRequest("Nie możesz użyć tego polecenia")
     if self.my_activities[operation] == 0:
       raise InvalidRequest("Nie możesz więcej użyć tej zdolności")
+    self.member = member
     if not member is None:
       member = await converter(ctx, member)
       if member not in get_guild().members:
