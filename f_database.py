@@ -9,7 +9,7 @@ factions_roles = {
 
 f_actions = {
   "Bandyci":[("search", False), ("hold", True)],
-  "Indianie":[("kill", None), ("kill", True), ("hold", True), ["Samotny_Kojot"], ["Płonący_Szał"], ["Szamanka"], ["Wojownik"], ["Cicha_Stopa"]],
+  "Indianie":[("kill", None), ("hold", True), ("kill", True), ["Samotny_Kojot"], ["Płonący_Szał"], ["Szamanka"], ["Wojownik"], ["Cicha_Stopa"]],
   "Ufoki":[["Detektor"], ["Pożeracz_Umysłów"], ("search", False),["Zielona_Macka"], ["Purpurowa_Przyssawka"], ("signal", True), ("hold", True)],
   "Inkwizycja":[["Wikary"], ["Misjonarz"], ["Spowiednik"], ("search", False), ("check", True), ("hold", True)]
 }

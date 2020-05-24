@@ -7,14 +7,14 @@ from settings import *
 from game import Game
 import globals
 
-async def glosowanie(ctx, title, required_votes, options, not_voting = ()):
+async def glosowanie(ctx, title, required_votes, options, not_voting = (), vtype = None):
   if globals.current_game is None:
     await ctx.send("Najpierw rozpocznij grę ;)")
     return
   if globals.current_game.voting_in_progress():
     await ctx.send("Najpierw zakończ bieżące głosowanie")
     return
-  globals.current_game.new_voting(required_votes, options, not_voting)
+  globals.current_game.new_voting(required_votes, options, not_voting, vtype)
   await ctx.message.add_reaction('✅')
   options_readable=""
   for option in options:
@@ -63,16 +63,14 @@ Liczba głosujących: {}\n""".format(summary_readable,votes_count,votes_count//g
     await get_glosowania_channel().send(message)
     for member in get_player_role().members:
       await member.send(message)
-    try:
-      if globals.current_game.days[-1].duel:
-        await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
-      elif globals.current_game.days[-1].hang:
-        await globals.current_game.days[-1].hang_sumarize(ctx, voing_summary.items())
-      elif globals.current_game.days[-1].hang_time:
-        await globals.current_game.days[-1].if_hang(ctx, voing_summary)
-    except AttributeError:
-      if globals.current_game.days[-1].search:
-        await globals.current_game.days[-1].search_summary(ctx, voing_summary.items())
+    if globals.current_game.vote_type == "duel":
+      await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
+    elif globals.current_game.vote_type == "hang":
+      await globals.current_game.days[-1].hang_sumarize(ctx, voing_summary.items())
+    elif globals.current_game.vote_type == "hangif":
+      await globals.current_game.days[-1].if_hang(ctx, voing_summary)
+    elif globals.current_game.vote_type == "search":
+      await globals.current_game.days[-1].search_summary(ctx, voing_summary.items())
   else:
     not_voted=list(set(get_player_role().members) - set(list(get_dead_role().members)) - globals.current_game.players_voted - set(globals.current_game.not_voting))
     if len(not_voted) == 0:

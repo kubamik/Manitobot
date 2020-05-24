@@ -8,6 +8,7 @@ import postacie
 import permissions
 
 
+
 class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   def __init__(self, bot):
         self.bot = bot
@@ -117,19 +118,24 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
         pass
     await ctx.message.add_reaction('✅')
 
+  @commands.command(name='pax')
+  async def pax(self, ctx):
+    try:
+      globals.current_game.rioters.remove(get_member(ctx.author.id))
+      await ctx.message.add_reaction('🕊️')
+    except KeyError:
+      await ctx.send("Nie jesteś buntownikiem")
+    
+
   @commands.command(name='bunt',aliases=['riot'])
   async def riot(self, ctx):
     '''/&riot/W przypadku poparcia przez co najmniej 67 % osób biorących udział w grze (także martwych, ale online) kończy grę'''
     if not czy_gram(ctx) and not czy_trup(ctx):
       await ctx.send("Mogą użyć tylko grający")
       return
-    try:
-      globals.current_game.rioters.add(get_member(ctx.author.id))
-    except AttributeError:
-      await ctx.send("Gra nie została rozpoczęta")
-      return
+    globals.current_game.rioters.add(get_member(ctx.author.id))
     count = set()
-    for person in get_player_role().members+get_dead_role().members:
+    for person in get_player_role().members + get_dead_role().members:
       if person.status != discord.Status.offline:
         count.add(person)
       else:
@@ -139,21 +145,32 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       await get_town_channel().send("Ktoś rozpoczął bunt. Użyj `&riot` jeśli chcesz dołączyć")
       await send_to_manitou("Ktoś rozpoczął bunt.")
     if len(globals.current_game.rioters) >= len(count) * 0.67:
+      await get_town_channel().send("**Doszło do buntu\nGra została zakończona**")
       for manitou in get_manitou_role().members:
         await manitou.remove_roles(get_manitou_role())
-        c=""
-      for member in globals.current_game.player_map.values():
-        c += "Rola {} to {}\n".format(get_nickname(member.member.id),member.role)
+      for role in globals.current_game.role_map.values():
+        if not role.revealed:
+          await role.reveal()
       globals.current_game = None
+      manit = bot.cogs['Dla Manitou']
+      await manit.remove_cogs()
+      await bot.change_presence(activity = None)
       player_role = get_player_role()
       dead_role = get_dead_role()
+      winner_role = get_duel_winner_role()
+      loser_role = get_duel_loser_role()
+      searched_role = get_searched_role()
+      hanged_role = get_hanged_role()
+      p = discord.Permissions().all()
+      try:
+        await get_admin_role().edit(permissions = p)
+      except (NameError, discord.errors.Forbidden):
+        pass
       for member in dead_role.members + player_role.members:
-        await member.remove_roles(dead_role)
+        await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         await member.add_roles(player_role)
-        nickname = get_nickname(member.id)
-        await clear_nickname(member,ctx)
-      await get_town_channel().send("Doszło do buntu gra została zakończona\n{}".format(c))
-    await ctx.send("Zarejestrowałem cię jako buntownika")
+      await manit.remove_cogs()
+    await ctx.message.add_reaction("👊")
       
 
   @commands.command(name="żywi",aliases=['zywi'])

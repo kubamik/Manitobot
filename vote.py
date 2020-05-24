@@ -11,6 +11,7 @@ class Vote:
     self.required_votes = 0
     self.voting_required = False
     self.not_voting = []
+    self.vote_type = None
     
     
   def voting_in_progress(self):
@@ -53,7 +54,7 @@ class Vote:
         summary[vote].append(player)
     return summary
 
-  def new_voting(self, required_votes, voting_options, not_voting):
+  def new_voting(self, required_votes, voting_options, not_voting, vote_type):
     self.voting_allowed = True
     self.required_votes = required_votes
     self.voting_options = voting_options
@@ -61,3 +62,4 @@ class Vote:
     self.players_voted = set()
     self.voting_required = True
     self.not_voting = not_voting
+    self.vote_type = vote_type

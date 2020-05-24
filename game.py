@@ -38,12 +38,12 @@ class Game(Vote):
       "Murzyni":0
     }
 
-  def new_day(self):
+  async def new_day(self):
     self.days.append(Day())
     self.day += 1
     self.night = False
     for player in self.player_map.values():
-      player.new_day()
+      await player.new_day()
     self.town_win()
     self.inqui_win()
     self.morning_bandits_win()

@@ -104,7 +104,7 @@ def czy_trup(ctx):
 def nickname_fit(nick):
   nick = nick.lower()
   for player in get_player_role().members:
-    if get_nickname(player.id).lower().rpartition('(')[0] == nick:
+    if player.display_name.lower().rpartition('(')[0] == nick or player.display_name.lower() == nick:
       return player
   return None
 
@@ -164,3 +164,7 @@ class GameEnd(Exception):
   def __init__(self, reason, winner):
     self.winner = winner
     self.reason = reason
+
+
+def plused(before, after):
+  return before.display_name[0] != after.display_name[0] and after.display_name.startswith('+')

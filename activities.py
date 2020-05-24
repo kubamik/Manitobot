@@ -18,10 +18,12 @@ class Activity:
 
   def if_worked(self):
     if not self.worked:
+      self.member = None
       raise InvalidRequest("Postępuj według kolejności w instrukcji")
   
   def if_not_worked(self):
     if self.worked:
+      self.member = None
       raise InvalidRequest("Postępuj według kolejności w instrukcji")
 
   def make_it_work(self):
@@ -29,6 +31,10 @@ class Activity:
 
   def unwork(self):
     self.worked = False
+
+  async def mark_arrest(self):
+    nick = self.member.member.display_name
+    await self.member.member.edit(nick=nick+'#')
 
   def angel_alive(self):
     r = permissions.role_abilities["inqui_change_on_death"]
@@ -67,6 +73,7 @@ class Activity:
   
   def nonzero(self):
     if globals.current_game.day == 0:
+      self.member = None
       raise InvalidRequest("Nie możesz działać zerowej nocy")
 
   def if_member(self):
@@ -136,6 +143,7 @@ class Activity:
       c += "Poczekaj aż użyje pożądanych zdolności"
     except InvalidRequest:
       self.output += "Nie możesz teraz użyć żadnej zdolności tej postaci. Idziesz spać."
+      self.deactivate()
     except KeyError:
       pass
     self.my_activities["start"] = "uncopy"
@@ -200,10 +208,12 @@ class Activity:
 
   def if_day(self):
     if globals.current_game.night:
+      self.member = None
       raise InvalidRequest("Tej zdolności można użyć tylko w dzień")
 
   def if_not_self(self):
     if self.member == self.player:
+      self.member = None
       raise InvalidRequest("Nie możesz działać sam na siebie")
 
   def if_parameter(self):
@@ -229,12 +239,15 @@ class Activity:
   def if_duel(self):
     if not self.member is None:
       if not globals.current_game.days[-1].duels_result:
+        self.member = None
         raise InvalidRequest("Nie możesz teraz zmienić wyniku pojedynku, aby tylko się ujawnić użyj samego `&wygr`")
       if not self.member.member in globals.current_game.days[-1].participants:
+        self.member = None
         raise InvalidRequest("Ta osoba nie brała udziału w pojedynku")
 
   def if_active(self):
     if self != globals.current_game.nights[-1].active_role:
+      self.member = None
       raise InvalidRequest("Nie możesz teraz działać")
 
   async def change_duel(self):
@@ -260,8 +273,10 @@ class Activity:
 
   def can_hold(self):
     if self.member.role not in self.roles:
+      self.member = None
       raise InvalidRequest("Możesz wręczyć posążek tylko członkowi swojej frakcji")
     if self.member.sleeped:
+      self.member = None
       raise InvalidRequest("Ta osoba nie jest aktywna")
 
   async def change_holder(self):
@@ -307,6 +322,7 @@ class Activity:
   
   def if_protected(self):
     if self.member.protected:
+      self.member = None
       raise InvalidRequest("Ta osoba jest chroniona")
 
   async def statue_alone(self):
@@ -315,6 +331,7 @@ class Activity:
   
   def if_not_prev(self):
     if self.member == self.roled_members[-1]:
+      self.member = None
       raise InvalidRequest("Nie możesz użyć swojej zdolności na tej samej osobie dwa razy z rzędu")
 
   def check_faction(self):

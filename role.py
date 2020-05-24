@@ -70,7 +70,6 @@ class Role(Activity):
       raise InvalidRequest("Nie możesz użyć tego polecenia")
     if self.my_activities[operation] == 0:
       raise InvalidRequest("Nie możesz więcej użyć tej zdolności")
-    self.member = member
     if not member is None:
       member = await converter(ctx, member)
       if member not in get_guild().members:
@@ -97,20 +96,19 @@ class Role(Activity):
     await ctx.message.add_reaction('✅')
 
 
-#efekty przy śmierci np. ochroniarz w operacjach pod die lista operacji
   async def die(self, reason = None):
     gracz = self.player.member
     try:
       globals.current_game.days[-1].remove_member(gracz)
+      globals.current_game.days[-1].search_remove_member(gracz)
       if self in globals.current_game.days[-1].duelers:
         await globals.current_game.days[-1].interrupt()
         await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
-      globals.current_game.days[-1].remove_member(self.player.member)
     except InvalidRequest:
       pass
     except AttributeError:
       pass
-    await gracz.remove_roles(get_player_role())
+    await gracz.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(), get_duel_winner_role())
     await gracz.add_roles(get_dead_role())
     nickname = gracz.display_name
     await get_town_channel().send("Ginie **{}**".format(nickname))
@@ -137,9 +135,10 @@ class Role(Activity):
             break
     except (KeyError, AttributeError):
       pass
-    if nickname[0] != '+':
+    if not nickname.startswith('+'):
       try:
-        await gracz.edit(nick = "+" + nickname)
+        await gracz.edit(nick = '+' + nickname)
+        await bot.wait_for('member_update', check=plused)
       except discord.errors.Forbidden:
         await gracz.send("Dodaj sobie '+' przed nickiem")
     if not globals.current_game.night and not self.revealed:

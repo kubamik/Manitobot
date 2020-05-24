@@ -47,9 +47,14 @@ class Przeszukania(commands.Cog):
     except InvalidRequest as err:
       await ctx.send(err.reason)
       return
-    
 
-  @commands.command(name='reported')
+  
+  @commands.command(name='end_reports', aliases=['repblok'])
+  @manitou_cmd
+  async def end_reports(self, ctx):
+    pass
+
+  @commands.command(name='reported', aliases=['rpt'])
   @manitou_cmd
   async def reported(self, ctx):
     """ⓂPokazuje aktualne zgłoszenia"""

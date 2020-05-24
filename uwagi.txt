@@ -1,0 +1,11 @@
+Specjalne wiadomośc bota,
+Informacja o głosowaniu na kanale miasto
+Oddzielenie głosowań
+Naprawa głosowań
+Usunięcie głosowań (czatu)
+spierdalaj - zamiast odmawiam
+liczba - riotów dla manitou, cofnięcie buntu (pax)
+delety
+
+komendy w krótkim helpie - mhelp:
+day, night, kill, vend, vsch, vdl, abend, pend, dnd, br, reported (rpt)

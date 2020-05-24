@@ -62,6 +62,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       return
     await globals.current_game.nights[-1].night_next(ctx.channel)
 
+
   @bot.listen('on_reaction_add')
   async def new_reaction(emoji, member):
     if not get_member(member.id) in get_manitou_role().members:
@@ -93,18 +94,15 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await clear_nickname(member, ctx)
       for member in spec_role.members:
         await member.remove_roles(spec_role)
-        await clear_nickname(member, ctx)  
-    await ctx.send("Usunięto wszystkim role Gram, Trup i Obserwator")
+        await clear_nickname(member, ctx) 
+    await ctx.message.add_reaction('❤️')
 
 
   @commands.command(name='kill')
   @manitou_cmd
   async def kill(self, ctx,*, gracz):
     """ⓂZabija otagowaną osobę."""
-    try:
-      gracz = await discord.ext.commands.MemberConverter().convert(ctx, gracz)
-    except commands.BadArgument:
-      gracz = nickname_fit(gracz)
+    gracz = await converter(ctx, gracz)
     if gracz is None or gracz not in get_guild().members:
       await ctx.send("Nie ma takiego gracza")
       return
@@ -203,7 +201,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       globals.current_game = None
       await self.remove_cogs()
       await bot.change_presence(activity = None)
-      await ctx.send("Gra została zakończona")
+      await get_town_channel().send("Gra została zakończona")
 
 
   @commands.command(name='end')
@@ -214,6 +212,13 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await self.resetuj_grajacych(ctx)
     await ctx.message.add_reaction('✅')
 
+  @commands.command(name='Manitou_help', aliases=['mhelp'])
+  @manitou_cmd
+  async def manithelp(self, ctx):
+    '''Ⓜ/&mhelp/Pokazuje skrótową pomoc dla Manitou'''
+    comm = ['kill', 'day', 'night', 'vdl', 'br', 'vsch', 'vend', 'abend', 'vhif', 'vhg', 'pend', 'dnd', 'snd', 'hnd', 'rpt', 'repblok']
+    for c in comm:
+      await ctx.send_help(c)
 
   @commands.command(name='random')
   @manitou_cmd
@@ -253,7 +258,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         await member.add_roles(player_role)
       await self.remove_cogs()
-    await ctx.send("Wszystkim z rolą 'preparat anatomiczny' nadano rolę 'gram'")
+    await get_town_channel().send("Wszystkim z rolą 'Trup' nadano rolę 'Gram!'")
 
 
   @commands.command(name="alives")
@@ -272,6 +277,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 Pozostali:{}""".format(len(alive_roles),team))
     except AttributeError:
       await ctx.send("Najpierw rozpocznij grę")
+
+
+  @commands.command(name='rioters_count', aliases=['criot'])
+  @manitou_cmd
+  async def countrioters(self, ctx):
+    await ctx.send("Liczba buntowników wynosi {}".format(len(globals.current_game.rioters)))
 
   @commands.command(name='searches')
   @manitou_cmd
@@ -310,7 +321,7 @@ Pozostali:{}""".format(len(alive_roles),team))
     if not globals.current_game.night:
       await ctx.send("Dzień można rozpocząć tylko w nocy")
       return
-    globals.current_game.new_day()
+    await globals.current_game.new_day()
     for channel in get_guild().text_channels:
       if channel.category_id==FRAKCJE_CATEGORY_ID:
         await channel.send("=\nDzień {}".format(globals.current_game.day))

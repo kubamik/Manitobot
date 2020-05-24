@@ -2,16 +2,19 @@ from discord.ext import commands
 import discord
 from random import SystemRandom
 
-help = commands.DefaultHelpCommand(
-  no_category = 'Pozostałe',
-  verify_checks = False,
-)
+class Help(commands.DefaultHelpCommand):
+  no_category = 'Pozostałe'
+  verify_checks = False
 
-bot=commands.Bot(command_prefix = '&', help_command = help, owner_id=388764073191538688)
+  def get_ending_note(self):
+    return 'Type &help command for more info on a command.\nYou can also type &help category for more info on a category.\nType &mhelp for shortened Manitou help'
+
+bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True)
+
 current_game = None
 
 
-@bot.command(name='HONK', hidden=True)
+@bot.command(name='_HONK', hidden=True)
 async def honk(ctx):
   await ctx.send("KWAK")
 
@@ -23,7 +26,7 @@ async def honk(ctx):
 async def honk(ctx):
   await ctx.send("honk")
 
-@bot.command(name='KWAK', hidden=True)
+@bot.command(name='_KWAK', hidden=True)
 async def honk(ctx):
   await ctx.send("HONK")
 
@@ -31,7 +34,7 @@ async def honk(ctx):
 async def honk(ctx):
   await ctx.send("gulugulugulugu")
 
-@bot.command(name='GULUGULU', hidden=True)
+@bot.command(name='_GULUGULU', hidden=True)
 async def honk(ctx):
   await ctx.send("GULUGULUGULUGU")
 
@@ -59,7 +62,7 @@ async def honk(ctx, member=None):
 async def honk(ctx):
   await ctx.send("dubidubiduba")
 
-@bot.command(name='DZIOBAK', hidden=True)
+@bot.command(name='_DZIOBAK', hidden=True)
 async def honk(ctx):
   await ctx.send("DUBIDUBIDUBA")
 
@@ -67,6 +70,6 @@ async def honk(ctx):
 async def honk(ctx):
   await ctx.send("AAAAAGEEEENT PEEEEEEE!!!")
 
-@bot.command(name='DUBIDUBIDUBA', hidden=True)
+@bot.command(name='_DUBIDUBIDUBA', hidden=True)
 async def honk(ctx):
   await ctx.send("AAAAAGEEEENT PEEEEEEE!!!")

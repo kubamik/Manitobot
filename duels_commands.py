@@ -1,7 +1,7 @@
 from utility import *
 from discord.ext import commands
 import discord
-#kolejność, kończenie głosowania przy przerwij, swap
+
 from settings import FRAKCJE_CATEGORY_ID
 import globals
 from starting import if_game
@@ -40,7 +40,7 @@ class Pojedynki(commands.Cog):
       await ctx.send(err.reason)
 
 
-  @commands.command(name='odrzucam', aliases=['od'])
+  @commands.command(name='odrzucam', aliases=['od', 'spierdalaj'])
   async def decline(self,ctx):
     '''/&od/Służy do odrzucenia pojedynku'''
     try:
@@ -67,7 +67,7 @@ class Pojedynki(commands.Cog):
       await ctx.send(err.reason)
 
   
-  @commands.command(name='przerwij', aliases=['br'])
+  @commands.command(name='break', aliases=['br'])
   @manitou_cmd
   async def interrupt(self,ctx):
     '''Ⓜ/&br/Przerywa trwający pojedynek'''

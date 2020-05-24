@@ -74,9 +74,7 @@ class Faction(Activity):
           await f()
         else:
           f()
-    except InvalidRequest:
-      pass
-    except KeyError:
+    except (InvalidRequest, KeyError):
       pass
     await self.channel.send("Rozpoczynamy rundę frakcji. Liderem dzisiejszej nocy jest {}.\n{}".format(self.leader.role, "Macie posążek" if self.f_has() else "Nie macie posążka"))
     globals.current_game.nights[-1].active_faction = self

@@ -88,6 +88,7 @@ class Search(Hang):
     self.to_revote = []
     self.search = False
     self.search_final = False
+    self.hang = None
     self.hang_time = False
 
   def add_report(self, author, gracz):
@@ -126,7 +127,7 @@ class Search(Hang):
     c += "\nDo dyspozycji są {} przeszukania".format(globals.current_game.searches)
     return c
 
-  def remove_member(self, gracz):
+  def search_remove_member(self, gracz):
     try:
       for member in self.searched[gracz]:
         del self.searchers[member][self.searchers[member].index(gracz)]

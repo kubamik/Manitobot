@@ -135,6 +135,7 @@ async def on_command_error(ctx, error):
     await ctx.send("HONK?", delete_after=5)
   elif isinstance(error, commands.MissingRole):
     await ctx.send("You have no power here!", delete_after=5)
+    await ctx.send(f"{error.missing_role.mention}n required", allowed_mentions = discord.AllowedMentions(roles=False), delete_after=5)
   elif isinstance(error, commands.CheckAnyFailure):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.NotOwner):

@@ -50,7 +50,7 @@ role_abilities = {
 
 def get_activity(name, obj):
   activities = {
-    "arrest":[obj.if_active, obj.if_not_prev, obj.sleep, obj.protect, obj.search, obj.deactivate],
+    "arrest":[obj.if_active, obj.if_not_prev, obj.sleep, obj.protect, obj.search, obj.mark_arrest, obj.deactivate],
     "wins":[obj.if_day, obj.if_duel, obj.reveal, obj.change_duel],
     "hang_win":[obj.hang_win],
     "peace":[obj.if_day, obj.reveal, obj.peace_make, obj.if_hang_time],
