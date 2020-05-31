@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 import asyncio
 import inspect
+import traceback
 
 import duels_commands
 import hang_commands
@@ -38,7 +39,17 @@ async def on_ready():
   except discord.errors.ClientException:
     pass
 
+@bot.group(name='sth', aliases=[], case_insensitive = True)
+async def pomoc(ctx):
+  pass
 
+@pomoc.command(aliases=['m'])
+async def manitou(ctx):
+  await ctx.send("`Manitou help here`")
+@pomoc.command(aliases=['g'])
+async def gracz(ctx):
+  await ctx.send("`Players help here`")
+ 
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
@@ -126,6 +137,23 @@ async def my_message(m):
 	except InvalidRequest as e:
 		await m.channel.send(e.reason)
 
+@bot.command(name='log')
+async def log(ctx):
+  '''ⒹWysyła logi błędów'''
+  try:
+    with open("error.log") as fp:
+      logs = discord.File(fp)
+      await ctx.send(file=logs)
+  except FileNotFoundError:
+    await ctx.send("Aktualnie nie ma logów")
+
+@bot.command(name='clear_logs', aliases=['logcls'])
+@commands.is_owner()
+async def log_clear(ctx):
+  '''ⒹCzyści logi błędów'''
+  os.remove('error.log')
+  await ctx.message.add_reaction('✅')
+  
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -135,25 +163,30 @@ async def on_command_error(ctx, error):
     await ctx.send("HONK?", delete_after=5)
   elif isinstance(error, commands.MissingRole):
     await ctx.send("You have no power here!", delete_after=5)
-    await ctx.send(f"{error.missing_role.mention}n required", allowed_mentions = discord.AllowedMentions(roles=False), delete_after=5)
   elif isinstance(error, commands.CheckAnyFailure):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.NotOwner):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
-    mess  = await ctx.send_help(ctx.command)
-    await mess.delete(delay=10)
+    await ctx.send_help(ctx.command)
   elif isinstance(error, ValueError):
     await ctx.send(str(error), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send("Błędny parametr", delete_after=5)
-    mess  = await ctx.send_help(ctx.command)
-    await mess.delete(delay=10)
+    await ctx.send_help(ctx.command)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
     utility.lock = False
     await ctx.send("Gra nie została rozpoczęta", delete_after=5)
-    raise error
+    try:
+      raise error
+    except:
+      with open('error.log', 'a') as logs:
+        traceback.print_exc(file=logs)
+        logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+      raise error
+  elif isinstance(error, commands.DisabledCommand):
+    await ctx.send("Prace nad tą komendą trwają. Nie należy jej używać.", delete_after=5)
   elif isinstance(error, commands.CheckFailure):
     pass
   elif isinstance(error, commands.PrivateMessageOnly):
@@ -169,10 +202,18 @@ async def on_command_error(ctx, error):
         await channel.send(c)
   else:
     utility.lock = False
-    print(type(error.original))
+    print(error.original)
     await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)
     print(ctx.command, type(error))
-    raise error
+    try:
+      raise error
+    except:
+      with open('error.log', 'a') as logs:
+        traceback.print_exc(file=logs)
+        logs.write(f'\n\n\n\n\n{RULLER}\n\n\n\n')
+      raise error
+    
+    
 
 
 #@bot.listen('on_member_update')

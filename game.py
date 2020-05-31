@@ -1,3 +1,5 @@
+import discord
+
 import utility
 from daynight import Day,Night
 from vote import Vote
@@ -6,10 +8,12 @@ from faction import Faction
 from role import Role
 from player import Player
 from postacie import get_faction, give_faction
+from utility import get_town_channel
 
 class Game(Vote):
   def __init__(self):
     Vote.__init__(self)
+    self.message = None
     self.statue = Statue()
     self.player_map = {}
     self.role_map = {}
@@ -25,6 +29,7 @@ class Game(Vote):
     self.bandit_morning = True
     self.rioters = set()
     self.new_night()
+    self.webhooks = {}
     self.stats = {
       "Miasto":0,
       "Bandyci":0,
@@ -54,7 +59,13 @@ class Game(Vote):
     self.nights.append(Night())
     self.night = True
     self.evening_bandits_win()
-    
+
+
+  async def make_webhooks(self):
+    try:
+      self.webhooks[get_town_channel()] = await get_town_channel().create_webhook(name="Manitobot")
+    except (discord.Forbidden, discord.HTTPException):
+      pass
 
   def make_factions(self, roles):
     for role in roles:

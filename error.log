@@ -1,0 +1,209 @@
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/start_commands.py", line 77, in start_skład
+    await start_game(ctx, *(sklady.get_set(nazwa_składu) + list(dodatkowe)))
+  File "/home/runner/RashDarkmagentaComputer/starting.py", line 34, in start_game
+    await globals.current_game.make_webhooks()
+AttributeError: 'Game' object has no attribute 'make_webhooks'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 171, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: 'Game' object has no attribute 'make_webhooks'
+
+
+
+
+================================================
+
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/start_commands.py", line 77, in start_skład
+    await start_game(ctx, *(sklady.get_set(nazwa_składu) + list(dodatkowe)))
+  File "/home/runner/RashDarkmagentaComputer/starting.py", line 34, in start_game
+    await globals.current_game.make_webhooks()
+  File "/home/runner/RashDarkmagentaComputer/game.py", line 66, in make_webhooks
+    self.webhooks[get_town_channel()] = await get_town_channel().create_webhook("Manitobot")
+TypeError: create_webhook() takes 1 positional argument but 2 were given
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 198, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: TypeError: create_webhook() takes 1 positional argument but 2 were given
+
+
+
+
+
+================================================
+
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 211, in wins
+    await self.command_template(ctx, member, "wins")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 39, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 84, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 261, in change_duel
+    await wbhk.send("Decyzją jednoosobowej ławy przysięgłych pojedynek wygrywa **{}**".format(self.member.member.display_name), name=self.name.replace('_', ' '), avatar = 'http://www.myiconfinder.com/uploads/iconsets/256-256-e9909996c50fe344c944c09c430b8346-judge.png')
+TypeError: send() got an unexpected keyword argument 'name'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 198, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: TypeError: send() got an unexpected keyword argument 'name'
+
+
+
+
+
+================================================
+
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 211, in wins
+    await self.command_template(ctx, member, "wins")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 39, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 84, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 261, in change_duel
+    await wbhk.send("Decyzją jednoosobowej ławy przysięgłych pojedynek wygrywa **{}**".format(self.member.member.display_name), username=self.name.replace('_', ' '), avatar = 'http://www.myiconfinder.com/uploads/iconsets/256-256-e9909996c50fe344c944c09c430b8346-judge.png')
+TypeError: send() got an unexpected keyword argument 'avatar'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 198, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: TypeError: send() got an unexpected keyword argument 'avatar'
+
+
+
+
+
+================================================
+
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 199, in arrest
+    await self.command_template(ctx, member, "arrest")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 39, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 85, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 41, in mark_arrest
+    await self.member.member.edit(nick=nick+'#')
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/member.py", line 578, in edit
+    await http.edit_member(guild_id, self.id, reason=reason, **payload)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/http.py", line 221, in request
+    raise Forbidden(r, data)
+discord.errors.Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 198, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: Forbidden: 403 Forbidden (error code: 50013): Missing Permissions
+
+
+
+
+
+================================================
+
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 217, in veto
+    await self.command_template(ctx, None, "peace")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 44, in command_template
+    raise err
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 39, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 85, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 175, in if_hang_time
+    async def if_hang_time(self):
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 262, in meantime_send
+    await self.meantime_send()
+KeyError: 'peace'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 198, in on_command_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: KeyError: 'peace'
+
+
+
+
+
+================================================
+
+
+

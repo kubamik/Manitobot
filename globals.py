@@ -3,11 +3,14 @@ import discord
 from random import SystemRandom
 
 class Help(commands.DefaultHelpCommand):
-  no_category = 'Pozostałe'
-  verify_checks = False
+  def __init__(self):
+    super().__init__(no_category='Pozostałe', verify_checks=False)
 
   def get_ending_note(self):
-    return 'Type &help command for more info on a command.\nYou can also type &help category for more info on a category.\nType &mhelp for shortened Manitou help'
+    return '''Informacje o konkretnej komendzie:\t&help <komenda>
+    Informacje o konkretnej kategorii:\t&help <kategoria>
+    Skrócona pomoc dla Manitou:\t\t   &mhelp
+    Skrócona pomoc dla graczy'''
 
 bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True)
 

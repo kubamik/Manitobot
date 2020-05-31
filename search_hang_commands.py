@@ -19,7 +19,7 @@ class Przeszukania(commands.Cog):
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.CheckFailure):
-      await ctx.send("Tej komendy można używać tylko w dzień i nie w trakcie pojedynku")
+      await ctx.send("Tej komendy można używać tylko w dzień i nie w trakcie pojedynku", delete_after=5)
 
   @commands.command(name='zgłaszam')
   async def duel_dare(self,ctx,*, gracz):
@@ -52,7 +52,9 @@ class Przeszukania(commands.Cog):
   @commands.command(name='end_reports', aliases=['repblok'])
   @manitou_cmd
   async def end_reports(self, ctx):
-    pass
+    '''ⓂBlokuje zgłaszanie nowych osób do przeszukania'''
+    globals.current_game.days[-1].search_lock = True
+    await ctx.message.add_reaction('✅')
 
   @commands.command(name='reported', aliases=['rpt'])
   @manitou_cmd
@@ -94,7 +96,7 @@ class Wieszanie(commands.Cog):
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.CheckFailure):
-      await ctx.send("Tej komendy można używać tylko w dzień")
+      await ctx.send("Tej komendy można używać tylko w dzień", delete_after=5)
 
   @commands.command(name='hangend',aliases=['hnd'])
   @manitou_cmd

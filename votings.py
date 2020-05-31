@@ -28,11 +28,12 @@ Opcje:
   Aby zagłosować wyślij mi (botowi) na priv dowolny wariant dowolnej opcji. Wiele głosów należy oddzielić przecinkami. Wielkość znaków nie ma znaczenia.
   """.format(title, required_votes, options_readable)
 
-  await get_glosowania_channel().send(message)
+  #await get_glosowania_channel().send(message)
   gracze = list(get_player_role().members)
   trupy = list(get_dead_role().members)
+  nie_glos = list(globals.current_game.not_voting)
   for gracz in gracze:
-    if gracz not in trupy:
+    if gracz not in trupy + nie_glos:
       await gracz.create_dm()
       await gracz.dm_channel.send(message)
 
@@ -46,21 +47,21 @@ async def see_voting(ctx, end_vote):
   votes_count = 0
   if end_vote:
     globals.current_game.voting_allowed = False
-    message = "Głosowanie zakończone!\n"
+    message = "**Głosowanie zakończone!**\n"
   else:
     message = "Podgląd głosowania\n"
   for option, voters in voing_summary.items():
     voters_readable = [get_nickname(voter_id) for voter_id in voters]
-    summary_readable+= "- {} na {}: {}\n".format(len(voters_readable), option, ", ".join(voters_readable))
+    summary_readable+= "- {} *na* **{}**: {}\n".format(len(voters_readable), option, ", ".join(voters_readable))
     votes_count+=len(voters_readable)
   await ctx.message.add_reaction('✅')
-  message += """Wyniki:
+  message += """__Wyniki__:
 {}
 Łączna liczba oddanych głosów: {}
 Liczba głosujących: {}\n""".format(summary_readable,votes_count,votes_count//globals.current_game.required_votes)
 
   if end_vote:
-    await get_glosowania_channel().send(message)
+    await get_town_channel().send(message)
     for member in get_player_role().members:
       await member.send(message)
     if globals.current_game.vote_type == "duel":

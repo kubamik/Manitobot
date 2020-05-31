@@ -7,6 +7,9 @@ import globals
 import postacie
 import permissions
 
+ankietawka = '@everyone\n**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
+
+ankietawka_emoji = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷', '🚫', '👁️']
 
 
 class DlaGraczy(commands.Cog, name = "Dla Graczy"):
@@ -77,6 +80,29 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       await ctx.send("Nie ma takiej osoby")
       return
     await member.remove_roles(get_admin_role())
+
+
+  @commands.command()
+  async def ankietka(self, ctx, *, date):
+    '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Oznaczenia we własnym zakresie'''
+    author = get_member(ctx.author.id)
+    if author not in get_admin_role().members:
+      raise commands.MissingRole(get_admin_role())
+    async with ctx.typing():
+      m = await get_ankietawka_channel().send(ankietawka.format(date=date))
+      for emoji in ankietawka_emoji:
+        await m.add_reaction(emoji)
+    await ctx.message.add_reaction('✅')
+
+  @commands.command(name='help_gracza', aliases=[])
+  async def playerhelp(self, ctx):
+    '''Pokazuje skrótową pomoc dla graczy'''
+    comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
+    mess = ""
+    for c in comm:
+      mess += help_format(c)
+    await ctx.send(f'```yaml\n{mess}```')
+
 
   @commands.command(name='czy_gram')
   async def if_registered(command, ctx):

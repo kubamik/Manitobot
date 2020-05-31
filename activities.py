@@ -5,12 +5,16 @@ import postacie
 from utility import *
 import globals
 import permissions
-from night_comunicates import night_send, operation_send
+from night_comunicates import night_send, operation_send, webhook_com
 from postacie import get_faction, send_faction, give_faction
 
 class Activity:
   def __init__(self):
     pass
+
+  def if_not_sleeped(self):
+    if self.plyer.sleeped:
+      raise InvalidRequest("Nie możesz działać, bo jesteś zamknięty lub upity")
 
   def if_night(self):
     if not globals.current_game.night:
@@ -34,8 +38,11 @@ class Activity:
 
   async def mark_arrest(self):
     nick = self.member.member.display_name
-    await self.member.member.edit(nick=nick+'#')
-
+    try:
+      await self.member.member.edit(nick=nick+'#')
+    except discord.Forbidden:
+      pass
+      
   def angel_alive(self):
     r = permissions.role_abilities["inqui_change_on_death"]
     try:
@@ -168,8 +175,7 @@ class Activity:
   async def if_hang_time(self):
     try:
       if globals.current_game.days[-1].hang_final:
-        await get_town_channel().send("Burmistrz ułaskawił wieszaną osobę")
-        await get_glosowania_channel().send("Burmistrz ułaskawił wieszaną osobę")
+        await self.meantime_send()
     except AttributeError:
       pass
 
@@ -253,6 +259,18 @@ class Activity:
   async def change_duel(self):
     if not self.member is None and not "copied" in self.my_activities:
       await globals.current_game.days[-1].change_winner(self.member.member)
+      await self.meantime_send()
+
+  async def meantime_send(self):
+    com = webhook_com[self.operation]
+    try:
+      wbhk = globals.current_game.webhooks[get_town_channel()]
+      if self.member is None:
+        await wbhk.send(com[0], username=self.name.replace('_', ' '), avatar_url = com[1])
+      else:
+        await wbhk.send(com[0].format(member=self.member.member.display_name), username=self.name.replace('_', ' '), avatar_url = com[1])
+    except KeyError:
+      pass
 
   def sleep(self):
     self.member.sleeped = True

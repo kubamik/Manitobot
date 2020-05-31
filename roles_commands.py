@@ -8,7 +8,7 @@ import utility
 
 
 
-class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji"):
+class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command_attrs=dict(enabled=True, hidden=True)):
 
   def __init__(self, bot):
         self.bot = bot
@@ -204,13 +204,13 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji"):
     '''/&spow/Służy do wyspowiadania osoby przez pastora'''
     await self.command_template(ctx, member, "pasteur")
 
-  @commands.command(name='wygrywa',aliases=['wygr'])
+  @commands.command(name='wygrywa',aliases=['wygr'], enabled=True, hidden=False)
   @commands.dm_only()
   async def wins(self, ctx, *, member = None):
     '''/&wygr/Służy do ujawnienia się przez Sędziego, użyte z nazwą gracza powoduje, że wygrywa on pojedynek, użyte samo ujawnia Sędziego powodując utratę zdolności'''
     await self.command_template(ctx, member, "wins")
   
-  @commands.command(name='veto',aliases=['łaska'])
+  @commands.command(name='veto',aliases=['łaska'], enabled=True, hidden=False)
   @commands.dm_only()
   async def veto(self, ctx):
     '''/&łaska/Służy do ujawnienia się przez Burmistrza, użyte w trakcie wieszania ułaskawia, użyte poza ujawnia Burmistrza powodując utratę zdolności'''
@@ -224,11 +224,11 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji"):
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.PrivateMessageOnly):
-      await ctx.send("Tej komendy teraz można używać tylko w DM")
+      await ctx.send("Tej komendy teraz można używać tylko w DM", delete_after=5)
     elif isinstance(error, commands.NoPrivateMessage):
-      await ctx.send("Tej komendy teraz można używać tylko na kanale frakcji")
+      await ctx.send("Tej komendy teraz można używać tylko na kanale frakcji", delete_after=5)
     elif isinstance(error, commands.CheckFailure):
-      await ctx.send("Spróbuj ponownie za chwilę")
+      await ctx.send("Spróbuj ponownie za chwilę", delete_after=5)
 
 
   """@commands.command(name='arrest')

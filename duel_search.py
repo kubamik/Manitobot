@@ -7,14 +7,17 @@ from utility import *
 
 
 class Hang:
-  def __init__(self, candidates):
-    self.candidates = candidates
+  
+  def __init__(self):
     self.hang = None
     self.to_hang = []
     self.hanged = None
     self.hang_final = False
     self.change = False
-
+  
+  def set_candidates(self, candidates):
+    self.candidates = candidates
+    
   async def if_hang(self, ctx, votes):
     if len(votes["Tak"]) > len(votes["Nie"]):
       self.hang = True
@@ -23,7 +26,6 @@ class Hang:
       self.hang = False
       c = "Miasto idzie spać"
     await get_town_channel().send(c)
-    await get_glosowania_channel().send(c)
 
   async def hang_sumarize(self, ctx, votes):
     results = []
@@ -47,9 +49,11 @@ class Hang:
       for member in self.to_hang:
         c += "**{}**\n".format(member.display_name)
     await get_town_channel().send(c)
-    await get_glosowania_channel().send(c)
+
 
   async def hang_finalize(self, ctx):
+    if not self.hang_final:
+      await ctx.send("Najpierw głosowanie na wieszanie")
     if len(get_hanged_role().members) > 1:
       await ctx.send("Powiesić można tylko jedną osobę")
       raise InvalidRequest
@@ -65,12 +69,10 @@ class Hang:
       else:
         c = "Nikt nie zostaje powieszony"
         await get_town_channel().send(c)
-        await get_glosowania_channel().send(c)
         return
     c = "Powieszony(-a) zostaje **{}**".format(self.hanged.display_name)
     role = globals.current_game.player_map[self.hanged].role_class
     await get_town_channel().send(c)
-    await get_glosowania_channel().send(c)
     await self.hanged.remove_roles(get_hanged_role())
     await role.die('hang')
 
@@ -87,12 +89,14 @@ class Search(Hang):
     self.to_search = []
     self.to_revote = []
     self.search = False
+    self.search_lock = False
     self.search_final = False
-    self.hang = None
     self.hang_time = False
+    Hang.__init__(self)
+
 
   def add_report(self, author, gracz):
-    if self.search:
+    if self.search or self.search_lock:
       raise InvalidRequest("Nie można już zgłaszać")
     if gracz not in self.searched:
       self.searched[gracz] = []
@@ -178,7 +182,6 @@ class Search(Hang):
       for member in self.to_revote:
         c += "**{}**\n".format(member.display_name)
     await get_town_channel().send(c)
-    await get_glosowania_channel().send(c)
 
 
   async def search_finalize(self, ctx):
@@ -197,13 +200,11 @@ class Search(Hang):
     for member in get_searched_role().members:
       c += "**{}**\n".format(member.display_name)
     await get_town_channel().send(c)
-    await get_glosowania_channel().send(c)
     for member in get_searched_role().members:
       c = globals.current_game.statue.day_search(member)
       await get_town_channel().send(c)
-      await get_glosowania_channel().send(c)
       await member.remove_roles(get_searched_role())
-    Hang.__init__(self, self.to_search)
+    self.set_candidates(self.to_search)
 
 
 

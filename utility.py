@@ -52,11 +52,14 @@ def get_searched_role():
   return bot.get_guild(GUILD_ID).get_role(SEARCHED_ID)
 
 def get_hanged_role():
-  return bot.get_guild(GUILD_ID).get_role(HANGED_ID)
+  return get_guild().get_role(HANGED_ID)
 
 def get_glosowania_channel():
   guild=get_guild()
   return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
+
+def get_ankietawka_channel():
+  return get_guild().get_channel(ANKIETAWKA_CHANNEL_ID)
 
 def get_manitou_notebook():
   guild = get_guild()
@@ -101,10 +104,30 @@ def czy_trup(ctx):
   deads=list(get_dead_role().members)
   return member in deads
 
+def help_format(command):
+  try:
+    c = bot.get_command(command)
+    txt = ""
+    txt += "**{pref}{name}**\n"
+    if (len(c.aliases) > 0):
+      txt += "*{pref}" + "*\n*{pref}".join(c.aliases) + "*\n"
+    txt += c.help.rpartition('Ⓜ')[2].rpartition('/')[2]
+    return txt.format(pref=bot.command_prefix, name=c.name) + '\n\n'
+  except AttributeError:
+    return ''
+
+
+def transform_nickname(nick):
+  if nick.startswith('+'):
+    nick = nick[1:]
+  if all(nick.rpartition('(')):
+    nick = nick.rpartition('(')[0]
+  return nick.lower()
+
 def nickname_fit(nick):
-  nick = nick.lower()
+  nick = transform_nickname(nick)
   for player in get_player_role().members:
-    if player.display_name.lower().rpartition('(')[0] == nick or player.display_name.lower() == nick:
+    if transform_nickname(player.display_name) == nick:
       return player
   return None
 
@@ -125,6 +148,8 @@ async def clear_nickname(member, ctx):
   new_nickname = old_nickname
   if new_nickname[0] == '+' or new_nickname[0] == '!':
     new_nickname = new_nickname[1:]
+  if new_nickname[-1] == '#':
+    new_nickname = new_nickname[:-1]
   if new_nickname[-1] == ')':
     new_nickname = new_nickname.rpartition('(')[0]
   if new_nickname != old_nickname:

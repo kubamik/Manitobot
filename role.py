@@ -77,6 +77,7 @@ class Role(Activity):
       if member not in get_player_role().members or member in get_dead_role().members: 
         raise InvalidRequest("Ta osoba nie gra lub nie żyje")
       self.member = globals.current_game.player_map[member]
+    self.operation = operation
     output = ""
     try:
       for f in permissions.get_activity(operation, self):
@@ -112,7 +113,6 @@ class Role(Activity):
     await gracz.add_roles(get_dead_role())
     nickname = gracz.display_name
     await get_town_channel().send("Ginie **{}**".format(nickname))
-    await get_glosowania_channel().send("Ginie **{}**".format(nickname))
     self.die_reason = reason
     try:
       actions = self.my_activities["die"]

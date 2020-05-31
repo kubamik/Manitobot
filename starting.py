@@ -29,8 +29,9 @@ async def start_game(ctx, *lista):
 		        len(gracze), len(lista)))
     return
   
-    
+  
   globals.current_game = Game()
+  await globals.current_game.make_webhooks()
 
   lista_shuffled = list(lista)
   shuffle(lista_shuffled)
@@ -78,9 +79,15 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
     if channel.category_id == FRAKCJE_CATEGORY_ID:
       await channel.send(RULLER)
   team = postacie.print_list(lista)
-  await get_glosowania_channel().send("""Rozdałem karty. Liczba graczy: {}
+  globals.current_game.message = await get_town_channel().send("""Rozdałem karty. Liczba graczy: {}
 Gramy w składzie:{}""".format(len(lista), team))
-
-
+  try:
+    await globals.current_game.message.pin()
+  except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+    pass
+  try:
+    await get_town_channel().set_permissions(get_player_role(), send_messages = False)
+  except (discord.Forbidden, discord.HTTPException):
+    pass
 def if_game():
   return globals.current_game != None

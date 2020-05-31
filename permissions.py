@@ -50,7 +50,7 @@ role_abilities = {
 
 def get_activity(name, obj):
   activities = {
-    "arrest":[obj.if_active, obj.if_not_prev, obj.sleep, obj.protect, obj.search, obj.mark_arrest, obj.deactivate],
+    "arrest":[obj.if_active, obj.if_not_prev, obj.sleep, obj.protect, obj.meantime_send, obj.search, obj.mark_arrest, obj.deactivate],
     "wins":[obj.if_day, obj.if_duel, obj.reveal, obj.change_duel],
     "hang_win":[obj.hang_win],
     "peace":[obj.if_day, obj.reveal, obj.peace_make, obj.if_hang_time],
@@ -79,7 +79,7 @@ def get_activity(name, obj):
     "heretic":[obj.if_active, obj.if_not_worked, obj.check_heresis, obj.deactivate_cond],
     "research":[obj.if_active, obj.if_member, obj.if_protected, obj.search, obj.set_use, obj.deactivate],
     "finoff":[obj.if_active, obj.if_member, obj.if_protected, obj.kill, obj.search, obj.deactivate],
-    "burn":[obj.nonzero, obj.if_protected, obj.statue_none, obj.reveal, obj.kill, obj.search],
+    "burn":[obj.nonzero, obj.if_not_sleeped, obj.if_protected, obj.statue_none, obj.reveal, obj.kill, obj.search],
     "mirror":[obj.if_active, obj.if_not_worked, obj.if_not_self, obj.check_role, obj.make_it_work, obj.mirror_send, obj.deactivate_cond],
     "copy":[obj.if_active, obj.if_worked, obj.set_use, obj.copy],
     "uncopy":[obj.unwork, obj.unchange],

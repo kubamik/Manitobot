@@ -20,7 +20,7 @@ class Pojedynki(commands.Cog):
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.CheckFailure):
-      await ctx.send("Tej komendy można używać tylko w dzień i (prawdopodobnie) nie w trakcie pojedynku")
+      await ctx.send("Tej komendy można używać tylko w dzień i (prawdopodobnie) nie w trakcie pojedynku", delete_after=5)
 
 
   @commands.command(name='wyzywam')
@@ -105,7 +105,6 @@ class Pojedynki(commands.Cog):
     globals.current_game.days[-1].duels_today = globals.current_game.duels
     await ctx.message.add_reaction('✅')
     await get_town_channel().send("__Zakończono turę pojedynków__")
-    await get_glosowania_channel().send("__Zakończono turę pojedynków__")
 
 
   """@commands.command(name='wyzywam')

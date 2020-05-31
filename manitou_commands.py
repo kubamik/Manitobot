@@ -34,7 +34,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       pass
     
 
-  @commands.command(name='tea')
+  @commands.command(name='tea', enabled=False, hidden=True)
   @manitou_cmd
   async def tea(self, ctx):
     '''ⓂUruchamia śmierć od ziółek'''
@@ -50,7 +50,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await herb.die("herbs")
     await ctx.message.add_reaction('✅')
 
-  @commands.command(name='next',aliases=['n'])
+  @commands.command(name='next',aliases=['n'], enabled=True, hidden=True)
   @manitou_cmd
   async def next_night(self,ctx):
     """Ⓜ/&n/Rozpoczyna rundę następnej postaci w trakcie nocy."""
@@ -101,7 +101,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   @commands.command(name='kill')
   @manitou_cmd
   async def kill(self, ctx,*, gracz):
-    """ⓂZabija otagowaną osobę."""
+    """ⓂZabija otagowaną osobę"""
     gracz = await converter(ctx, gracz)
     if gracz is None or gracz not in get_guild().members:
       await ctx.send("Nie ma takiego gracza")
@@ -198,6 +198,14 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       for role in globals.current_game.role_map.values():
         if not role.revealed:
           await role.reveal()
+      try:
+        await globals.current_game.message.unpin()
+      except (discord.NotFound, discord.Forbidden, discord.HTTPException, AttributeError):
+        pass
+      try:
+        await get_town_channel().set_permissions(get_player_role(), send_messages = True)
+      except (discord.Forbidden, discord.HTTPException):
+        pass
       globals.current_game = None
       await self.remove_cogs()
       await bot.change_presence(activity = None)
@@ -217,8 +225,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   async def manithelp(self, ctx):
     '''Ⓜ/&mhelp/Pokazuje skrótową pomoc dla Manitou'''
     comm = ['kill', 'day', 'night', 'vdl', 'br', 'vsch', 'vend', 'abend', 'vhif', 'vhg', 'pend', 'dnd', 'snd', 'hnd', 'rpt', 'repblok']
+    mess = ""
     for c in comm:
-      await ctx.send_help(c)
+      mess += help_format(c)
+    await ctx.send(f'```fix\n{mess}```')
 
   @commands.command(name='random')
   @manitou_cmd
@@ -309,7 +319,7 @@ Pozostali:{}""".format(len(alive_roles),team))
   @commands.command(name='morning', aliases=['morn'])
   @manitou_cmd
   async def evening(self, ctx, n: int):
-    '''Ⓜ/&even/Ustawia czas odjazdu bandytów na podany poranek'''
+    '''Ⓜ/&morn/Ustawia czas odjazdu bandytów na podany poranek'''
     globals.current_game.bandit_night = n
     globals.current_game.bandit_morning = True
     await ctx.message.add_reaction('✅')
@@ -325,6 +335,10 @@ Pozostali:{}""".format(len(alive_roles),team))
     for channel in get_guild().text_channels:
       if channel.category_id==FRAKCJE_CATEGORY_ID:
         await channel.send("=\nDzień {}".format(globals.current_game.day))
+    try:
+      await get_town_channel().set_permissions(get_player_role(), send_messages = True)
+    except (discord.Forbidden, discord.HTTPException):
+      pass
     for member in get_dead_role().members:
       nickname = get_nickname(member.id)
       if not globals.current_game.player_map[member].role_class.revealed:
@@ -338,6 +352,10 @@ Pozostali:{}""".format(len(alive_roles),team))
     if globals.current_game.night:
       await ctx.send("Noc można rozpocząć tylko w dzień")
       return
+    try:
+      await get_town_channel().set_permissions(get_player_role(), send_messages = False)
+    except (discord.Forbidden, discord.HTTPException):
+      pass
     globals.current_game.new_night()
     globals.current_game.night = True
     await ctx.message.add_reaction('✅')

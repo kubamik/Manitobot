@@ -23,6 +23,6 @@ class Player:
     nickname = self.member.display_name
     if nickname.endswith('#'):
       try:
-        await self.member.display_name.edit(nick=nickname[:-1])
+        await self.member.edit(nick=nickname[:-1])
       except discord.errors.Forbidden:
         pass

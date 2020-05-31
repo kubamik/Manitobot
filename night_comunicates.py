@@ -53,9 +53,15 @@ operation_com_private = {
   "cheat":"Zostałeś ograny przez Szulera, nie obudzisz się więcej tej nocy"
 }
 
+webhook_com = {
+  'wins':("Decyzją jednoosobowej ławy przysięgłych pojedynek wygrywa **{member}**", 'http://www.myiconfinder.com/uploads/iconsets/256-256-e9909996c50fe344c944c09c430b8346-judge.png'),
+  'arrest':("Na mocy nadanej mi przez Manitou władzy oświadczam:\n**{member}** zostaje zamknięty(-a) do wyjaśnienia", 'https://www.shareicon.net/data/512x512/2016/04/10/747358_people_512x512.png'),
+  'peace':('**Uniewinniam!**', 'https://static.thenounproject.com/png/24402-200.png')
+}
+
 operation_com_public = {
-  "wins":("Decyzją Sędziego pojedynek wygrywa **{subject}**",[get_town_channel,get_glosowania_channel],[]),
-  "arrest":("Szeryf zamknął **{subject}**", [get_town_channel, get_manitou_notebook], [get_manitou_role]),
+  #"wins":("Decyzją Sędziego pojedynek wygrywa **{subject}**",[get_town_channel],[]),
+  "arrest":("Szeryf zamknął **{subject}**", [get_manitou_notebook], [get_manitou_role]),
   "dziw":("Dziwka zadziwiła {subject}", [get_manitou_notebook], [get_manitou_role]),
   "pasteur":("Pastor sprawdził {subject}",[get_manitou_notebook],[get_manitou_role]),
   "drink":("Upity został {subject}", [get_manitou_notebook], [get_manitou_role]),
