@@ -205,11 +205,13 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji"):
     await self.command_template(ctx, member, "pasteur")
 
   @commands.command(name='wygrywa',aliases=['wygr'])
+  @commands.dm_only()
   async def wins(self, ctx, *, member = None):
     '''/&wygr/Służy do ujawnienia się przez Sędziego, użyte z nazwą gracza powoduje, że wygrywa on pojedynek, użyte samo ujawnia Sędziego powodując utratę zdolności'''
     await self.command_template(ctx, member, "wins")
   
   @commands.command(name='veto',aliases=['łaska'])
+  @commands.dm_only()
   async def veto(self, ctx):
     '''/&łaska/Służy do ujawnienia się przez Burmistrza, użyte w trakcie wieszania ułaskawia, użyte poza ujawnia Burmistrza powodując utratę zdolności'''
     await self.command_template(ctx, None, "peace")
