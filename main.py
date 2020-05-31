@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 import asyncio
 import inspect
+import traceback
 
 import duels_commands
 import hang_commands
@@ -43,6 +44,23 @@ async def on_ready():
 async def help1(ctx):
   """Wzywa bota do pomocy"""
   await ctx.send("nie mogę ci pomóc, jestem botem")
+  await ctx.message.add_reaction('✅')
+
+@bot.command(name='log')
+async def log(ctx):
+  '''ⒹWysyła logi błędów'''
+  try:
+    with open("error.log") as fp:
+      logs = discord.File(fp)
+      await ctx.send(file=logs)
+  except FileNotFoundError:
+    await ctx.send("Aktualnie nie ma logów")
+
+@bot.command(name='clear_logs', aliases=['logcls'])
+@commands.is_owner()
+async def log_clear(ctx):
+  '''ⒹCzyści logi błędów'''
+  os.remove('error.log')
   await ctx.message.add_reaction('✅')
 
 
@@ -138,18 +156,22 @@ async def on_command_error(ctx, error):
     await ctx.send("You have no power here!", delete_after=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
-    mess  = await ctx.send_help(ctx.command)
-    await mess.delete(delay=10)
+    await ctx.send_help(ctx.command)
   elif isinstance(error, ValueError):
     await ctx.send(str(error), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send("Błędny parametr", delete_after=5)
-    mess  = await ctx.send_help(ctx.command)
-    await mess.delete(delay=10)
+    await ctx.send_help(ctx.command)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
     utility.lock = False
     await ctx.send("Gra nie została rozpoczęta", delete_after=5)
-    raise error
+    try:
+      raise error
+    except:
+      with open('error.log', 'a') as logs:
+        traceback.print_exc(file=logs)
+        logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+      raise error
   elif isinstance(error, commands.CheckFailure):
     pass
   elif isinstance(error, commands.PrivateMessageOnly):
@@ -168,7 +190,13 @@ async def on_command_error(ctx, error):
     print(type(error.original))
     await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)
     print(ctx.command, type(error))
-    raise error
+    try:
+      raise error
+    except:
+      with open('error.log', 'a') as logs:
+        traceback.print_exc(file=logs)
+        logs.write(f'\n\n\n\n\n{RULLER}\n\n\n\n')
+      raise error
 
 
 
