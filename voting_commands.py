@@ -10,11 +10,8 @@ class Glosowania(commands.Cog, name="Głosowania"):
   def __init__(self, bot):
     self.bot = bot
   
-  async def cog_check(self, ctx):
-    try:
-      return not globals.current_game.night
-    except:
-      return False
+  async def cog_check(self, ctx):  
+    return not globals.current_game.night
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.CheckFailure):
@@ -123,7 +120,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     else:
       await ctx.send("Nie ma kandydatur na takie głosowanie")
 
-  @commands.command(name='hangif', aliases=['vhif'])
+  @commands.command(name='hangif', aliases=['vhif', 'hiv'])
   @manitou_cmd
   async def czy_wieszamy(self, ctx):
     """Ⓜ/&vhif/Rozpoczyna głosowanie: czy powiesić?"""

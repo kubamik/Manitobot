@@ -18,7 +18,7 @@ class Przeszukania(commands.Cog):
       return False
 
   async def cog_command_error(self, ctx, error):
-    if isinstance(error, commands.CheckFailure):
+    if type(error) is commands.CheckFailure:
       await ctx.send("Tej komendy można używać tylko w dzień i nie w trakcie pojedynku", delete_after=5)
 
   @commands.command(name='zgłaszam')
@@ -95,7 +95,7 @@ class Wieszanie(commands.Cog):
       return False
 
   async def cog_command_error(self, ctx, error):
-    if isinstance(error, commands.CheckFailure):
+    if type(error) is commands.CheckFailure:
       await ctx.send("Tej komendy można używać tylko w dzień", delete_after=5)
 
   @commands.command(name='hangend',aliases=['hnd'])

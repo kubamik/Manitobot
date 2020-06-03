@@ -38,17 +38,8 @@ async def on_ready():
     bot.add_cog(start_commands.Starting(bot))
   except discord.errors.ClientException:
     pass
-
-@bot.group(name='sth', aliases=[], case_insensitive = True)
-async def pomoc(ctx):
-  pass
-
-@pomoc.command(aliases=['m'])
-async def manitou(ctx):
-  await ctx.send("`Manitou help here`")
-@pomoc.command(aliases=['g'])
-async def gracz(ctx):
-  await ctx.send("`Players help here`")
+  await get_member(MY_ID).create_dm()
+  await get_member(MY_ID).dm_channel.send('')
  
 @bot.command(name='pomoc')
 async def help1(ctx):
@@ -58,9 +49,9 @@ async def help1(ctx):
 
 
 @bot.command(name='przeproś')
-async def przeproś(ctx, *, powod = ''):
+async def przeproś(ctx):
 	"""Przepraszam"""
-	await ctx.send("Przepraszam {}".format(powod))
+	await ctx.send("Przepraszam".format(powod))
 
 
 @bot.command(name='przegrywam')
@@ -190,6 +181,8 @@ async def on_command_error(ctx, error):
   elif isinstance(error, commands.CheckFailure):
     pass
   elif isinstance(error, commands.PrivateMessageOnly):
+    pass
+  elif isinstance(error, commands.NoPrivateMessage):
     pass
   elif isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd):
     utility.lock = False

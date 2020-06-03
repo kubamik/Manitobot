@@ -8,11 +8,11 @@ class Help(commands.DefaultHelpCommand):
 
   def get_ending_note(self):
     return '''Informacje o konkretnej komendzie:\t&help <komenda>
-    Informacje o konkretnej kategorii:\t&help <kategoria>
-    Skrócona pomoc dla Manitou:\t\t   &mhelp
-    Skrócona pomoc dla graczy'''
+Informacje o konkretnej kategorii:\t&help <kategoria>
+Skrócona pomoc dla Manitou:\t\t   &mhelp
+Skrócona pomoc dla graczy'''
 
-bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True)
+bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False)
 
 current_game = None
 
@@ -63,7 +63,7 @@ async def honk(ctx, member=None):
 
 @bot.command(name='dziobak', hidden=True)
 async def honk(ctx):
-  await ctx.send("dubidubiduba")
+  await ctx.send("&dubidubiduba")
 
 @bot.command(name='_DZIOBAK', hidden=True)
 async def honk(ctx):

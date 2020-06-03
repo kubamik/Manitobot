@@ -166,15 +166,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await ctx.send("Gra nie została rozpoczęta")
       return
     for member in get_dead_role().members:
-      nickname = get_nickname(member.id)
-      globals.current_game.role_map[globals.current_game.player_map[member].role].revealed = True
-      if nickname[-1] != ')':
-        try:
-          await get_town_channel().send("Rola **{}** to **{}**".format(nickname.replace('+',' '),globals.current_game.player_map[member].role.replace('_',' ')))
-          await member.edit(nick = nickname + "({})".format(globals.current_game.player_map[member].role.replace('_',' ')))
-        except discord.errors.Forbidden:
-          await member.send("Zmień swój nick na {}, bo ja nie mam uprawnień.".format(nickname+"({})".format(globals.current_game.player_map[member].role.replace('_',' '))))
-          await ctx.send("Nie mam uprawnień aby zmienić nick użytkownika {}".format(nickname))
+      if not globals.current_game.player_map[member].role_class.revealed:
+        await globals.current_game.player_map[member].role_class.reveal()
     await ctx.message.add_reaction('✅')
 
 
@@ -340,7 +333,6 @@ Pozostali:{}""".format(len(alive_roles),team))
     except (discord.Forbidden, discord.HTTPException):
       pass
     for member in get_dead_role().members:
-      nickname = get_nickname(member.id)
       if not globals.current_game.player_map[member].role_class.revealed:
         await globals.current_game.player_map[member].role_class.reveal()
     await ctx.message.add_reaction('✅')

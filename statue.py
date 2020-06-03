@@ -67,9 +67,9 @@ class Statue:
 
   def day_search(self, member):
     if self.holder == member:
-      raise GameEnd("Znaleziono posążek u {}".format(member.display_name), "Miasto")
+      raise GameEnd("**{}** ma posążek".format(member.display_name), "Miasto")
     else:
-      return "U **{}** posążka nie znaleziono".format(member.display_name)
+      return "**{}** nie ma posążka".format(member.display_name)
 
   async def search(self, author, role, member, info = True):
     if self.holder == member:

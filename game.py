@@ -114,11 +114,11 @@ class Game(Vote):
       raise utility.GameEnd("{} posiada posążek o poranku".format(role.replace("_"," ")),"Miasto")
 
   def evening_bandits_win(self):
-    if self.day == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == "Bandyci":
+    if self.day == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == "Bandyci" and self.statue.holder:
       raise utility.GameEnd("Bandyci odpływają z posążkiem","Bandyci")
 
   def morning_bandits_win(self):
-    if self.statue.faction_holder == "Bandyci" and (self.day > self.bandit_night or (self.bandit_morning and self.day == self.bandit_night)):
+    if self.statue.faction_holder == "Bandyci" and self.statue.holder and (self.day > self.bandit_night or (self.bandit_morning and self.day == self.bandit_night)):
       raise utility.GameEnd("Bandyci odpływają z posążkiem", "Bandyci")
 
     

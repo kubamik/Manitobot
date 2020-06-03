@@ -7,5 +7,10 @@ spierdalaj - zamiast odmawiam
 liczba - riotów dla manitou, cofnięcie buntu (pax)
 delety
 
+usunięcie końca wiad o głosowaniu
+
 komendy w krótkim helpie - mhelp:
 day, night, kill, vend, vsch, vdl, abend, pend, dnd, br, reported (rpt)
+
+
+Jeden kanał do komunikacji w send_to_manitou, udoskonalenie pokazywania następnej postaci, ID wiadomości przy śledzeniu emoji
