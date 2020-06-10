@@ -31,7 +31,6 @@ async def start_game(ctx, *lista):
   
   
   globals.current_game = Game()
-  await globals.current_game.make_webhooks()
 
   lista_shuffled = list(lista)
   shuffle(lista_shuffled)
@@ -46,8 +45,9 @@ async def start_game(ctx, *lista):
       await member.dm_channel.send(
 			    """{}\nWitaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. Jako gracz masz dostęp m.in. do następujących komend:
 `&help` pokazuje wszystkie dostępne komendy
+`help g` pokazuje komendy przydatne dla graczy
 `&postać <nazwa postaci>` pokazuje opis danej postaci
-`&żywi` przedstawia postaci, które biorą udział w grze
+`&żywi` przedstawia żywe postaci, które biorą udział w grze
 {}
 Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, role)))
     except discord.errors.Forbidden:
@@ -61,12 +61,12 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
     c += "{};\t{}\n".format(get_nickname(member.id),globals.current_game.player_map[member].role)
     k = lambda m: get_nickname(m.id)
     roles.write("{}\t{}\n".format(get_nickname(member.id),globals.current_game.player_map[member].role))
-    #gracz i rola muszą byc oddzielone przecinkiem, wtedy przy wklejaniu w excela się oddzielają komórki
   try:
     roles.close()
     await send_to_manitou(c)
+    time = datetime.datetime.now()
     with open("Postacie.txt",'rb') as fp:
-      await send_file_to_manitou(discord.File(fp,'Postacie {}.txt'.format(datetime.datetime.now() + datetime.timedelta(hours=2))))
+      await send_to_manitou(file=discord.File(fp,'Postacie {}.txt'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))))
     os.remove("Postacie.txt")
   except discord.errors.Forbidden:
     await ctx.send(
@@ -74,6 +74,9 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
 		)
     globals.current_game = None
     return
+  for member in gracze:
+    if member in get_newcommer_role().members:
+      await member.remove_roles(get_newcommer_role())
   await bot.change_presence(activity = discord.Game("Ktulu"))
   for channel in get_guild().text_channels:
     if channel.category_id == FRAKCJE_CATEGORY_ID:

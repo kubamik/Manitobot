@@ -129,6 +129,7 @@ class Duel:
       self.duels_queue.append(member)
       await get_town_channel().send(c)
       await self.if_next(True)
+    
 
 
   def remove_duel(self):
@@ -177,13 +178,14 @@ class Duel:
     self.participants = (agresor, victim)
     #print(self.participants)
     self.duel = True
-    c = "Rozpoczynamy pojedynek:\n :gun:**{}** vs. :shield:**{}**".format(agresor.display_name, victim.display_name)
+    c = "Rozpoczynamy pojedynek:\n<:legacy_gun:717099650087387158> **{}** vs. :shield:**{}**".format(agresor.display_name, victim.display_name)
     await get_town_channel().send(c)
 
 
   async def interrupt(self):
     if not self.duel:
-      raise InvalidRequest("Nie trwa pojedynek")
+      self.remove_dare(self.duels_order[0])
+      return "Manitou usunął wyzwanie"
     winner_role = get_duel_winner_role()
     loser_role = get_duel_loser_role()
     self.duel = False

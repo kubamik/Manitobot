@@ -1,10 +1,7 @@
 Specjalne wiadomośc bota,
-Informacja o głosowaniu na kanale miasto
 Oddzielenie głosowań
 Naprawa głosowań
-Usunięcie głosowań (czatu)
-spierdalaj - zamiast odmawiam
-liczba - riotów dla manitou, cofnięcie buntu (pax)
+liczba riotów dla manitou, cofnięcie buntu (pax)
 delety
 
 usunięcie końca wiad o głosowaniu
@@ -13,4 +10,6 @@ komendy w krótkim helpie - mhelp:
 day, night, kill, vend, vsch, vdl, abend, pend, dnd, br, reported (rpt)
 
 
-Jeden kanał do komunikacji w send_to_manitou, udoskonalenie pokazywania następnej postaci, ID wiadomości przy śledzeniu emoji
+Jeden kanał do komunikacji w send_to_manitou, udoskonalenie pokazywania następnej postaci, ID wiadomości przy śledzeniu emoji, kończenie za pomocą emojii, dodawanie gram tylko na głosowym, masowwe usuwanie wiadomości, reagowanie na edytowane wiadomości, naprawa {night_send(wewnątrz i zewnątrz)}, embedowe głosowania
+
+Lock day command, wieszanie randomów, głosowania przez cały czas

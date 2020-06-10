@@ -14,10 +14,6 @@ class Statue:
   def follow(self, author, member):
     self.followed[author] = member
 
-  def luke_win(self):
-    if self.has():
-      raise GameEnd("Lucky Luke odjeżdża z posążkiem","Lucky_Luke")
-
   def unfollow(self, author):
     try:
       del self.followed[author]
@@ -54,6 +50,11 @@ class Statue:
       self.holder = member
     else:
       globals.current_game.nights[-1].output += f
+
+  def manitou_plant(self, member):
+    playing(member)
+    self.holder = member
+    self.planted = True
   
   def give(self, member):
     playing(member)
@@ -129,7 +130,6 @@ class Statue:
     if not f:
       c = "{} przejmuje posążek".format(role)
       await send_to_manitou(c)
-      await get_manitou_notebook().send(c)
       self.holder = member
       self.planted = False
       faction = send_faction(role)[2:-2]

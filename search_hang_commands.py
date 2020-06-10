@@ -110,3 +110,14 @@ class Wieszanie(commands.Cog):
       await ctx.message.add_reaction('✅')
     except InvalidRequest:
       pass
+
+  @commands.command(name='hang_random', aliases=['hrnd'])
+  @manitou_cmd
+  async def handrand(self, ctx):
+    ''''Ⓜ/&hrnd/Wyłania drogą losową wieszaną osobę'''
+    if globals.current_game.night:
+      await ctx.send("Trwa noc!")
+      return
+    c = await globals.current_game.days[-1].hang_random()
+    if c:
+      await ctx.send(c)

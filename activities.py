@@ -5,7 +5,7 @@ import postacie
 from utility import *
 import globals
 import permissions
-from night_comunicates import night_send, operation_send, webhook_com
+from night_comunicates import webhook_com, operation_com_public, meantime_operation_com 
 from postacie import get_faction, send_faction, give_faction
 
 class Activity:
@@ -241,6 +241,10 @@ class Activity:
       await member.edit(nick=nickname + "({})".format(self.name.replace('_',' ')))
     except discord.errors.Forbidden:
       await member.send("Zmień swój nick na {}, bo ja nie mam uprawnień.".format(nickname+"({})".format(self.name.replace('_',' '))))
+    except discord.HTTPException:
+      role = list(self.name.split('_'))
+      role[0] = role[0][:3] + '.'
+      await member.edit(nick=nickname +'({})'.format(" ".join(role)))
 
   def if_duel(self):
     if not self.member is None:
@@ -262,15 +266,24 @@ class Activity:
       await self.meantime_send()
 
   async def meantime_send(self):
-    com = webhook_com[self.operation]
+    display_name = None if self.member is None else self.member.member.display_name
     try:
-      wbhk = globals.current_game.webhooks[get_town_channel()]
-      if self.member is None:
-        await wbhk.send(com[0], username=self.name.replace('_', ' '), avatar_url = com[1])
+      if not meantime_operation_com[self.operation][1]:
+        raise KeyboardInterrupt
+      com = webhook_com[self.operation]
+      for webhk in await get_town_channel().webhooks():
+        if webhk.name == "Manitobot {}".format(self.name.replace('_', ' ')):
+          wbhk = webhk
+          break
       else:
-        await wbhk.send(com[0].format(member=self.member.member.display_name), username=self.name.replace('_', ' '), avatar_url = com[1])
-    except KeyError:
-      pass
+        wbhk = await get_town_channel().create_webhook(name="Manitobot {}".format(self.name.replace('_', ' ')))
+      await wbhk.send(com[0].format(role=self.name.replace('_', ' '), member=display_name), username=self.name.replace('_', ' '), avatar_url = com[1])
+    except KeyboardInterrupt:
+      com = meantime_operation_com[self.operation]
+      if com[1]:
+        await get_town_channel().send(com[0].format(role=self.name.replace('_', ' '), member=display_name))
+      if com[2]:
+        await send_to_manitou(com[0].format(role=self.name.replace('_', ' '), member=display_name))
 
   def sleep(self):
     self.member.sleeped = True
@@ -397,13 +410,12 @@ class Activity:
   async def mirror_send(self):
     c = "{} zlustrowało {}".format(self.name, self.member.member.display_name)
     await send_to_manitou(c)
-    await get_manitou_notebook().send(c)
 
   def unfollow(self):
     globals.current_game.statue.unfollow(self.player.member)
 
   def luke_win(self):
-    if self.f_has():
+    if self.if_has():
       raise GameEnd("Lucky Luke odjeżdża z posążkiem","Lucky_Luke")
   
   async def plant(self):

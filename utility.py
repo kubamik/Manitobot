@@ -54,6 +54,9 @@ def get_searched_role():
 def get_hanged_role():
   return get_guild().get_role(HANGED_ID)
 
+def get_newcommer_role():
+  return get_guild().get_role(NEWCOMMER_ID)
+
 def get_glosowania_channel():
   guild=get_guild()
   return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
@@ -73,6 +76,8 @@ def get_voice_channel():
   guild = get_guild()
   return discord.utils.get(guild.voice_channels, id=VOICE_CHANNEL_ID)
 
+def on_voice(ctx):
+  return get_member(ctx.author.id) in get_voice_channel().members
 
 def get_faction_channel(faction):
   guild = bot.get_guild(GUILD_ID)
@@ -116,6 +121,20 @@ def help_format(command):
   except AttributeError:
     return ''
 
+def playerhelp():
+  comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
+  mess = ""
+  for c in comm:
+    mess += help_format(c)
+  return mess
+
+def manitouhelp():
+  comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch', 'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night']
+  mess = ""
+  for c in comm:
+    mess += help_format(c)
+  return mess
+
 
 def transform_nickname(nick):
   if nick.startswith('+'):
@@ -131,17 +150,12 @@ def nickname_fit(nick):
       return player
   return None
 
-async def send_to_manitou(c):
-  manitou=list(get_manitou_role().members)
-  for member in manitou:
-    await member.create_dm()
-    await member.dm_channel.send(c)
-
-async def send_file_to_manitou(c: discord.File):
-  manitou=list(get_manitou_role().members)
-  for member in manitou:
-    await member.create_dm()
-    await member.dm_channel.send(file=c)
+async def send_to_manitou(c=None, embed: discord.Embed = None, file: discord.File = None):
+  if CONFIG['DM_Manitou']:
+    for member in get_manitou_role().members:
+      await member.send(c, embed=embed, file=file)
+  else:
+    await get_manitou_notebook().send(c, embed=embed, file=file)
 
 async def clear_nickname(member, ctx):
   old_nickname = get_nickname(member.id)
@@ -177,15 +191,15 @@ def playing(gracz = -1, *, author = -1):
   if author != -1 and author not in get_player_role().members:
     raise InvalidRequest("Nie grasz")
 
-class InvalidRequest(Exception):
+class InvalidRequest(commands.CommandError):
   def __init__(self, reason = None):
     self.reason = reason
 
-class NoEffect(Exception):
+class NoEffect(commands.CommandError):
   def __init__(self, reason = "No reason"):
     self.reason = reason
 
-class GameEnd(Exception):
+class GameEnd(commands.CommandError):
   def __init__(self, reason, winner):
     self.winner = winner
     self.reason = reason

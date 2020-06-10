@@ -50,6 +50,14 @@ class Hang:
         c += "**{}**\n".format(member.display_name)
     await get_town_channel().send(c)
 
+  async def hang_random(self):
+    if len(get_hanged_role().members) > 0:
+      return f"Wieszana osoba została już wytypowana i jest to: **{get_hanged_role().members[0].display_name}**"
+    if len(self.to_hang) == 0:
+      return "Musisz najpierw przeprowadzić głosowanie"
+    member = random.choice(self.to_hang)
+    await member.add_roles(get_hanged_role())
+    await get_town_channel().send(f"Powieszony(-a) ma zostać **{member.display_name}**")
 
   async def hang_finalize(self, ctx):
     if not self.hang_final:
@@ -65,10 +73,10 @@ class Hang:
           raise InvalidRequest
     except IndexError:
       if not self.change:
-        self.hanged = random.choice(self.candidates)
+        await ctx.send("Brak osób do powieszenia. Przeprowadź ponowne głosowanie(`&revote`) lub wytypuj osobę drogą losową(`&hrnd`).")
+        return
       else:
-        c = "Nikt nie zostaje powieszony"
-        await get_town_channel().send(c)
+        await get_town_channel().send("Nikt nie zostaje powieszony")
         return
     c = "Powieszony(-a) zostaje **{}**".format(self.hanged.display_name)
     role = globals.current_game.player_map[self.hanged].role_class

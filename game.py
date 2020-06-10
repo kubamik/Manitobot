@@ -29,7 +29,6 @@ class Game(Vote):
     self.bandit_morning = True
     self.rioters = set()
     self.new_night()
-    self.webhooks = {}
     self.stats = {
       "Miasto":0,
       "Bandyci":0,
@@ -60,12 +59,6 @@ class Game(Vote):
     self.night = True
     self.evening_bandits_win()
 
-
-  async def make_webhooks(self):
-    try:
-      self.webhooks[get_town_channel()] = await get_town_channel().create_webhook(name="Manitobot")
-    except (discord.Forbidden, discord.HTTPException):
-      pass
 
   def make_factions(self, roles):
     for role in roles:

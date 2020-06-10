@@ -53,7 +53,7 @@ class Faction(Activity):
         if self.leader is None:
           self.leader = role.player
           try:
-            await self.channel.set_permissions(role.player.member, read_messages=True, send_messages=True)
+            await self.channel.set_permissions(role.player.member, read_messages=True, send_messages=True, add_reactions=True)
           except discord.errors.Forbidden:
             pass
         await role.player.member.send("Rozpoczynamy rundę twojej frakcji. Wejdź na <#{}>".format(self.channel.id))
@@ -95,7 +95,7 @@ class Faction(Activity):
           await self.channel.set_permissions(role.player.member, overwrite=None)
         except discord.errors.Forbidden:
           pass
-      raise NoEffect("{} idą spać".format(self.name))
+      raise InvalidRequest("{} idą spać".format(self.name))
     self.act_number += 1
     try:
       statue = self.actions[self.act_number - 1][1]
@@ -153,7 +153,7 @@ class Faction(Activity):
     await send_to_manitou(c)
     await get_manitou_notebook().send(c)
     try:
-      a = self.actions[self.act_number][1]
+      self.actions[self.act_number][1]
       await globals.current_game.nights[-1].night_next()
     except IndexError:
       pass

@@ -10,7 +10,7 @@ class Help(commands.DefaultHelpCommand):
     return '''Informacje o konkretnej komendzie:\t&help <komenda>
 Informacje o konkretnej kategorii:\t&help <kategoria>
 Skrócona pomoc dla Manitou:\t\t   &mhelp
-Skrócona pomoc dla graczy'''
+Skrócona pomoc dla graczy\t\t\t &help g'''
 
 bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False)
 

@@ -1,6 +1,6 @@
 factions_roles = {
   "Bandyci":["Herszt","Mściciel","Złodziej","Zły_Rew","Szantażysta","Szuler"],
-  "Indianie":["Wódz","Szaman","Szamanka","Samotny_Kojot","Płonący_Szał","Lornecie_Oko","Cicha_Stopa"],
+  "Indianie":["Wódz","Szaman","Szamanka","Samotny_Kojot", "Wojownik", "Płonący_Szał","Lornecie_Oko","Cicha_Stopa"],
   "Ufoki":["Wielki_Ufol","Zielona_Macka","Detektor","Pożeracz_Umysłów","Purpurowa_Przyssawka"],
   "Inkwizycja":["Kardynał","Biskup","Misjonarz","Spowiednik","Wikary","Anioł","Ministrant"],
   "Bogowie":["Kaszabara","Chorągiew","Bezimienny"],

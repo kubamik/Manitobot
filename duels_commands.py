@@ -40,7 +40,7 @@ class Pojedynki(commands.Cog):
       await ctx.send(err.reason)
 
 
-  @commands.command(name='odrzucam', aliases=['od', 'spierdalaj'])
+  @commands.command(name='odrzucam', aliases=['spierdalaj'])
   async def decline(self,ctx):
     '''/&od/Służy do odrzucenia pojedynku'''
     try:
@@ -70,7 +70,7 @@ class Pojedynki(commands.Cog):
   @commands.command(name='break', aliases=['br'])
   @manitou_cmd
   async def interrupt(self,ctx):
-    '''Ⓜ/&br/Przerywa trwający pojedynek'''
+    '''Ⓜ/&br/Przerywa trwający pojedynek lub usuwa pierwsze wyzwanie z listy'''
     try:
       c = await globals.current_game.days[-1].interrupt()
       await get_town_channel().send(c)

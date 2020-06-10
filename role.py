@@ -102,7 +102,7 @@ class Role(Activity):
     try:
       globals.current_game.days[-1].remove_member(gracz)
       globals.current_game.days[-1].search_remove_member(gracz)
-      if self in globals.current_game.days[-1].duelers:
+      if self in globals.current_game.days[-1].duelers and globals.current_game.duel:
         await globals.current_game.days[-1].interrupt()
         await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
     except InvalidRequest:

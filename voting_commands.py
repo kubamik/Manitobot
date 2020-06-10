@@ -10,8 +10,10 @@ class Glosowania(commands.Cog, name="Głosowania"):
   def __init__(self, bot):
     self.bot = bot
   
-  async def cog_check(self, ctx):  
-    return not globals.current_game.night
+  def not_night():  
+    def predicate(ctx):
+      return not globals.current_game.night
+    return commands.check(predicate)
 
   async def cog_command_error(self, ctx, error):
     if isinstance(error, commands.CheckFailure):
@@ -35,6 +37,8 @@ class Glosowania(commands.Cog, name="Głosowania"):
       -tytuł głosowania.
       -wymagana liczba głosów.
       -nazwy kandydatów"""
+    if not '\n' in title:
+      title += '\nWymagana liczba głosów: {}'
     options_parsed = []
     for option in options:
       options_parsed.append(option.split(','))
@@ -48,7 +52,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     if len(kandydaci)<1:
       await ctx.send("Za mało kandydatur. Otrzymano {}, oczekiwano co najmniej {}".format(len(kandydaci),1))
       return
-    await self.glosowanie_custom(ctx, "**Pojedynek\nGłosujecie na osobę, która chcecie aby wygrała.**", "1", *kandydaci, "3,Wstrzymuję_Się")
+    await self.glosowanie_custom(ctx, "Pojedynek\nMasz {} głos na osobę, która ma **wygrać** pojedynek", "1", *kandydaci, "3,Wstrzymuję_Się")
 
   @commands.command(name='duel_vote', aliases=['vdl'])
   @manitou_cmd
@@ -60,7 +64,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     agresor = globals.current_game.days[-1].participants[0]
     victim = globals.current_game.days[-1].participants[1]
     options_parsed = [["1", get_nickname(agresor.id)], ["2",get_nickname(victim.id)], ["3", "Wstrzymuję_Się"]]
-    await votings.glosowanie(ctx, "**Pojedynek\nGłosujecie na osobę, która chcecie aby wygrała.**", 1, options_parsed, (agresor, victim), "duel")
+    await votings.glosowanie(ctx, "Pojedynek\nMasz {} głos na osobę, która ma **wygrać** pojedynek", 1, options_parsed, (agresor, victim), "duel")
 
   @commands.command(name='search')
   @manitou_cmd
@@ -71,17 +75,15 @@ class Glosowania(commands.Cog, name="Głosowania"):
     if len(kandydaci)<globals.current_game.searches:
       await ctx.send("Za mało kandydatur. Otrzymano {}, oczekiwano co najmniej {}".format(len(kandydaci),globals.current_game.searches))
       return
-    await self.glosowanie_custom(ctx, "**Przeszukania\nGłosujecie na osoby, które mają być przeszukane**", globals.current_game.searches, *kandydaci)
+    await self.glosowanie_custom(ctx, "Przeszukania\nMasz {} głosy na osoby, które mają **zostać przeszukane**", globals.current_game.searches, *kandydaci)
 
 
   @commands.command(name='search_vote', aliases=['vsch'])
   @manitou_cmd
+  @not_night()
   async def search_vote(self, ctx):
     '''Ⓜ/&vsch/Rozpoczyna głosowanie kogo przeszukać na podstawie zgłoszonych kandydatur'''
     globals.current_game.days[-1].to_search = []
-    if globals.current_game.night:
-      await ctx.send("Nie można rozpocząć głosowania w nocy")
-      return
     if globals.current_game.days[-1].hang_time:
       await ctx.send("Przeszukania już były")
       return
@@ -95,16 +97,19 @@ class Glosowania(commands.Cog, name="Głosowania"):
       await member.remove_roles(get_searched_role())
     globals.current_game.days[-1].search = True
     kandydaci = list(globals.current_game.days[-1].searched.keys())
+    if len(get_player_role().members) < globals.current_game.searches:
+      globals.current_game.searches = len(get_player_role().members)
     while len(kandydaci) < globals.current_game.searches:
       kandydaci.append(random.choice(list(set(get_player_role().members) - set(kandydaci))))
     if len(kandydaci) == globals.current_game.searches:
       await globals.current_game.days[-1].search_end(kandydaci)
       return
     options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-    await votings.glosowanie(ctx, "**Przeszukania\nGłosujecie na osoby, które mają być przeszukane**", globals.current_game.searches, options_parsed, vtype="search")
+    await votings.glosowanie(ctx, "Przeszukania\nMasz {} głosy na osoby, które mają **zostać przeszukane**", globals.current_game.searches, options_parsed, vtype="search")
 
   @commands.command(name='revote', aliases=['vre'])
   @manitou_cmd
+  @not_night()
   async def revote(self, ctx):
     '''Ⓜ/&vre/Uruchamia głosowanie uzupełniające'''
     cand_h_revote = globals.current_game.days[-1].to_hang
@@ -112,28 +117,29 @@ class Glosowania(commands.Cog, name="Głosowania"):
     if len(cand_h_revote) > 0:
       kandydaci = cand_h_revote
       options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-      await votings.glosowanie(ctx, "**Głosowanie uzupełniające na wieszanie\nGłosujecie na osobę, która ma zginąć**", 1, options_parsed, vtype="hang")
+      await votings.glosowanie(ctx, "Wieszanie - uzupełniające\nPrzeszukania\nMasz {} głos na osobę, która ma zginąć", 1, options_parsed, vtype="hang")
     elif len(cand_s_revote) > 0:
       kandydaci = cand_s_revote
       options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-      await votings.glosowanie(ctx, "**Głosowanie uzupełniające na przeszukanie\nGłosujecie na osoby, które mają być przeszukane**", globals.current_game.searches - len(globals.current_game.days[-1].to_search), options_parsed, vtype="search")
+      await votings.glosowanie(ctx, "Przeszukania - uzupełniające\nMasz {} głos(y) na osobę(-y), która(-e) ma(ją) **zostać przeszukana(-e)**", globals.current_game.searches - len(globals.current_game.days[-1].to_search), options_parsed, vtype="search")
     else:
       await ctx.send("Nie ma kandydatur na takie głosowanie")
 
   @commands.command(name='hangif', aliases=['vhif', 'hiv'])
   @manitou_cmd
+  @not_night()
   async def czy_wieszamy(self, ctx):
     """Ⓜ/&vhif/Rozpoczyna głosowanie: czy powiesić?"""
     if not globals.current_game.days[-1].hang_time:
       await ctx.send("Najpierw przeszukania. Jeżeli chcesz wymusić głosowanie użyj `&fhangif`")
       return
-    await votings.glosowanie(ctx, "**Czy wieszamy?**", 1, [["t", "Tak"], ["n", "Nie"]], vtype="hangif")
+    await votings.glosowanie(ctx, "Czy wieszamy?\nMasz {} głos na wybraną opcję.", 1, [["t", "Tak"], ["n", "Nie"]], vtype="hangif")
 
   @commands.command(name='force_hangif', aliases=['fhangif'])
   @manitou_cmd
   async def hanging(self, ctx):
     """Ⓜ/&fhangif/Rozpoczyna głosowanie: czy powiesić?"""
-    await votings.glosowanie(ctx, "**Czy wieszamy?**", 1, [["t", "Tak"], ["n", "Nie"]])
+    await votings.glosowanie(ctx, "Czy wieszamy?\nMasz {} głos na wybraną opcję.", 1, [["t", "Tak"], ["n", "Nie"]])
 
   @commands.command(name='hang')
   @manitou_cmd
@@ -147,6 +153,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
 
   @commands.command(name='hang_vote',aliases=['vhg'])
   @manitou_cmd
+  @not_night()
   async def hang_vote(self,ctx):
     '''Ⓜ/&vhg/Rozpoczyna głosowanie kogo powiesić na podstawie przeszukiwanych osób'''
     if not globals.current_game.days[-1].hang_time or globals.current_game.days[-1].hang is None:

@@ -1,20 +1,27 @@
 from discord.ext import commands
 import discord
+import asyncio
 
 import globals
 from utility import send_to_manitou, czy_manitou, czy_gram, get_nickname, get_town_channel, get_member, InvalidRequest, manitou_cmd
-import discord
 import utility
 
 
 
-class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command_attrs=dict(enabled=True, hidden=True)):
+class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command_attrs=dict(enabled=False, hidden=True)):
 
   def __init__(self, bot):
-        self.bot = bot
+    self.bot = bot
+    self.lock = False
   
   async def cog_check(self, ctx):
-    return not utility.lock
+    return not self.lock
+
+  async def cog_before_invoke(self, ctx):
+    self.lock = True
+  
+  async def cog_after_invoke(self, ctx):
+    self.lock = False
 
   def proper_channel():
     async def predicate(ctx):
@@ -26,11 +33,8 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
       return True
     return commands.check(predicate)
 
-
-
   async def command_template(self, ctx, member, operation):
     author = get_member(ctx.author.id)
-    utility.lock = True
     try:
       faction = globals.current_game.nights[-1].active_faction
       if faction != None and faction == globals.current_game.nights[-1].active_role:
@@ -40,9 +44,9 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
     except InvalidRequest as err:
       await ctx.send(err.reason)
     except KeyError as err:
-      await ctx.send("Nie grasz w tej grze")
-      raise err
-    utility.lock = False
+      await ctx.message.delete(delay=5)
+      await ctx.send("Nie grasz w tej grze", delete_after=5)
+      raise err#to_delete
 
   @commands.command(name='śledź')
   @commands.dm_only()

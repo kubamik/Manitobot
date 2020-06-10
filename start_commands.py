@@ -33,6 +33,8 @@ class Starting(commands.Cog, name='Początkowe'):
       bot.add_cog(search_hang_commands.Wieszanie(bot))
     except discord.errors.ClientException:
       pass
+    bot.get_command('g').help = playerhelp()
+    bot.get_command('m').help = manitouhelp()
     p = discord.Permissions().all()
     p.administrator = False
     try:

@@ -39,30 +39,31 @@ night_action_com_public = {
 "Dziwka":("Dziwka zadziwiła {}",[],[get_manitou_role])
 }
 
-night_action_com_private = {
-  "Szeryf":"Zostałeś zamknięty. Nie obudzisz się więcej tej nocy.",
-  "Opój":"Zostałeś upity. Nie obudzisz się więcej tej nocy.",
-  "Pijany_Sędzia":"Zostałeś upity. Nie obudzisz się więcej tej nocy.",
-  "Dziwka":"Zostałeś zadziwiony przez {}"
-}
 
 operation_com_private = {
   "arrest":"Zostałeś zamknięty. Nie obudzisz się więcej tej nocy.",
   "drink":"Zostałeś upity. Nie obudzisz się więcej tej nocy.",
-  "dziw":"Zostałeś zadziwiony przez **{author}**",
+  "dziw":"**{author}** właśnie Cię zadziwił(a)",
   "cheat":"Zostałeś ograny przez Szulera, nie obudzisz się więcej tej nocy"
 }
 
 webhook_com = {
   'wins':("Decyzją jednoosobowej ławy przysięgłych pojedynek wygrywa **{member}**", 'http://www.myiconfinder.com/uploads/iconsets/256-256-e9909996c50fe344c944c09c430b8346-judge.png'),
   'arrest':("Na mocy nadanej mi przez Manitou władzy oświadczam:\n**{member}** zostaje zamknięty(-a) do wyjaśnienia", 'https://www.shareicon.net/data/512x512/2016/04/10/747358_people_512x512.png'),
-  'peace':('**Uniewinniam!**', 'https://static.thenounproject.com/png/24402-200.png')
+  'peace':('Jako wybrany w demokratycznych (i wcale nie sfałszowanych) wyborach {role} **Bum Bum City** __uniewinniam__ wieszaną osobę!', 'https://media.discordapp.net/attachments/691394357571485696/720236813901365308/burmistrz.png?width=671&height=671')
+}
+
+#(text, send_town, send_manitou)
+meantime_operation_com = {
+  "arest":("{role} zamknął {subject}", False, True),
+  "wins":("{role} zadecydował, że pojedynek wygrywa **{subject}**", True, False),
+  "peace":("{role} ułaskawił wieszaną osobę", True, False)
 }
 
 operation_com_public = {
   #"wins":("Decyzją Sędziego pojedynek wygrywa **{subject}**",[get_town_channel],[]),
-  "arrest":("Szeryf zamknął **{subject}**", [get_manitou_notebook], [get_manitou_role]),
-  "dziw":("Dziwka zadziwiła {subject}", [get_manitou_notebook], [get_manitou_role]),
+  "arrest":("{role} zamknął **{subject}**", [get_manitou_notebook], [get_manitou_role]),
+  "dziw":("{role} zadziwiła **{subject}**", [get_manitou_notebook], [get_manitou_role]),
   "pasteur":("Pastor sprawdził {subject}",[get_manitou_notebook],[get_manitou_role]),
   "drink":("Upity został {subject}", [get_manitou_notebook], [get_manitou_role]),
   "refuse":("{role} odmówił skorzystania ze swojej zdolności", [get_manitou_notebook], [get_manitou_role]),

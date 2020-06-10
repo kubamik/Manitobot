@@ -1,6 +1,6 @@
 import os
 import discord
-import datetime
+import datetime as dt
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 import asyncio
@@ -19,39 +19,35 @@ import search_hang_commands
 from keep_alive import keep_alive
 from utility import *
 import utility
-import settings
 from settings import *
 from globals import bot
 import globals
 from f_database import factions_roles
-
-PRZEGRALEM_COOLDOWN = datetime.timedelta(minutes=30)
-ostatnio_przegralem = datetime.datetime.now() - PRZEGRALEM_COOLDOWN
+from manitou_commands import manitouhelp
 
 
 @bot.event
 async def on_ready():
   print("Hello world!")
   try:
-    bot.add_cog(player_commands.DlaGraczy(bot))
     bot.add_cog(manitou_commands.DlaManitou(bot))
     bot.add_cog(start_commands.Starting(bot))
-  except discord.errors.ClientException:
+    bot.add_cog(player_commands.DlaGraczy(bot))
+    bot.get_command('g').help = playerhelp()
+    bot.get_command('m').help = manitouhelp()
+  except (discord.errors.ClientException, AttributeError):
     pass
-  await get_member(MY_ID).create_dm()
-  await get_member(MY_ID).dm_channel.send('')
  
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
-  await ctx.send("nie mogę ci pomóc, jestem botem")
+  m = await ctx.send("Nie mogę ci pomóc, jestem botem")
   await ctx.message.add_reaction('✅')
-
 
 @bot.command(name='przeproś')
 async def przeproś(ctx):
 	"""Przepraszam"""
-	await ctx.send("Przepraszam".format(powod))
+	await ctx.send("Przepraszam")
 
 
 @bot.command(name='przegrywam')
@@ -77,33 +73,29 @@ async def not_lose(ctx):
 
 
 @bot.command(name='przegrałem')
+@commands.cooldown(rate=1, per=30*60)
 async def przegrałeś(ctx):
-	"""Przypomina przegrywom o grze."""
-	global ostatnio_przegralem
-	delta = datetime.datetime.now() - ostatnio_przegralem
-	ostatnio_przegralem = datetime.datetime.now()
-	if PRZEGRALEM_COOLDOWN > delta:
-		await ctx.send("Mam okres ochronny")
-		return
-	guild = get_guild()
-	gracz = discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID)
-	gracze = list(gracz.members)
+	loser = get_guild().get_role(PRZEGRALEM_ROLE_ID)
 	await ctx.send("Przegrałem!")
-	for i in gracze:
+	for i in loser.members:
 		try:
-			await i.create_dm()
-			await i.dm_channel.send("Przegrałem!")
+			await i.send("Przegrałem!")
 		except:
-			await ctx.send("Nie można wysłać wiadomości do {}".format(
-			    get_nickname(i.id)))
+			await ctx.send("Nie można wysłać wiadomości do {}".format(get_nickname(i.id)))
 
 '''@bot.listen('on_message')
 async def mess(m):
   print(m.content)'''
 
+@bot.listen('on_message_edit')
+async def message_change(before, after):
+  reaction = discord.utils.get(before.reactions, emoji='✅')
+  if before.content != after.content and (reaction is None or not reaction.me):
+    ctx = await bot.get_context(after)
+    await bot.invoke(ctx)
+
 
 @bot.listen('on_message')
-@commands.dm_only()
 async def my_message(m):
 	try:
 		if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
@@ -133,7 +125,8 @@ async def log(ctx):
   '''ⒹWysyła logi błędów'''
   try:
     with open("error.log") as fp:
-      logs = discord.File(fp)
+      time = dt.datetime.now()
+      logs = discord.File(fp, filename='Manitobot {}.log'.format(time.strftime("%Y-%m-%d_%H-%M-%S")))
       await ctx.send(file=logs)
   except FileNotFoundError:
     await ctx.send("Aktualnie nie ma logów")
@@ -142,51 +135,57 @@ async def log(ctx):
 @commands.is_owner()
 async def log_clear(ctx):
   '''ⒹCzyści logi błędów'''
-  os.remove('error.log')
+  try:
+    os.remove('error.log')
+  except FileNotFoundError:
+    pass
   await ctx.message.add_reaction('✅')
+
+def report_error(error):
+  try:
+    raise error
+  except:
+    with open('error.log', 'a') as logs:
+      logs.write(f'{dt.datetime.now()}\n\n\n')
+      traceback.print_exc(file=logs)
+      logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+    raise error
   
 
 @bot.event
 async def on_command_error(ctx, error):
-  if not (isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd)):
-    await ctx.message.delete(delay=5)
   if isinstance(error, CommandNotFound):
     await ctx.send("HONK?", delete_after=5)
   elif isinstance(error, commands.MissingRole):
     await ctx.send("You have no power here!", delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CheckAnyFailure):
     await ctx.send("You have no power here!", delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.NotOwner):
     await ctx.send("You have no power here!", delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
-    await ctx.send_help(ctx.command)
-  elif isinstance(error, ValueError):
-    await ctx.send(str(error), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send("Błędny parametr", delete_after=5)
-    await ctx.send_help(ctx.command)
+  elif isinstance(error, commands.CommandOnCooldown):
+    await ctx.send("Mam okres ochronny", delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
-    utility.lock = False
     await ctx.send("Gra nie została rozpoczęta", delete_after=5)
-    try:
-      raise error
-    except:
-      with open('error.log', 'a') as logs:
-        traceback.print_exc(file=logs)
-        logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
-      raise error
+    await ctx.message.delete(delay=5)
+    report_error(error)
   elif isinstance(error, commands.DisabledCommand):
     await ctx.send("Prace nad tą komendą trwają. Nie należy jej używać.", delete_after=5)
-  elif isinstance(error, commands.CheckFailure):
-    pass
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.PrivateMessageOnly):
-    pass
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.NoPrivateMessage):
-    pass
-  elif isinstance(error, discord.ext.commands.errors.CommandInvokeError) and isinstance(error.original, utility.GameEnd):
-    utility.lock = False
-    error = error.original
+    await ctx.message.delete(delay=5)
+  elif isinstance(error, commands.CheckFailure):
+    await ctx.message.delete(delay=5)
+  elif isinstance(error, GameEnd):
     c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
     await globals.current_game.winning(error.reason, error.winner)
     await send_to_manitou(c)
@@ -194,17 +193,9 @@ async def on_command_error(ctx, error):
       if channel.category_id == FRAKCJE_CATEGORY_ID:
         await channel.send(c)
   else:
-    utility.lock = False
-    print(error.original)
     await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)
     print(ctx.command, type(error))
-    try:
-      raise error
-    except:
-      with open('error.log', 'a') as logs:
-        traceback.print_exc(file=logs)
-        logs.write(f'\n\n\n\n\n{RULLER}\n\n\n\n')
-      raise error
+    report_error(error)
     
     
 

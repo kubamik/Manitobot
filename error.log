@@ -1,0 +1,402 @@
+2020-06-09 18:36:58.651041
+
+
+Traceback (most recent call last):
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 241, in reveal
+    await member.edit(nick=nickname + "({})".format(self.name.replace('_',' ')))
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/member.py", line 578, in edit
+    await http.edit_member(guild_id, self.id, reason=reason, **payload)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/http.py", line 225, in request
+    raise HTTPException(r, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 233, in end_reset
+    await self.end_game(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 352, in __call__
+    return await self.callback(self.cog, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 214, in end_game
+    await role.reveal()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 247, in reveal
+    await member.edit(nick=nickname + " ".join(role))
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/member.py", line 578, in edit
+    await http.edit_member(guild_id, self.id, reason=reason, **payload)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/http.py", line 225, in request
+    raise HTTPException(r, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 148, in report_error
+    except:
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+
+
+
+================================================
+
+
+
+2020-06-09 18:39:39.500374
+
+
+Traceback (most recent call last):
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 241, in reveal
+    await member.edit(nick=nickname + "({})".format(self.name.replace('_',' ')))
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/member.py", line 578, in edit
+    await http.edit_member(guild_id, self.id, reason=reason, **payload)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/http.py", line 225, in request
+    raise HTTPException(r, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 233, in end_reset
+    await self.end_game(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 352, in __call__
+    return await self.callback(self.cog, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 214, in end_game
+    await role.reveal()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 247, in reveal
+    await member.edit(nick=nickname +'({})'.format(" ".join(role)))
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/member.py", line 578, in edit
+    await http.edit_member(guild_id, self.id, reason=reason, **payload)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/http.py", line 225, in request
+    raise HTTPException(r, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 147, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: HTTPException: 400 Bad Request (error code: 50035): Invalid Form Body
+In nick: Must be 32 or fewer in length.
+
+
+
+
+================================================
+
+
+
+2020-06-10 11:19:58.285895
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/voting_commands.py", line 83, in search_vote
+    globals.current_game.days[-1].to_search = []
+AttributeError: 'NoneType' object has no attribute 'to_search'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 147, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: 'NoneType' object has no attribute 'to_search'
+
+
+
+
+================================================
+
+
+
+2020-06-10 11:21:30.007504
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 221, in veto
+    await self.command_template(ctx, None, "peace")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 43, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 85, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 178, in if_hang_time
+    await self.meantime_send()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 278, in meantime_send
+    await get_town_channel().create_webhook("Manitobot {}".format(self.name.replace('_', ' ')))
+TypeError: create_webhook() takes 1 positional argument but 2 were given
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 147, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: TypeError: create_webhook() takes 1 positional argument but 2 were given
+
+
+
+
+================================================
+
+
+
+2020-06-10 11:25:45.446516
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 221, in veto
+    await self.command_template(ctx, None, "peace")
+  File "/home/runner/RashDarkmagentaComputer/roles_commands.py", line 43, in command_template
+    await globals.current_game.player_map[author].role_class.new_activity(ctx, operation, member)
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 85, in new_activity
+    ret = await f()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 178, in if_hang_time
+    await self.meantime_send()
+  File "/home/runner/RashDarkmagentaComputer/activities.py", line 280, in meantime_send
+    await wbhk.send(com[0], username=self.name.replace('_', ' '), avatar_url = com[1])
+UnboundLocalError: local variable 'wbhk' referenced before assignment
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 147, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: UnboundLocalError: local variable 'wbhk' referenced before assignment
+
+
+
+
+================================================
+
+
+
+2020-06-10 15:48:51.048065
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/search_hang_commands.py", line 121, in handrand
+    c = await globals.current_game.days[-1].hang_random()
+  File "/home/runner/RashDarkmagentaComputer/duel_search.py", line 54, in hang_random
+    if len(get_hanged_role() > 0):
+TypeError: '>' not supported between instances of 'Role' and 'int'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 147, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: TypeError: '>' not supported between instances of 'Role' and 'int'
+
+
+
+
+================================================
+
+
+
+2020-06-10 16:33:14.287898
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/duels_commands.py", line 96, in duel_end
+    await globals.current_game.days[-1].end_duel(ctx)
+  File "/home/runner/RashDarkmagentaComputer/duel.py", line 265, in end_duel
+    await player.die("duel")
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 106, in die
+    await globals.current_game.days[-1].interrupt()
+  File "/home/runner/RashDarkmagentaComputer/duel.py", line 187, in interrupt
+    remove_dare(self.duels_order[0])
+NameError: name 'remove_dare' is not defined
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 152, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: NameError: name 'remove_dare' is not defined
+
+
+
+
+================================================
+
+
+
+2020-06-10 16:35:47.585368
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/search_hang_commands.py", line 121, in handrand
+    c = await globals.current_game.days[-1].hang_random()
+  File "/home/runner/RashDarkmagentaComputer/duel_search.py", line 56, in hang_random
+    member = random.choice(self.to_hang)
+  File "/usr/lib/python3.8/random.py", line 290, in choice
+    raise IndexError('Cannot choose from an empty sequence') from None
+IndexError: Cannot choose from an empty sequence
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 152, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: IndexError: Cannot choose from an empty sequence
+
+
+
+
+================================================
+
+
+
+2020-06-10 16:39:38.742286
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/search_hang_commands.py", line 121, in handrand
+    c = await globals.current_game.days[-1].hang_random()
+  File "/home/runner/RashDarkmagentaComputer/duel_search.py", line 58, in hang_random
+    member = random.choice(self.to_hang)
+NameError: name 'ctx' is not defined
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 152, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: NameError: name 'ctx' is not defined
+
+
+
+
+================================================
+
+
+
+2020-06-10 16:41:13.424654
+
+
+Traceback (most recent call last):
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
+    ret = await coro(*args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
+    await func(self, ctx, *args, **kwargs)
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 132, in kill
+    await globals.current_game.player_map[gracz].role_class.die()
+  File "/home/runner/RashDarkmagentaComputer/role.py", line 106, in die
+    await globals.current_game.days[-1].interrupt()
+  File "/home/runner/RashDarkmagentaComputer/duel.py", line 187, in interrupt
+    self.remove_dare(self.duels_order[0])
+NameError: name 'remove_dare' is not defined
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "main.py", line 152, in report_error
+    raise error
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
+    await ctx.command.invoke(ctx)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
+    await injected(*ctx.args, **ctx.kwargs)
+  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
+    raise CommandInvokeError(exc) from exc
+discord.ext.commands.errors.CommandInvokeError: Command raised an exception: NameError: name 'remove_dare' is not defined
+
+
+
+
+================================================
+
+
+
