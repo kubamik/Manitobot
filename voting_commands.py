@@ -149,7 +149,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     if len(kandydaci)<1:
       await ctx.send("Za mało kandydatur. Otrzymano {}, oczekiwano co najmniej {}".format(len(kandydaci),1))
       return
-    await self.glosowanie_custom(ctx, "**Kogo wieszamy?\nGłosujecie na tego kogo chcecie powiesić**", "1", *kandydaci)
+    await self.glosowanie_custom(ctx, "Wieszanie\nGłosujecie Głosujecie na osobę, która **ma być powieszona**", "1", *kandydaci)
 
   @commands.command(name='hang_vote',aliases=['vhg'])
   @manitou_cmd
@@ -165,7 +165,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
       await globals.current_game.days[-1].hang_sumarize(ctx, [[kandydaci[0].display_name, []]])
     else:
       options_parsed = [['{}'.format(number+1),get_nickname(member.id)] for number, member in enumerate(kandydaci)]
-      await votings.glosowanie(ctx, "**Wieszanie\nGłosujecie na osobę, która ma być powieszona**", 1, options_parsed, vtype="hang")
+      await votings.glosowanie(ctx, "Wieszanie\nGłosujecie na osobę, która **ma być powieszona**", 1, options_parsed, vtype="hang")
 
   @commands.command(name='votend',aliases=['vend'])
   @manitou_cmd

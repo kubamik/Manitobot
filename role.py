@@ -140,9 +140,11 @@ class Role(Activity):
     if not nickname.startswith('+'):
       try:
         await gracz.edit(nick = '+' + nickname)
-        await bot.wait_for('member_update', check=plused)
+        await bot.wait_for('member_update', check=plused, timeout=5)
       except discord.errors.Forbidden:
         await gracz.send("Dodaj sobie '+' przed nickiem")
+      except asyncio.TimeoutError:
+        pass
     if not globals.current_game.night and not self.revealed:
       await self.reveal()
     if self.die_reason == "herbs":
