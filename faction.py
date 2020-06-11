@@ -52,10 +52,10 @@ class Faction(Activity):
         counter += 1
         if self.leader is None:
           self.leader = role.player
-          try:
-            await self.channel.set_permissions(role.player.member, read_messages=True, send_messages=True, add_reactions=True)
-          except discord.errors.Forbidden:
-            pass
+        try:
+          await self.channel.set_permissions(role.player.member, read_messages=True, send_messages=True, add_reactions=True)
+        except discord.errors.Forbidden:
+          pass
         await role.player.member.send("Rozpoczynamy rundę twojej frakcji. Wejdź na <#{}>".format(self.channel.id))
       elif role.player.sleeped or (role.player.member in get_dead_role().members and not role.revealed):
         awake = False
@@ -102,7 +102,7 @@ class Faction(Activity):
       if not self.awake_number:
         await globals.current_game.nights[-1].night_next()
         return
-      if statue == None:
+      if statue is None:
         statue = self.f_has()
       if (self.operation == "hold" or globals.current_game.day > 0) and statue == self.f_has():
         com = f_coms[self.operation]

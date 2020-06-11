@@ -202,13 +202,14 @@ class Activity:
       f = self.my_activities["follow"]
       if ((k or f) and not self.worked) or (k and f):
         globals.current_game.nights[-1].active_role = self
-        c = "Poczekaj na decyzję o dodatkowej zdolności {}".format(self.name)
+        c = "Poczekaj na decyzję o dodatkowej zdolności {}".format(self.name.replace('_', ' '))
         ret = None
+        await get_town_channel().send(globals.current_game.nights[-1].output)
+        globals.current_game.nights[-1].output = ""
       else:
         c = "{} dowiedział się kto ma posążek".format(self.name)
         ret = self.who()
       await send_to_manitou(c)
-      await get_manitou_notebook().send(c)
       return ret
         
 

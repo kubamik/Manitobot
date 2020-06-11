@@ -1,5 +1,5 @@
 from utility import playing, GameEnd, send_to_manitou, get_town_channel, get_manitou_notebook
-from postacie import send_faction, give_faction
+from postacie import give_faction
 import globals
 
 
@@ -61,9 +61,7 @@ class Statue:
     self.holder = member
     self.planted = False
     role = globals.current_game.player_map[member].role
-    faction = send_faction(role)[2:-2]
-    if faction.endswith(':'):
-      faction = faction[:-1]
+    faction = give_faction(role)
     self.faction_holder = faction
 
   def day_search(self, member):
@@ -82,9 +80,7 @@ class Statue:
         await get_manitou_notebook().send(c)
         globals.current_game.nights[-1].output = c
         self.holder = author
-        faction = send_faction(role)[2:-2]
-        if faction.endswith(':'):
-          faction = faction[:-1]
+        faction = give_faction(role)
         self.faction_holder = faction
         self.planted = False
         return "Przejmujesz posążek"
@@ -109,9 +105,7 @@ class Statue:
         await get_manitou_notebook().send(c)
         await get_town_channel().send(c)
         self.holder = author
-        faction = send_faction(role)[2:-2]
-        if faction.endswith(':'):
-          faction = faction[:-1]
+        faction = give_faction(role)
         self.faction_holder = faction
         self.planted = False
         return "Przejmujesz posążek"
@@ -132,9 +126,7 @@ class Statue:
       await send_to_manitou(c)
       self.holder = member
       self.planted = False
-      faction = send_faction(role)[2:-2]
-      if faction.endswith(':'):
-        faction = faction[:-1]
+      faction = give_faction(role)
       self.faction_holder = faction
       globals.current_game.nights[-1].output = "{} przejmuje(-ą) posążek".format(faction)
     else:

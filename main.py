@@ -23,7 +23,6 @@ from settings import *
 from globals import bot
 import globals
 from f_database import factions_roles
-from manitou_commands import manitouhelp
 
 
 @bot.event
@@ -91,8 +90,7 @@ async def mess(m):
 async def message_change(before, after):
   reaction = discord.utils.get(before.reactions, emoji='✅')
   if before.content != after.content and (reaction is None or not reaction.me):
-    ctx = await bot.get_context(after)
-    await bot.invoke(ctx)
+    await bot.process_commands(after)
 
 
 @bot.listen('on_message')
@@ -129,7 +127,13 @@ async def log(ctx):
       logs = discord.File(fp, filename='Manitobot {}.log'.format(time.strftime("%Y-%m-%d_%H-%M-%S")))
       await ctx.send(file=logs)
   except FileNotFoundError:
-    await ctx.send("Aktualnie nie ma logów")
+    await ctx.send("Logs aren't available now.", delete_after=5)
+    await ctx.message.delete(delay=5)
+
+@bot.command(name='started_at')
+async def start_time(ctx):
+  '''ⒹPokazuje czas rozpoczęcia sesji bota'''
+  await ctx.send(f"Current bot session started at {started_at}")
 
 @bot.command(name='clear_logs', aliases=['logcls'])
 @commands.is_owner()
@@ -206,4 +210,5 @@ async def on_command_error(ctx, error):
 
 keep_alive()
 token = os.environ.get("TOKEN")
+started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 bot.run(token)

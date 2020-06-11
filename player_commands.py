@@ -122,7 +122,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   @commands.command(name='bunt', aliases=['riot'])
   async def riot(self, ctx):
     '''/&riot/W przypadku poparcia przez co najmniej 67 % osób biorących udział w grze kończy grę'''
-    if not (czy_gram(ctx) or czy_trup(ctx) and on_voice(ctx)):
+    if not ((czy_gram(ctx) or czy_trup(ctx)) and on_voice(ctx)):
       await ctx.send("Mogą użyć tylko grający na kanale głosowym")
       return
     globals.current_game.rioters.add(get_member(ctx.author.id))
@@ -140,10 +140,13 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       await get_town_channel().send("**Doszło do buntu\nGra została zakończona**")
       for manitou in get_manitou_role().members:
         await manitou.remove_roles(get_manitou_role())
-      for role in globals.current_game.role_map.values():
-        if not role.revealed:
-          await role.reveal()
-      globals.current_game = None
+      try:
+        for role in globals.current_game.role_map.values():
+          if not role.revealed:
+            await role.reveal()
+        await globals.current_game.message.unpin()
+      except AttributeError:
+        pass
       manit = bot.cogs['Dla Manitou']
       await bot.change_presence(activity = None)
       player_role = get_player_role()
@@ -156,7 +159,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
         await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         if member in get_voice_channel().members:
           await member.add_roles(player_role)
-      await globals.current_game.message.unpin()
+      globals.current_game = None
       await manit.remove_cogs()
     await ctx.message.add_reaction("👊")
       

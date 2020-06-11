@@ -137,7 +137,7 @@ def manitouhelp():
 
 
 def transform_nickname(nick):
-  if nick.startswith('+'):
+  if nick.startswith(('+', '!')):
     nick = nick[1:]
   if all(nick.rpartition('(')):
     nick = nick.rpartition('(')[0]
@@ -145,7 +145,7 @@ def transform_nickname(nick):
 
 def nickname_fit(nick):
   nick = transform_nickname(nick)
-  for player in get_player_role().members:
+  for player in get_player_role().members + get_dead_role().members:
     if transform_nickname(player.display_name) == nick:
       return player
   return None

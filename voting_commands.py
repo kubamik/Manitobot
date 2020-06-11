@@ -16,7 +16,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     return commands.check(predicate)
 
   async def cog_command_error(self, ctx, error):
-    if isinstance(error, commands.CheckFailure):
+    if type(error) is commands.CheckFailure:
       await ctx.send("Tej komendy można używać tylko w dzień", delete_after=5)
   
   @commands.command(name='vote_cancel', aliases=['vclc'])

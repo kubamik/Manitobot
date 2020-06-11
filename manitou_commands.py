@@ -64,7 +64,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await herb.die("herbs")
     await ctx.message.add_reaction('✅')
 
-  @commands.command(name='next',aliases=['n'], enabled=True, hidden=True)
+  @commands.command(name='next', aliases=['n'], enabled=False, hidden=True)
   @manitou_cmd
   async def next_night(self,ctx):
     """Ⓜ/&n/Rozpoczyna rundę następnej postaci w trakcie nocy."""
@@ -130,7 +130,6 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await ctx.send("Ten gracz musi grać, aby mógł zginąć")
       return
     await globals.current_game.player_map[gracz].role_class.die()
-    nickname = get_nickname(gracz.id)
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='plant', aliases=[])
@@ -158,14 +157,14 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     except InvalidRequest as err:
       await ctx.send(err.reason)
 
-  @commands.command(name='whohas',aliases=['whos','who_has'])
+  @commands.command(name='who_has',aliases=['whos','whohas'])
   @manitou_cmd
   async def who_has(self, ctx):
     '''Ⓜ/&whos/&who_has/Wysyła do Manitou kto ma aktualnie posążek'''
     try:
-      c = "Posążek {}jest podłożony i ma go **{}**".format("nie " if not globals.current_game.statue.planted else "", globals.current_game.statue.holder.display_name)
+      c = "Posążek {}jest podłożony i ma go **{}**, frakcja **{}**".format("nie " if not globals.current_game.statue.planted else "", globals.current_game.statue.holder.display_name, globals.current_game.statue.faction_holder)
     except AttributeError:
-      c = "Na razie nikt nie ma posążka"
+      c = f"Posążek ma frakcja **{globals.current_game.statue.faction_holder}**, posiadacz jest nieustalony."
     await send_to_manitou(c)
     await ctx.message.add_reaction('✅')
 
@@ -225,14 +224,32 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await bot.change_presence(activity = None)
       await get_town_channel().send("Gra została zakończona")
 
+  
 
   @commands.command(name='end')
   @manitou_cmd
   async def end_reset(self, ctx):
     """ⓂResetuje graczy i kończy grę"""
-    await self.end_game(ctx)
-    await self.resetuj_grajacych(ctx)
-    await ctx.message.add_reaction('✅')
+    if globals.current_game is None:
+      raise AttributeError('Game not started')
+    m = await ctx.send("Czy na pewno chcesz zakończyć grę?")
+    await m.add_reaction('✅')
+    await m.add_reaction('⛔')
+    def check_func(r, u):
+      if get_member(u.id) not in get_manitou_role().members or r.emoji not in ('✅', '⛔') or r.message.id != m.id:
+        return False
+      return True
+    try:
+      reaction, _ = await bot.wait_for('reaction_add', check=check_func, timeout=60)
+      if reaction.emoji == '✅':
+        raise asyncio.TimeoutError
+      await ctx.message.delete(delay=0)
+    except asyncio.TimeoutError:
+      await self.end_game(ctx)
+      await self.resetuj_grajacych(ctx)
+      await ctx.message.add_reaction('✅')
+    await m.delete()
+    
 
   @commands.command(name='Manitou_help', aliases=['mhelp'])
   @manitou_cmd
@@ -284,7 +301,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         if member in get_voice_channel().members:
           await member.add_roles(player_role)
       await self.remove_cogs()
-    await get_town_channel().send("Wszystkim z rolą 'Trup' nadano rolę 'Gram!'")
+    await get_town_channel().send("Wszystkim z rolą 'Trup' na kanale głosowym nadano rolę 'Gram!'")
 
 
   @commands.command(name="alives")
