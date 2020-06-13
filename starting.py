@@ -92,5 +92,7 @@ Gramy w składzie:{}""".format(len(lista), team))
     await get_town_channel().set_permissions(get_player_role(), send_messages = False)
   except (discord.Forbidden, discord.HTTPException):
     pass
+
+    
 def if_game():
   return globals.current_game != None

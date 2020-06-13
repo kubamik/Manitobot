@@ -105,9 +105,7 @@ class Role(Activity):
       if self in globals.current_game.days[-1].duelers and globals.current_game.duel:
         await globals.current_game.days[-1].interrupt()
         await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
-    except InvalidRequest:
-      pass
-    except AttributeError:
+    except (InvalidRequest, AttributeError):
       pass
     await gracz.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(), get_duel_winner_role())
     await gracz.add_roles(get_dead_role())
@@ -134,13 +132,15 @@ class Role(Activity):
               self.faction.leader = role.player
               await self.faction.channel.send("Ginie {}\nNowym liderem zostaje {}".format(self.player.member.display_name, self.faction.leader.role))
               break
+          else:
+            pass#Uśpienie frakcji
         await self.faction.channel.set_permissions(self.player.member,overwrite=None)
     except (KeyError, AttributeError, discord.errors.Forbidden):
       pass
     if not nickname.startswith('+'):
       try:
         await gracz.edit(nick = '+' + nickname)
-        await bot.wait_for('member_update', check=plused, timeout=5)
+        await bot.wait_for('member_update', check=plused, timeout=3)
       except discord.errors.Forbidden:
         await gracz.send("Dodaj sobie '+' przed nickiem")
       except asyncio.TimeoutError:

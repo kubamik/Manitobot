@@ -136,6 +136,15 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   async def plant(self, ctx, *, member):
     '''ⓂPodkłada posążek wskazanegu graczowi, nie zmieniając frakcji posiadaczy'''
     member = await converter(ctx, member)
+    '''if gracz is None or gracz not in get_guild().members:
+      await ctx.send("Nie ma takiego gracza")
+      return
+    if gracz in get_dead_role().members:
+      await ctx.send("Ten gracz już nie żyje")
+      return
+    if not if_game() or gracz not in get_player_role().members:
+      await ctx.send("Ta osoba nie gra")
+      return'''
     try:
       playing(member)
       globals.current_game.statue.manitou_plant(member)

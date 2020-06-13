@@ -1,4 +1,5 @@
 from discord.ext import commands
+import datetime as dt
 
 from utility import *
 from settings import *
@@ -82,6 +83,31 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       for emoji in ankietawka_emoji:
         await m.add_reaction(emoji)
     await ctx.message.add_reaction('✅')
+
+  
+  @commands.command(name='usuń')
+  async def delete(self, ctx, time: int, *members):
+    '''Masowo usuwa wiadomości, używać tylko do spamu\nSkładnia &usuń <czas w minutach> [członkowie], w przypadku braku podania członków czyszczone są wszystkie wiadomości'''
+    author = get_member(ctx.author.id)
+    if author not in get_admin_role().members:
+      raise commands.MissingRole(get_admin_role())
+    if time > 24*60:
+      await ctx.send("Maksymalny czas to 24 godziny")
+    new_members = []
+    if not len(members):
+      new_members = list(get_guild().members)
+    else:
+      for member in members:
+        m = member
+        member = await converter(ctx, member)
+        if member is None:
+          await ctx.send(f"Nieznana osoba: {m}")
+        else:
+          new_members.append(member)
+    def proper_members(m):
+      return m.author in new_members
+    print(ctx.message.created_at-dt.timedelta(minutes=time))
+    await ctx.channel.purge(after=ctx.message.created_at-dt.timedelta(minutes=time), before=ctx.message.created_at, check=proper_members)
     
   @commands.command(name='czy_gram')
   async def if_registered(command, ctx):
