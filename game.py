@@ -102,7 +102,7 @@ class Game(Vote):
       raise utility.GameEnd("Wszyscy heretycy nie żyją","Inkwizycja")
     
   def town_win(self):
-    if self.statue.faction_holder == "Miasto":
+    if self.statue.faction_holder == "Miasto" and not self.statue.planted:
       role = self.player_map[self.statue.holder].role
       raise utility.GameEnd("{} posiada posążek o poranku".format(role.replace("_"," ")),"Miasto")
 
