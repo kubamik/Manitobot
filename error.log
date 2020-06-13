@@ -1,4 +1,4 @@
-2020-06-11 17:27:06.709902
+2020-06-13 09:26:28.576663
 
 
 Traceback (most recent call last):
@@ -6,14 +6,14 @@ Traceback (most recent call last):
     ret = await coro(*args, **kwargs)
   File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
     await func(self, ctx, *args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 234, in end_reset
+  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 233, in end_reset
     raise AttributeError('Game not started')
 AttributeError: Game not started
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
-  File "main.py", line 150, in report_error
+  File "main.py", line 165, in report_error
     raise error
   File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
     await ctx.command.invoke(ctx)
@@ -22,112 +22,6 @@ Traceback (most recent call last):
   File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
     raise CommandInvokeError(exc) from exc
 discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: Game not started
-
-
-
-
-================================================
-
-
-
-2020-06-11 17:28:26.995843
-
-
-Traceback (most recent call last):
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
-    ret = await coro(*args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
-    await func(self, ctx, *args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 365, in night_end
-    if not globals.current_game.night:
-AttributeError: 'NoneType' object has no attribute 'night'
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "main.py", line 150, in report_error
-    raise error
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
-    await ctx.command.invoke(ctx)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
-    await injected(*ctx.args, **ctx.kwargs)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
-    raise CommandInvokeError(exc) from exc
-discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: 'NoneType' object has no attribute 'night'
-
-
-
-
-================================================
-
-
-
-2020-06-11 17:35:07.981335
-
-
-Traceback (most recent call last):
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
-    ret = await coro(*args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
-    await func(self, ctx, *args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/manitou_commands.py", line 335, in searches
-    globals.current_game.searches = n
-AttributeError: 'NoneType' object has no attribute 'searches'
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "main.py", line 150, in report_error
-    raise error
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
-    await ctx.command.invoke(ctx)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
-    await injected(*ctx.args, **ctx.kwargs)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
-    raise CommandInvokeError(exc) from exc
-discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: 'NoneType' object has no attribute 'searches'
-
-
-
-
-================================================
-
-
-
-2020-06-11 18:00:47.993756
-
-
-Traceback (most recent call last):
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 83, in wrapped
-    ret = await coro(*args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/utility.py", line 16, in wrapper
-    await func(self, ctx, *args, **kwargs)
-  File "/home/runner/RashDarkmagentaComputer/search_hang_commands.py", line 109, in hangend
-    await globals.current_game.days[-1].hang_finalize(ctx)
-  File "/home/runner/RashDarkmagentaComputer/duel_search.py", line 85, in hang_finalize
-    await role.die('hang')
-  File "/home/runner/RashDarkmagentaComputer/role.py", line 143, in die
-    await bot.wait_for('member_update', check=plused, timeout=5)
-  File "/usr/lib/python3.8/asyncio/tasks.py", line 455, in wait_for
-    return await fut
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/client.py", line 339, in dispatch
-    result = condition(*args)
-  File "/home/runner/RashDarkmagentaComputer/utility.py", line 209, in plused
-    return before.display_name[0] != after.display_name[0] and after.nick.startswith('+')
-AttributeError: 'NoneType' object has no attribute 'startswith'
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "main.py", line 150, in report_error
-    raise error
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/bot.py", line 892, in invoke
-    await ctx.command.invoke(ctx)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 797, in invoke
-    await injected(*ctx.args, **ctx.kwargs)
-  File "/opt/virtualenvs/python3/lib/python3.8/site-packages/discord/ext/commands/core.py", line 92, in wrapped
-    raise CommandInvokeError(exc) from exc
-discord.ext.commands.errors.CommandInvokeError: Command raised an exception: AttributeError: 'NoneType' object has no attribute 'startswith'
 
 
 

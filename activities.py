@@ -279,7 +279,7 @@ class Activity:
       else:
         wbhk = await get_town_channel().create_webhook(name="Manitobot {}".format(self.name.replace('_', ' ')))
       await wbhk.send(com[0].format(role=self.name.replace('_', ' '), member=display_name), username=self.name.replace('_', ' '), avatar_url = com[1])
-    except KeyboardInterrupt:
+    except:
       com = meantime_operation_com[self.operation]
       if com[1]:
         await get_town_channel().send(com[0].format(role=self.name.replace('_', ' '), member=display_name))

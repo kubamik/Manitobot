@@ -36,10 +36,13 @@ async def on_ready():
     bot.get_command('m').help = manitouhelp()
   except (discord.errors.ClientException, AttributeError):
     pass
+  
  
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
+  member = await commands.MemberConverter().convert(ctx, 'kuba')
+  print(member)
   m = await ctx.send("Nie mogę ci pomóc, jestem botem")
   await ctx.message.add_reaction('✅')
 
@@ -74,6 +77,7 @@ async def not_lose(ctx):
 @bot.command(name='przegrałem')
 @commands.cooldown(rate=1, per=30*60)
 async def przegrałeś(ctx):
+	"""Przegrałem"""
 	loser = get_guild().get_role(PRZEGRALEM_ROLE_ID)
 	await ctx.send("Przegrałem!")
 	for i in loser.members:
@@ -118,7 +122,7 @@ async def my_message(m):
 	except InvalidRequest as e:
 		await m.channel.send(e.reason)
 
-@bot.command(name='log')
+@bot.command(name='log', hidden=True)
 async def log(ctx):
   '''ⒹWysyła logi błędów'''
   try:
@@ -130,12 +134,12 @@ async def log(ctx):
     await ctx.send("Logs aren't available now.", delete_after=5)
     await ctx.message.delete(delay=5)
 
-@bot.command(name='started_at')
+@bot.command(name='started_at', hidden=True)
 async def start_time(ctx):
   '''ⒹPokazuje czas rozpoczęcia sesji bota'''
   await ctx.send(f"Current bot session started at {started_at}")
 
-@bot.command(name='clear_logs', aliases=['logcls'])
+@bot.command(name='clear_logs', aliases=['logcls'], hidden=True)
 @commands.is_owner()
 async def log_clear(ctx):
   '''ⒹCzyści logi błędów'''
@@ -144,6 +148,17 @@ async def log_clear(ctx):
   except FileNotFoundError:
     pass
   await ctx.message.add_reaction('✅')
+
+def dev_help():
+  h = ''
+  for c in bot.commands:
+    if c.help and c.help.startswith('Ⓓ'):
+      h += help_format(c.name)
+  return h
+
+@bot.command(hidden=True, help=dev_help())
+async def dev(ctx):
+  await ctx.delete(delay=0)
 
 def report_error(error):
   try:

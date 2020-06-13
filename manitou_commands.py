@@ -105,13 +105,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await self.remove_cogs()
       for member in dead_role.members:
         await member.remove_roles(dead_role)
-        await clear_nickname(member, ctx)
       for member in player_role.members:
         await member.remove_roles(player_role)
-        await clear_nickname(member, ctx)
       for member in spec_role.members:
         await member.remove_roles(spec_role)
-        await clear_nickname(member, ctx) 
+      for member in get_guild().members:
+        await clear_nickname(member, ctx)
     await ctx.message.add_reaction('❤️')
 
 

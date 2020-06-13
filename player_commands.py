@@ -19,6 +19,20 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   @bot.listen('on_member_join')
   async def new_member_guild(member):
     await member.add_roles(get_newcommer_role())
+
+  @bot.listen('on_member_remove')
+  async def member_leaves(member):
+    ch = get_guild().system_channel
+    if ch is None:
+      return
+    for wb in await ch.webhooks():
+      if wb.name == 'System':
+        wbhk = wb
+        break
+    else:
+      wbhk = await ch.create_webhook(name='System')
+    await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')
+    
   
   @commands.command(name='postacie', aliases=['lista'])
   async def lista(self, ctx):

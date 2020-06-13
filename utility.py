@@ -173,11 +173,13 @@ async def clear_nickname(member, ctx):
       await ctx.send("Nie mam uprawnień aby zresetować nick użytkownika {}".format(new_nickname))
 
 async def converter(ctx, member):
-  try:
-    member = await commands.MemberConverter().convert(ctx, member)
-  except commands.BadArgument:
-    member = nickname_fit(member)
-  return member
+  _member = nickname_fit(member)
+  if _member is None:
+    try:
+      _member = await commands.MemberConverter().convert(ctx, member)
+    except commands.BadArgument:
+      pass
+  return _member
 
 def playing(gracz = -1, *, author = -1):
   if gracz != -1 and (gracz is None or gracz not in get_guild().members):
