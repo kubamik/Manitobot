@@ -79,7 +79,7 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
       await member.remove_roles(get_newcommer_role())
   await bot.change_presence(activity = discord.Game("Ktulu"))
   for channel in get_guild().text_channels:
-    if channel.category_id == FRAKCJE_CATEGORY_ID:
+    if channel.category_id == FRAKCJE_CATEGORY_ID  or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
       await channel.send(RULLER)
   team = postacie.print_list(lista)
   globals.current_game.message = await get_town_channel().send("""Rozdałem karty. Liczba graczy: {}

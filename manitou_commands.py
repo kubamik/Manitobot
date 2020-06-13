@@ -367,7 +367,7 @@ Pozostali:{}""".format(len(alive_roles),team))
       return
     await globals.current_game.new_day()
     for channel in get_guild().text_channels:
-      if channel.category_id==FRAKCJE_CATEGORY_ID:
+      if channel.category_id==FRAKCJE_CATEGORY_ID or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
         await channel.send("=\nDzień {}".format(globals.current_game.day))
     try:
       await get_town_channel().set_permissions(get_player_role(), send_messages = True)

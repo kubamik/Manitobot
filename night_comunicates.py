@@ -31,14 +31,6 @@ new_night_com = {
   "Lucky_Luke":[("Aby kogoś przeszukać użyj `&szukaj NICK`. Następnie, aby kogoś zabić użyj `&zabij NICK`, możesz zabijać jeszcze {} razy","kill"),("\nAby zacząć śledzić użyj `&śledź NICK`, możesz to zrobić jeszcze {} razy. Kiedy użyjesz wszystkich pożądanych zdolności użyj `&kto`, aby dowiedzieć się kto ma posążek.","follow")]
 }
 
-night_action_com_public = {
-"Szeryf":("Zamknięty został {}", [get_town_channel], [get_manitou_role]),
-"Opój":("Upity został {}",[],[get_manitou_role]),
-"Pijany_Sędzia":("Upity został {}",[],[get_manitou_role]),
-"Pastor":("Pastor sprawdził {}",[],[get_manitou_role]),
-"Dziwka":("Dziwka zadziwiła {}",[],[get_manitou_role])
-}
-
 
 operation_com_private = {
   "arrest":"Zostałeś zamknięty. Nie obudzisz się więcej tej nocy.",
@@ -55,7 +47,7 @@ webhook_com = {
 
 #(text, send_town, send_manitou)
 meantime_operation_com = {
-  "arest":("{role} zamknął {subject}", False, True),
+  "arest":("{role} zamknął **{subject}**", False, True),
   "wins":("{role} zadecydował, że pojedynek wygrywa **{subject}**", True, False),
   "peace":("{role} ułaskawił wieszaną osobę", True, False)
 }

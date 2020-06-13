@@ -237,7 +237,7 @@ class Activity:
     nickname = get_nickname(self.player.member.id)
     self.revealed = True
     member = self.player.member
-    await get_town_channel().send("Rola **{}** to **{}**".format(nickname.replace('+',''),self.name.replace('_',' ')))
+    await get_town_channel().send("**{}** to **{}**".format(nickname.replace('+',''),self.name.replace('_',' ')))
     try:
       await member.edit(nick=nickname + "({})".format(self.name.replace('_',' ')))
     except discord.errors.Forbidden:
@@ -370,7 +370,7 @@ class Activity:
     return "Frakcja {} to {}".format(self.member.member.display_name,get_faction(self.member.role))
 
   def check_role(self):
-    return "Rola **{}** to **{}**".format(self.member.member.display_name, self.member.role.replace('_',' '))
+    return "**{}** to **{}**".format(self.member.member.display_name, self.member.role.replace('_',' '))
   
   async def hang_win(self):
     if self.die_reason == 'hang':

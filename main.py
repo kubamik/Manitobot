@@ -41,8 +41,6 @@ async def on_ready():
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
-  member = await commands.MemberConverter().convert(ctx, 'kuba')
-  print(member)
   m = await ctx.send("Nie mogę ci pomóc, jestem botem")
   await ctx.message.add_reaction('✅')
 
@@ -77,7 +75,7 @@ async def not_lose(ctx):
 @bot.command(name='przegrałem')
 @commands.cooldown(rate=1, per=30*60)
 async def przegrałeś(ctx):
-	"""Przegrałem"""
+	"""Przypomina przegrywom o grze."""
 	loser = get_guild().get_role(PRZEGRALEM_ROLE_ID)
 	await ctx.send("Przegrałem!")
 	for i in loser.members:
@@ -209,7 +207,7 @@ async def on_command_error(ctx, error):
     await globals.current_game.winning(error.reason, error.winner)
     await send_to_manitou(c)
     for channel in get_guild().text_channels:
-      if channel.category_id == FRAKCJE_CATEGORY_ID:
+      if channel.category_id == FRAKCJE_CATEGORY_ID  or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
         await channel.send(c)
   else:
     await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)

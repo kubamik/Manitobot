@@ -73,7 +73,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
 
   @commands.command()
   async def ankietka(self, ctx, *, date):
-    '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Oznaczenia we własnym zakresie'''
+    '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Zawiera oznaczenie @everyone'''
     author = get_member(ctx.author.id)
     if author not in get_admin_role().members:
       raise commands.MissingRole(get_admin_role())

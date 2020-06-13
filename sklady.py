@@ -4,6 +4,7 @@ SETS={
   "1" : ["Sędzia"],
   "4":["Sędzia", "Burmistrz", "Szeryf", "Janosik"],
   "5":["Sędzia", "Burmistrz", "Szeryf", "Szaman", "Janosik"],
+  "7":["Szeryf", "Pastor", "Dobry_Rew", "Mściciel", "Zły_Rew", "Szaman", "Szamanka"],
   "11" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Mściciel", "Złodziej", "Zły_Rew", "Szaman", "Szamanka", "Wojownik"],
   "12" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Mściciel", "Złodziej", "Zły_Rew", "Szaman", "Szamanka", "Wojownik", "Janosik"],
   "13" : ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Burmistrz", "Mściciel", "Szuler", "Zły_Rew", "Szaman", "Szamanka", "Wojownik", "Janosik"],
