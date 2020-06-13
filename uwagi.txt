@@ -1,4 +1,0 @@
-
-Jeden kanał do komunikacji w send_to_manitou, udoskonalenie pokazywania następnej postaci, ID wiadomości przy śledzeniu emoji, kończenie za pomocą emojii,masowwe usuwanie wiadomości, reagowanie na edytowane wiadomości, naprawa {night_send(wewnątrz i zewnątrz)}
-
-Lock day/night command, nadawanie sygnału przez ufoki
