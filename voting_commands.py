@@ -4,8 +4,7 @@ from discord.ext import commands
 
 import globals
 import votings
-from utility import manitou_cmd, get_nickname, get_player_role, \
-    get_searched_role
+from utility import manitou_cmd, get_nickname, get_player_role
 
 
 class Glosowania(commands.Cog, name="Głosowania"):
@@ -100,8 +99,6 @@ class Glosowania(commands.Cog, name="Głosowania"):
                 return
         except AttributeError:
             pass
-        for member in get_searched_role().members:
-            await member.remove_roles(get_searched_role())
         globals.current_game.days[-1].search = True
         kandydaci = list(globals.current_game.days[-1].searched.keys())
         while len(kandydaci) < globals.current_game.searches:

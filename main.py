@@ -11,7 +11,7 @@ import player_commands
 import start_commands
 import utility
 from globals import bot
-from settings import *
+import settings
 from utility import *
 
 PRZEGRALEM_COOLDOWN = datetime.timedelta(minutes=30)
@@ -20,11 +20,13 @@ ostatnio_przegralem = datetime.datetime.now() - PRZEGRALEM_COOLDOWN
 
 @bot.event
 async def on_ready():
-    print("Hello world!")
+    print("Starting...")
     try:
+        settings.load_ids()
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(manitou_commands.DlaManitou(bot))
         bot.add_cog(start_commands.Starting(bot))
+        print("Ready!")
     except discord.errors.ClientException:
         pass
 
@@ -68,7 +70,7 @@ async def lose(ctx):
     guild = get_guild()
     member = get_member(ctx.author.id)
     await member.add_roles(
-        discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID))
+        discord.utils.get(guild.roles, id=settings.PRZEGRALEM_ROLE_ID))
     await ctx.send("Zostałeś przegranym {}".format(
         get_nickname(ctx.author.id)))
 
@@ -79,7 +81,7 @@ async def not_lose(ctx):
     guild = get_guild()
     member = get_member(ctx.author.id)
     await member.remove_roles(
-        discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID))
+        discord.utils.get(guild.roles, id=settings.PRZEGRALEM_ROLE_ID))
     await ctx.send("Już nie jesteś przegranym {}".format(
         get_nickname(ctx.author.id)))
 
@@ -94,7 +96,7 @@ async def przegrałeś(ctx):
         await ctx.send("Mam okres ochronny")
         return
     guild = get_guild()
-    gracz = discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID)
+    gracz = discord.utils.get(guild.roles, id=settings.PRZEGRALEM_ROLE_ID)
     gracze = list(gracz.members)
     await ctx.send("Przegrałem!")
     for i in gracze:
@@ -165,7 +167,7 @@ async def on_command_error(ctx, error):
         except:
             with open('error.log', 'a') as logs:
                 traceback.print_exc(file=logs)
-                logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+                logs.write(f'\n\n\n\n{settings.RULLER}\n\n\n\n')
             raise error
     elif isinstance(error, commands.CheckFailure):
         pass
@@ -182,7 +184,7 @@ async def on_command_error(ctx, error):
         await globals.current_game.winning(error.reason, error.winner)
         await send_to_manitou(c)
         for channel in get_guild().text_channels:
-            if channel.category_id == FRAKCJE_CATEGORY_ID:
+            if channel.category_id == settings.FRAKCJE_CATEGORY_ID:
                 await channel.send(c)
     else:
         utility.lock = False
@@ -194,7 +196,7 @@ async def on_command_error(ctx, error):
         except:
             with open('error.log', 'a') as logs:
                 traceback.print_exc(file=logs)
-                logs.write(f'\n\n\n\n\n{RULLER}\n\n\n\n')
+                logs.write(f'\n\n\n\n\n{settings.RULLER}\n\n\n\n')
             raise error
 
 

@@ -118,7 +118,7 @@ class WywolywaniePostaci(commands.Cog):
         for channel in get_guild().text_channels:
             if channel.category_id == FRAKCJE_CATEGORY_ID:
                 await channel.send(
-                    "=\nDzień {}".format(globals.current_game.day))
+                    settings.RULLER+"\nDzień {}".format(globals.current_game.day))
         for member in get_dead_role().members:
             nickname = get_nickname(member.id)
             if not globals.current_game.player_map[member].role_class.revealed:

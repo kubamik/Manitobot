@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from globals import bot
-from settings import *
+import settings as s
 
 lock = False
 
@@ -20,51 +20,48 @@ def manitou_cmd(func):
 
 
 def get_guild():
-    """guild = ctx.guild
-    if guild is not None:
-      return guild"""
-    return discord.utils.get(bot.guilds, id=GUILD_ID)
+    return discord.utils.get(bot.guilds, id=s.GUILD_ID)
 
 
 def get_player_role():
     guild = get_guild()
-    return discord.utils.get(guild.roles, id=PLAYER_ROLE_ID)
+    return discord.utils.get(guild.roles, id=s.PLAYER_ROLE_ID)
 
 
 def get_manitou_role():
     guild = get_guild()
-    return discord.utils.get(guild.roles, id=MANITOU_ROLE_ID)
+    return discord.utils.get(guild.roles, id=s.MANITOU_ROLE_ID)
 
 
 def get_dead_role():
     guild = get_guild()
-    return discord.utils.get(guild.roles, id=TRUP_ROLE_ID)
+    return discord.utils.get(guild.roles, id=s.TRUP_ROLE_ID)
 
 
 def get_spectator_role():
     guild = get_guild()
-    return discord.utils.get(guild.roles, id=SPECTATOR_ROLE_ID)
+    return discord.utils.get(guild.roles, id=s.SPECTATOR_ROLE_ID)
 
 
 def get_glosowania_channel():
     guild = get_guild()
-    return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
+    return discord.utils.get(guild.text_channels, id=s.GLOSOWANIA_CHANNEL_ID)
 
 
 def get_manitou_notebook():
     guild = get_guild()
     return discord.utils.get(guild.text_channels,
-                             id=NOTATNIK_MANITOU_CHANNEL_ID)
+                             id=s.NOTATNIK_MANITOU_CHANNEL_ID)
 
 
 def get_town_channel():
     guild = get_guild()
-    return discord.utils.get(guild.text_channels, id=TOWN_CHANNEL_ID)
+    return discord.utils.get(guild.text_channels, id=s.TOWN_CHANNEL_ID)
 
 
 def get_faction_channel(faction):
-    guild = bot.get_guild(GUILD_ID)
-    return guild.get_channel(FAC2CHANN_ID[faction])
+    guild = bot.get_guild(s.GUILD_ID)
+    return guild.get_channel(s.FAC2CHANN_ID[faction])
 
 
 def get_member(member_id):
@@ -73,7 +70,7 @@ def get_member(member_id):
 
 
 def get_game_channels_category_id():
-    return FRAKCJE_CATEGORY_ID
+    return s.FRAKCJE_CATEGORY_ID
 
 
 def get_nickname(member_id):

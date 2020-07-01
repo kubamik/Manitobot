@@ -14,6 +14,7 @@ experimental_features = False
 @bot.command(name='i-want-errors', hidden=True)
 @commands.is_owner()
 async def enable_experimental(ctx):
+    global experimental_features
     experimental_features = True
     await ctx.send("You are mad")
 
@@ -21,6 +22,7 @@ async def enable_experimental(ctx):
 @bot.command(name='go-back-to-safety', hidden=True)
 @commands.is_owner()
 async def enable_experimental(ctx):
+    global experimental_features
     experimental_features = False
     await ctx.send("Sanity is back!")
 

@@ -6,7 +6,6 @@ from discord.ext import commands
 import globals
 import postacie
 from postacie import get_role_details
-from settings import *
 from starting import if_game
 from utility import *
 

@@ -6,7 +6,7 @@ import globals
 import postacie
 from game import Game
 from globals import bot
-from settings import *
+import settings
 from utility import *
 
 
@@ -42,7 +42,7 @@ async def start_game(ctx, *lista):
 `&postać <nazwa postaci>` pokazuje opis danej postaci
 `&żywi` przedstawia postaci, które biorą udział w grze
 {}
-Twoja postać to:\n{}""".format(RULLER, RULLER,
+Twoja postać to:\n{}""".format(settings.RULLER, settings.RULLER,
                                postacie.get_role_details(role, role)))
         except discord.errors.Forbidden:
             await ctx.send(
@@ -77,8 +77,8 @@ Twoja postać to:\n{}""".format(RULLER, RULLER,
         return
     await bot.change_presence(activity=discord.Game("Ktulu"))
     for channel in get_guild().text_channels:
-        if channel.category_id == FRAKCJE_CATEGORY_ID:
-            await channel.send(RULLER)
+        if channel.category_id == settings.FRAKCJE_CATEGORY_ID:
+            await channel.send(settings.RULLER)
     team = postacie.print_list(lista)
     await get_glosowania_channel().send("""Rozdałem karty. Liczba graczy: {}
 Gramy w składzie:{}""".format(len(lista), team))

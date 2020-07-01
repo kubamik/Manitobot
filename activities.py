@@ -2,7 +2,7 @@ import globals
 import permissions
 from postacie import get_faction, send_faction, give_faction
 from utility import *
-
+from globals import experimental_features
 
 class Activity:
     def __init__(self):
@@ -57,6 +57,8 @@ class Activity:
         await self.channel.send("Możecie kontynuować wcześniejszą akcję")
 
     def inqui_alone_win(self):
+        if not experimental_features:
+            return
         if globals.current_game.stats["Inkwizycja"] == len(
                 get_player_role().members):
             raise GameEnd("Zostali sami Inkwizytorzy", "Inkiwzycja")
@@ -183,11 +185,15 @@ class Activity:
             pass
 
     def indian_win(self):
+        if not experimental_features:
+            return
         if globals.current_game.stats["Indianie"] == len(
                 get_player_role().members):
             raise GameEnd("Zostali sami Indianie", "Indianie")
 
     def inqui_win(self):
+        if not experimental_features:
+            return
         d = globals.current_game.stats
         if not (d["Indianie"] or d["Ufoki"] or d["Janosik"] or d["Lusterko"] or
                 d["Murzyni"] or d["Bogowie"] or not d["Inkwizycja"]):
@@ -414,6 +420,8 @@ class Activity:
         globals.current_game.statue.unfollow(self.player.member)
 
     def luke_win(self):
+        if not experimental_features:
+            return
         if self.f_has():
             raise GameEnd("Lucky Luke odjeżdża z posążkiem", "Lucky_Luke")
 
