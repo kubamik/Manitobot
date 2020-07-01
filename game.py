@@ -6,6 +6,7 @@ from postacie import get_faction, give_faction
 from role import Role
 from statue import Statue
 from vote import Vote
+from globals import experimental_features
 
 
 class Game(Vote):
@@ -45,14 +46,16 @@ class Game(Vote):
         self.night = False
         for player in self.player_map.values():
             player.new_day()
-        self.town_win()
-        self.inqui_win()
-        self.morning_bandits_win()
+        if experimental_features:
+            self.town_win()
+            self.inqui_win()
+            self.morning_bandits_win()
 
     def new_night(self):
         self.nights.append(Night())
         self.night = True
-        self.evening_bandits_win()
+        if experimental_features:
+            self.evening_bandits_win()
 
     def make_factions(self, roles):
         for role in roles:

@@ -22,11 +22,6 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         bot.remove_cog("Pojedynki")
         bot.remove_cog("Przeszukania")
         bot.remove_cog("Wieszanie")
-        p = discord.Permissions().all()
-        try:
-            await get_admin_role().edit(permissions=p)
-        except (NameError, discord.errors.Forbidden):
-            pass
 
     @commands.command(name='tea')
     @manitou_cmd

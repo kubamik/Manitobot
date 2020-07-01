@@ -6,10 +6,23 @@ help = commands.DefaultHelpCommand(
     verify_checks=False,
 )
 
-bot = commands.Bot(command_prefix='&', help_command=help,
-                   owner_id=388764073191538688)
+bot = commands.Bot(command_prefix='/', help_command=help)
 current_game = None
 experimental_features = False
+
+
+@bot.command(name='i-want-errors', hidden=True)
+@commands.is_owner()
+async def enable_experimental(ctx):
+    experimental_features = True
+    await ctx.send("You are mad")
+
+
+@bot.command(name='go-back-to-safety', hidden=True)
+@commands.is_owner()
+async def enable_experimental(ctx):
+    experimental_features = False
+    await ctx.send("Sanity is back!")
 
 
 @bot.command(name='HONK', hidden=True)
