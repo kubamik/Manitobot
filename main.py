@@ -113,7 +113,7 @@ async def przegrałeś(ctx):
 async def my_message(m):
     try:
         if m.type != discord.MessageType.default or m.author == bot.user or \
-                m.content.strip()[0] == '&':
+                m.content.strip()[0] == settings.COMMAND_KEY:
             return
     except:
         pass

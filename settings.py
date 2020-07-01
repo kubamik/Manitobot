@@ -3,6 +3,7 @@ from globals import bot
 import os
 
 PREFIX = os.getenv('BOT_PREFIX', "")
+COMMAND_KEY = "/"
 
 GUILD_NAME = "Warsztaty WWW"
 PLAYER_ROLE_NAME = PREFIX+"gracz"
