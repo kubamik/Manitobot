@@ -51,19 +51,6 @@ async def honk(ctx):
     await ctx.send("NOOT NOOT")
 
 
-@bot.command(name='ważnawiadomość', hidden=True)
-async def honk(ctx, member=None):
-    if member is not None:
-        try:
-            member = await discord.ext.commands.MemberConverter().convert(ctx,
-                                                                          member)
-            await ctx.send(member.mention)
-        except commands.BadArgument:
-            await ctx.send("nie ma takiego gracza")
-            return
-    await ctx.send("ZABIJ SIĘ!")
-
-
 @bot.command(name='dziobak', hidden=True)
 async def honk(ctx):
     await ctx.send("dubidubiduba")

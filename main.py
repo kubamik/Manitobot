@@ -12,7 +12,6 @@ import start_commands
 import utility
 from globals import bot
 from settings import *
-# from keep_alive import keep_alive
 from utility import *
 
 PRZEGRALEM_COOLDOWN = datetime.timedelta(minutes=30)
@@ -199,6 +198,5 @@ async def on_command_error(ctx, error):
             raise error
 
 
-# keep_alive()
 token = os.environ.get("TOKEN")
 bot.run(token)
