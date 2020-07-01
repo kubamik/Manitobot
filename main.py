@@ -47,6 +47,7 @@ async def help1(ctx):
   await ctx.message.add_reaction('✅')
 
 @bot.command(name='log')
+@commands.is_owner()
 async def log(ctx):
   '''ⒹWysyła logi błędów'''
   try:
