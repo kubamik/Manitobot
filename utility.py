@@ -6,8 +6,6 @@ from discord.ext import commands
 from globals import bot
 from settings import *
 
-# nie mam pojęcia czemu from globals import * nie działa, from globals import bot działą
-
 lock = False
 
 
@@ -48,26 +46,6 @@ def get_spectator_role():
     return discord.utils.get(guild.roles, id=SPECTATOR_ROLE_ID)
 
 
-def get_admin_role():
-    return bot.get_guild(GUILD_ID).get_role(ADMIN_ROLE_ID)
-
-
-def get_duel_winner_role():
-    return bot.get_guild(GUILD_ID).get_role(DUEL_WINNER_ID)
-
-
-def get_duel_loser_role():
-    return bot.get_guild(GUILD_ID).get_role(DUEL_LOSER_ID)
-
-
-def get_searched_role():
-    return bot.get_guild(GUILD_ID).get_role(SEARCHED_ID)
-
-
-def get_hanged_role():
-    return bot.get_guild(GUILD_ID).get_role(HANGED_ID)
-
-
 def get_glosowania_channel():
     guild = get_guild()
     return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
@@ -84,11 +62,6 @@ def get_town_channel():
     return discord.utils.get(guild.text_channels, id=TOWN_CHANNEL_ID)
 
 
-def get_voice_channel():
-    guild = get_guild()
-    return discord.utils.get(guild.voice_channels, id=VOICE_CHANNEL_ID)
-
-
 def get_faction_channel(faction):
     guild = bot.get_guild(GUILD_ID)
     return guild.get_channel(FAC2CHANN_ID[faction])
@@ -97,6 +70,10 @@ def get_faction_channel(faction):
 def get_member(member_id):
     guild = get_guild()
     return discord.utils.get(guild.members, id=member_id)
+
+
+def get_game_channels_category_id():
+    return FRAKCJE_CATEGORY_ID
 
 
 def get_nickname(member_id):

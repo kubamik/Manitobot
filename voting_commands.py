@@ -30,7 +30,9 @@ class Glosowania(commands.Cog, name="Głosowania"):
         Argumentami są:
           -tytuł głosowania.
           -wymagana liczba głosów.
-          -nazwy kandydatów"""
+          -opcje (oddzielone spacjami, równoważne warianty oddzielone przecinkami)
+        Przykład:
+          &vote "Czy na WWW jest Ser?" 1 t,Tak j,JeszczeJak o,Oczywiście n,WstrzymujęSię"""
         options_parsed = []
         for option in options:
             options_parsed.append(option.split(','))
@@ -50,7 +52,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
                                      "**Pojedynek\nGłosujecie na osobę, która chcecie aby wygrała.**",
                                      "1", *kandydaci, "3,Wstrzymuję_Się")
 
-    @commands.command(name='duel_vote', aliases=['vdl'])
+    @commands.command(name='auto_duel', aliases=['vdl'])
     @manitou_cmd
     async def duel_vote(self, ctx):
         """Ⓜ/&vdl/Rozpoczyna głosowanie: kto ma wygrać pojedynek na podstawie automatycznie rozpoczętego pojedynku"""
@@ -81,7 +83,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
                                      "**Przeszukania\nGłosujecie na osoby, które mają być przeszukane**",
                                      globals.current_game.searches, *kandydaci)
 
-    @commands.command(name='search_vote', aliases=['vsch'])
+    @commands.command(name='auto_search', aliases=['vsch'])
     @manitou_cmd
     async def search_vote(self, ctx):
         '''Ⓜ/&vsch/Rozpoczyna głosowanie kogo przeszukać na podstawie zgłoszonych kandydatur'''
@@ -114,7 +116,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
                                  "**Przeszukania\nGłosujecie na osoby, które mają być przeszukane**",
                                  globals.current_game.searches, options_parsed)
 
-    @commands.command(name='revote', aliases=['vre'])
+    @commands.command(name='auto_revote', aliases=['vre'])
     @manitou_cmd
     async def revote(self, ctx):
         '''Ⓜ/&vre/Uruchamia głosowanie uzupełniające'''
@@ -178,7 +180,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
                                      "**Kogo wieszamy?\nGłosujecie na tego kogo chcecie powiesić**",
                                      "1", *kandydaci)
 
-    @commands.command(name='hang_vote', aliases=['vhg'])
+    @commands.command(name='auto_hang', aliases=['vhg'])
     @manitou_cmd
     async def hang_vote(self, ctx):
         '''Ⓜ/&vhg/Rozpoczyna głosowanie kogo powiesić na podstawie przeszukiwanych osób'''

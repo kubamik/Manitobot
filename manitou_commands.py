@@ -96,8 +96,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     async def kill(self, ctx, *, gracz):
         """ⓂZabija otagowaną osobę."""
         try:
-            gracz = await discord.ext.commands.MemberConverter().convert(ctx,
-                                                                         gracz)
+            gracz = await discord.ext.commands.MemberConverter().convert(ctx, gracz)
         except commands.BadArgument:
             gracz = nickname_fit(gracz)
         if gracz is None or gracz not in get_guild().members:
@@ -110,7 +109,6 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             await ctx.send("Ten gracz musi grać, aby mógł zginąć")
             return
         await globals.current_game.player_map[gracz].role_class.die()
-        nickname = get_nickname(gracz.id)
         await ctx.message.add_reaction('✅')
 
     @commands.command(name='give', aliases=['statue', 'statuette'])
@@ -247,19 +245,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             return
         player_role = get_player_role()
         dead_role = get_dead_role()
-        winner_role = get_duel_winner_role()
-        loser_role = get_duel_loser_role()
-        searched_role = get_searched_role()
-        hanged_role = get_hanged_role()
-        p = discord.Permissions().all()
-        try:
-            await get_admin_role().edit(permissions=p)
-        except (NameError, discord.errors.Forbidden):
-            pass
         async with ctx.typing():
             for member in dead_role.members + player_role.members:
-                await member.remove_roles(dead_role, winner_role, loser_role,
-                                          searched_role, hanged_role)
+                await member.remove_roles(dead_role)
                 await member.add_roles(player_role)
             await self.remove_cogs()
         await ctx.send(
@@ -269,14 +257,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd
     async def alives(self, ctx):
         """Ⓜ&żywi dla Manitou"""
-        team = ""
         try:
             alive_roles = []
             for role in globals.current_game.roles:
-                if globals.current_game.role_map[
-                    role].player.member in get_player_role().members and not \
-                globals.current_game.role_map[
-                    role].player.member in get_dead_role().members:
+                if globals.current_game.role_map[role].player.member in get_player_role().members \
+                        and not globals.current_game.role_map[role].player.member in get_dead_role().members:
                     alive_roles.append(role)
             team = postacie.print_list(alive_roles)
             await ctx.send(
@@ -324,14 +309,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             return
         globals.current_game.new_day()
         for channel in get_guild().text_channels:
-            if channel.category_id == FRAKCJE_CATEGORY_ID:
-                await channel.send(
-                    "=\nDzień {}".format(globals.current_game.day))
+            if channel.category_id == get_game_channels_category_id():
+                await channel.send("=\nDzień {}".format(globals.current_game.day))
         for member in get_dead_role().members:
-            nickname = get_nickname(member.id)
             if not globals.current_game.player_map[member].role_class.revealed:
-                await globals.current_game.player_map[
-                    member].role_class.reveal()
+                await globals.current_game.player_map[member].role_class.reveal()
         await ctx.message.add_reaction('✅')
 
     @commands.command(name="night")

@@ -7,6 +7,7 @@ import voting_commands
 from game import Game
 from starting import start_game
 from utility import *
+from globals import *
 
 
 class Starting(commands.Cog, name='Początkowe'):
@@ -17,17 +18,12 @@ class Starting(commands.Cog, name='Początkowe'):
     async def add_cogs(self):
         try:
             bot.add_cog(voting_commands.Glosowania(bot))
-            bot.add_cog(roles_commands.PoleceniaPostaci(bot))
-            bot.add_cog(duels_commands.Pojedynki(bot))
-            bot.add_cog(search_hang_commands.Przeszukania(bot))
-            bot.add_cog(search_hang_commands.Wieszanie(bot))
+            if experimental_features:
+                bot.add_cog(roles_commands.PoleceniaPostaci(bot))
+                bot.add_cog(duels_commands.Pojedynki(bot))
+                bot.add_cog(search_hang_commands.Przeszukania(bot))
+                bot.add_cog(search_hang_commands.Wieszanie(bot))
         except discord.errors.ClientException:
-            pass
-        p = discord.Permissions().all()
-        p.administrator = False
-        try:
-            await get_admin_role().edit(permissions=p)
-        except (NameError, discord.errors.Forbidden):
             pass
 
     @commands.command(name='setlist', aliases=['składy'])
@@ -44,7 +40,6 @@ class Starting(commands.Cog, name='Początkowe'):
     @manitou_cmd
     async def rozdawanie(self, ctx, *lista):
         """ⓂRozpoczyna grę z składem podanym jako argumenty funkcji."""
-        # await resetuj_grajacych(ctx) #dopisałem resetowanie nicku w pętli wysyłaniu graczom roli na PM
         async with ctx.typing():
             await self.add_cogs()
             await start_game(ctx, *lista)

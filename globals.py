@@ -9,6 +9,7 @@ help = commands.DefaultHelpCommand(
 bot = commands.Bot(command_prefix='&', help_command=help,
                    owner_id=388764073191538688)
 current_game = None
+experimental_features = False
 
 
 @bot.command(name='HONK', hidden=True)
