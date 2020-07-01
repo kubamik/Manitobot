@@ -1,3 +1,5 @@
+import asyncio
+
 import duels_commands
 import globals
 import roles_commands
@@ -99,4 +101,39 @@ class Starting(commands.Cog, name='Początkowe'):
             return
         await member.remove_roles(get_player_role())
         await member.remove_roles(get_dead_role())
+        await ctx.message.add_reaction('✅')
+
+    @commands.command(name='bede_manitou')
+    async def make_me_manitou(self, ctx):
+        """Służy do wyznaczenia się na manitou."""
+        member = get_member(ctx.author.id)
+        if not globals.current_game == None:
+            await ctx.message.delete(delay=5)
+            await ctx.send("Gra została rozpoczęta, nie można zmieniać manitou",
+                           delete_after=5)
+            return
+        manitou_role = get_manitou_role()
+        tasks = [
+            clear_nickname(member, ctx),
+            member.remove_roles(get_spectator_role()),
+            member.remove_roles(get_dead_role()),
+            member.remove_roles(get_player_role())
+        ]
+        for old_manitou in manitou_role.members:
+            tasks.append(old_manitou.remove_roles(manitou_role))
+        tasks.append(member.add_roles(manitou_role))
+        await asyncio.gather(*tasks)
+        await ctx.message.add_reaction('✅')
+
+    @commands.command(name='nie_jestem_manitou')
+    async def make_me_not_manitou(self, ctx):
+        """Służy do wyznaczenia się na manitou."""
+        member = get_member(ctx.author.id)
+        if not globals.current_game == None:
+            await ctx.message.delete(delay=5)
+            await ctx.send("Gra została rozpoczęta, nie można zmieniać manitou",
+                           delete_after=5)
+            return
+        manitou_role = get_manitou_role()
+        await member.remove_roles(manitou_role)
         await ctx.message.add_reaction('✅')
