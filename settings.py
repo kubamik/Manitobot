@@ -23,6 +23,7 @@ def load_ids():
         GLOSOWANIA_CHANNEL_ID, TOWN_CHANNEL_ID, FRAKCJE_CATEGORY_ID, \
         FAC2CHANN_ID
 
+    FRAKCJE_CATEGORY_ID = int(os.getenv("BOT_CATEGORY"))
     GUILD = discord.utils.get(bot.guilds, name=GUILD_NAME)
     GUILD_ID = GUILD.id
     PLAYER_ROLE_ID = discord.utils.get(GUILD.roles, name=PLAYER_ROLE_NAME).id
@@ -31,18 +32,20 @@ def load_ids():
     MANITOU_ROLE_ID = discord.utils.get(GUILD.roles, name=MANITOU_ROLE_NAME).id
     PRZEGRALEM_ROLE_ID = discord.utils.get(GUILD.roles, name=PRZEGRALEM_ROLE_NAME).id
     NOTATNIK_MANITOU_CHANNEL_ID = discord.utils.get(GUILD.text_channels,
-                                                    name=NOTATNIK_MANITOU_CHANNEL_NAME).id
+                                                    name=NOTATNIK_MANITOU_CHANNEL_NAME,
+                                                    category_id=FRAKCJE_CATEGORY_ID).id
     GLOSOWANIA_CHANNEL_ID = discord.utils.get(GUILD.text_channels,
-                                              name=GLOSOWANIA_CHANNEL_NAME).id
+                                              name=GLOSOWANIA_CHANNEL_NAME,
+                                              category_id=FRAKCJE_CATEGORY_ID).id
     TOWN_CHANNEL_ID = discord.utils.get(GUILD.text_channels,
-                                        name=TOWN_CHANNEL_NAME).id
-    FRAKCJE_CATEGORY_ID = discord.utils.get(GUILD.text_channels,
-                                            name=TOWN_CHANNEL_NAME).category_id
+                                        name=TOWN_CHANNEL_NAME,
+                                        category_id=FRAKCJE_CATEGORY_ID).id
+
     FAC2CHANN_ID = {
-        "Bandyci": discord.utils.get(GUILD.text_channels, name="bandyci").id,
-        "Indianie": discord.utils.get(GUILD.text_channels, name="indianie").id,
-        "Ufoki": discord.utils.get(GUILD.text_channels, name="ufoki").id,
-        "Inkwizycja": discord.utils.get(GUILD.text_channels, name="inkwizycja").id,
+        "Bandyci": discord.utils.get(GUILD.text_channels, name="bandyci", category_id=FRAKCJE_CATEGORY_ID).id,
+        "Indianie": discord.utils.get(GUILD.text_channels, name="indianie", category_id=FRAKCJE_CATEGORY_ID).id,
+        "Ufoki": discord.utils.get(GUILD.text_channels, name="ufoki", category_id=FRAKCJE_CATEGORY_ID).id,
+        "Inkwizycja": discord.utils.get(GUILD.text_channels, name="inkwizycja", category_id=FRAKCJE_CATEGORY_ID).id,
     }
 
 
