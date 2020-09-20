@@ -12,7 +12,7 @@ Informacje o konkretnej kategorii:\t&help <kategoria>
 Skrócona pomoc dla Manitou:\t\t   &help m
 Skrócona pomoc dla graczy\t\t\t &help g'''
 
-bot=commands.Bot(command_prefix = '&', help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False)
+bot=commands.Bot(command_prefix = commands.when_mentioned_or('&'), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False)
 
 current_game = None
 

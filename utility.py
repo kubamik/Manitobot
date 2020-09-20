@@ -4,7 +4,6 @@ import discord
 
 from settings import *
 from globals import bot
-# nie mam pojęcia czemu from globals import * nie działa, from globals import bot działą
 
 lock = False
 
@@ -172,11 +171,11 @@ async def clear_nickname(member, ctx):
     except discord.errors.Forbidden:
       await ctx.send("Nie mam uprawnień aby zresetować nick użytkownika {}".format(new_nickname))
 
-async def converter(ctx, member):
-  _member = nickname_fit(member)
+async def converter(ctx, name):
+  _member = nickname_fit(name)
   if _member is None:
     try:
-      _member = await commands.MemberConverter().convert(ctx, member)
+      _member = await commands.MemberConverter().convert(ctx, name)
     except commands.BadArgument:
       pass
   return _member
@@ -194,8 +193,9 @@ def playing(gracz = -1, *, author = -1):
     raise InvalidRequest("Nie grasz")
 
 class InvalidRequest(commands.CommandError):
-  def __init__(self, reason = None):
+  def __init__(self, reason = None, flag = None):
     self.reason = reason
+    self.flag = flag
 
 class NoEffect(commands.CommandError):
   def __init__(self, reason = "No reason"):

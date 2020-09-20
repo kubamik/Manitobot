@@ -1,7 +1,6 @@
 from utility import * 
-from globals import bot
 
-
+#[(text, activity to format number)], len can be greater than 1
 new_night_com = {
   "Szeryf":[("Wybierz osobę, którą chcesz zamknąć. Użyj komendy `&zamk NICK`", "arrest")],
   "Dziwka":[("Wybierz osobę, którą chcesz zadziwić. Użyj komendy `&dziw NICK`","dziw")],
@@ -36,7 +35,7 @@ operation_com_private = {
   "arrest":"Zostałeś zamknięty. Nie obudzisz się więcej tej nocy.",
   "drink":"Zostałeś upity. Nie obudzisz się więcej tej nocy.",
   "dziw":"**{author}** właśnie Cię zadziwił(a)",
-  "cheat":"Zostałeś ograny przez Szulera, nie obudzisz się więcej tej nocy"
+  "cheat":"Zostałeś ograny, nie obudzisz się więcej tej nocy"
 }
 
 webhook_com = {
@@ -54,7 +53,7 @@ meantime_operation_com = {
 
 operation_com_public = {
   #"wins":("Decyzją Sędziego pojedynek wygrywa **{subject}**",[get_town_channel],[]),
-  "arrest":("{role} zamknął **{subject}**", [get_manitou_notebook], [get_manitou_role]),
+  "arrest":("{role} zamknął **{subject}**", [get_town_channel], []),
   "dziw":("{role} zadziwiła **{subject}**", [get_manitou_notebook], [get_manitou_role]),
   "pasteur":("Pastor sprawdził {subject}",[get_manitou_notebook],[get_manitou_role]),
   "drink":("Upity został {subject}", [get_manitou_notebook], [get_manitou_role]),
@@ -70,20 +69,10 @@ operation_com_public = {
   "holders":("{role} dowiedział się czy {subject} należy do frakcji posiadaczy posążka",[get_manitou_notebook], [get_manitou_role]),
   "finoff":("{role} zabił {subject}", [get_manitou_notebook], [get_manitou_role]),
   "burn":("{role} zabił {subject}", [get_manitou_notebook], [get_manitou_role]),
-  "heretic":("{role} dowiadział się, czy {subject} jest heretykiem", [get_manitou_notebook], [get_manitou_role]),
+  "heretic":("{role} dowiedział się, czy {subject} jest heretykiem", [get_manitou_notebook], [get_manitou_role]),
   "research":("{role} przeszukał {subject}", [get_manitou_notebook], [get_manitou_role])
 }
 
-
-async def night_send(author, member, role):
-  if role in night_action_com_private:
-    await member.send(night_action_com_private[role].format(get_nickname(author.id)))
-  mess_det = night_action_com_public[role]
-  for channel in mess_det[1]:
-    await channel().send(mess_det[0].format(member.name if member.nick==None else member.nick))
-  for funk in mess_det[2]:
-    for person in funk().members:
-      await person.send(mess_det[0].format(get_nickname(member.id)))
 
 
 async def operation_send(operation, author, role, member):
@@ -110,3 +99,64 @@ async def operation_send(operation, author, role, member):
     await member.send(mess.format(author = author.display_name))
   except KeyError:
     pass
+
+
+#new remake
+'''
+operation_com_private = {
+  "arrest":"Zamknięto Cię, nie obudzisz się więcej tej nocy.",
+  "drink":"Upito Cię, nie obudzisz się więcej tej nocy.",
+  "dziw":"**{a_name}** właśnie Cię zadziwił(a)",
+  "cheat":"Ograno Cię, nie obudzisz się więcej tej nocy"
+}
+operation_com_public = {
+  "arrest":("{role}({a_name}) zamknął **{m_name}({m_role})**", True, False),
+  "dziw":("{role}({a_name}) zadziwiła **{m_name}({m_role})**", False, True),
+  "pasteur":("Pastor sprawdził {m_name}({m_role})", False, True),
+  "drink":("Upity został {m_name}({m_role})", False, True),
+  "refuse":("{role}({a_name}) odmówił skorzystania ze swojej zdolności", False, True),
+  "play":("{role}({a_name}) zabił {m_name}({m_role})", False, True),
+  "plant":("{role}({a_name}) podłożył(a) posążek {m_name}({m_role})", False, True),
+  "cheat":("{role}({a_name}) ograł {m_name}({m_role})", False, True),
+  "szam":("{role}({a_name}) sprawdził {m_name}({m_role})", False, True),
+  "who":("{role}({a_name}) dowiedział(-o) się kto ma posążek", False, True),
+  "detect":("{role}({a_name}) sprawdził {m_name}({m_role})", False, True),
+  "eat":("{role}({a_name}) sprawdził rolę {m_name}({m_role})", False, True),
+  "herb":("{role}({a_name}) podłożyła ziólka {m_name}({m_role})", False, True),
+  "holders":("{role}({a_name}) dowiedział się czy {m_name}({m_role}) należy do frakcji posiadaczy posążka", False, True),
+  "finoff":("{role}({a_name}) zabił {m_name}({m_role})", False, True),
+  "burn":("{role}({a_name}) zabił {m_name}({m_role})", False, True),
+  "heretic":("{role}({a_name}) dowiedział się, czy {m_name}({m_role}) jest heretykiem", False, True),
+  "research":("{role}({a_name}) przeszukał {m_name}({m_role})", False, True)
+}
+async def operation_send(operation, author, member):#member, author : <class Player>
+  kwargs = {
+    'role':author.role.replace('_', ' '),
+    'a_name':author.member.display_name,
+  }
+  if not member is None:
+    kwargs['m_name'] = member.member.display_name,
+    kwargs['m_role'] = member.role.replace('_', ' ')
+  if operation in operation_com_public:
+    try:
+      com = webhook_com[operation]
+      for webhk in await get_town_channel().webhooks():
+        if webhk.name == "Manitobot {}".format(kwargs[role]):
+          wbhk = webhk
+          break
+      else:
+        wbhk = await get_town_channel().create_webhook(name="Manitobot {}".format(kwargs[role]))
+      await wbhk.send(com[0].format(**kwargs), username=kwargs[a_name], avatar_url = com[1])
+    except:
+      mess_det = operation_com_public[operation]
+      if mess_det[1]:
+        await get_town_channel().send(mess_det[0].format(**kwargs))
+      if mess_det[2]:
+        await send_to_manitou(mess_det[0].format(**kwargs))
+  try:
+    mess = operation_com_private[operation]
+    await member.send(mess.format(**kwargs))
+  except KeyError:
+    pass
+
+'''

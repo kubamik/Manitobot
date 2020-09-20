@@ -142,7 +142,8 @@ class Search(Hang):
   def search_remove_member(self, gracz):
     try:
       for member in self.searched[gracz]:
-        del self.searchers[member][self.searchers[member].index(gracz)]
+        self.searchers[member].remove(gracz)
+        #del self.searchers[member][self.searchers[member].index(gracz)]
         if len(self.searchers[member]) == 0:
           del self.searchers[member]
       del self.searched[gracz]
@@ -150,7 +151,8 @@ class Search(Hang):
       pass
     try:
       for member in self.searchers[gracz]:
-        del self.searched[member][self.searched[member].index(gracz)]
+        self.searched[member].remove(gracz)
+        #del self.searched[member][self.searched[member].index(gracz)]
         if len(self.searched[member]) == 0:
           del self.searched[member]
       del self.searchers[gracz]

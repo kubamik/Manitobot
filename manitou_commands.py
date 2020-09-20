@@ -156,10 +156,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     except InvalidRequest as err:
       await ctx.send(err.reason)
 
-  @commands.command(name='who_has',aliases=['whos','whohas'])
+  @commands.command(name='who_has',aliases=['whos'])
   @manitou_cmd
   async def who_has(self, ctx):
-    '''Ⓜ/&whos/&who_has/Wysyła do Manitou kto ma aktualnie posążek'''
+    '''Ⓜ/&whos/Wysyła do Manitou kto ma aktualnie posążek'''
     try:
       c = "Posążek {}jest podłożony i ma go **{}**, frakcja **{}**".format("nie " if not globals.current_game.statue.planted else "", globals.current_game.statue.holder.display_name, globals.current_game.statue.faction_holder)
     except AttributeError:
@@ -207,9 +207,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   async def end_game(self, ctx):
     """ⓂKończy grę"""
     async with ctx.typing():
-      for role in globals.current_game.role_map.values():
-        if not role.revealed:
-          await role.reveal()
+      for player in globals.current_game.player_map.values():
+        if not player.role_class.revealed:
+          await player.role_class.reveal()
       try:
         await globals.current_game.message.unpin()
       except (discord.NotFound, discord.Forbidden, discord.HTTPException, AttributeError):
@@ -235,19 +235,21 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await m.add_reaction('✅')
     await m.add_reaction('⛔')
     def check_func(r, u):
-      if get_member(u.id) not in get_manitou_role().members or r.emoji not in ('✅', '⛔') or r.message.id != m.id:
+      if any([get_member(u.id) not in get_manitou_role().members, r.emoji not in ('✅', '⛔'), r.message.id != m.id]):
         return False
       return True
     try:
       reaction, _ = await bot.wait_for('reaction_add', check=check_func, timeout=60)
-      if reaction.emoji == '✅':
+      if reaction.emoji == '⛔':
         raise asyncio.TimeoutError
-      await ctx.message.delete(delay=0)
     except asyncio.TimeoutError:
+      await ctx.message.delete(delay=0)
+    else:
       await self.end_game(ctx)
       await self.resetuj_grajacych(ctx)
       await ctx.message.add_reaction('✅')
-    await m.delete()
+    finally:
+      await m.delete()
     
 
   @commands.command(name='Manitou_help', aliases=['mhelp'])
@@ -324,7 +326,7 @@ Pozostali:{}""".format(len(alive_roles),team))
   @commands.command(name='rioters_count', aliases=['criot'])
   @manitou_cmd
   async def countrioters(self, ctx):
-    '''ⓂZwraca liczbę zbuntowanych graczy'''
+    '''Ⓜ/criot/Zwraca liczbę zbuntowanych graczy'''
     await ctx.send("Liczba buntowników wynosi {}".format(len(globals.current_game.rioters)))
 
   @commands.command(name='searches')
@@ -355,6 +357,25 @@ Pozostali:{}""".format(len(alive_roles),team))
     '''Ⓜ/&morn/Ustawia czas odjazdu bandytów na podany poranek'''
     globals.current_game.bandit_night = n
     globals.current_game.bandit_morning = True
+    await ctx.message.add_reaction('✅')
+
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
+  @manitou_cmd
+  async def revealing_on(self, ctx):
+    globals.current_game.reveal_dead = True
+
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
+  @manitou_cmd
+  async def revealing_on(self, ctx):
+    '''Ⓜ/rev_on/Włącza ujawnianie postaci po śmierci'''
+    globals.current_game.reveal_dead = True
+    await ctx.message.add_reaction('✅')
+
+  @commands.command(name='switch_revealing_off', aliases=['rev_off'])
+  @manitou_cmd
+  async def revealing_off(self, ctx):
+    '''Ⓜ/rev_off/Wyłącza ujawnianie postaci po śmierci'''
+    globals.current_game.reveal_dead = False
     await ctx.message.add_reaction('✅')
 
   @commands.command(name="day")

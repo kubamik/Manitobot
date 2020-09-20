@@ -1,7 +1,7 @@
-from utility import *
 from discord.ext import commands
 import discord
 
+from utility import *
 from settings import FRAKCJE_CATEGORY_ID
 import globals
 from starting import if_game

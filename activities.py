@@ -5,8 +5,8 @@ import postacie
 from utility import *
 import globals
 import permissions
-from night_comunicates import webhook_com, operation_com_public, meantime_operation_com 
-from postacie import get_faction, send_faction, give_faction
+from night_comunicates import webhook_com, operation_com_public, meantime_operation_com
+from postacie import get_faction, send_faction, give_faction, get_role_details
 
 class Activity:
   def __init__(self):
@@ -156,14 +156,13 @@ class Activity:
     self.my_activities["start"] = "uncopy"
     self.my_activities["copy"] = 1
     await send_to_manitou(c)
-    await get_manitou_notebook().send(c)
 
   async def angelize(self):
     r = permissions.role_abilities["inqui_change_on_death"]
     angel = globals.current_game.role_map[r].player.member
-    globals.current_game.swap(self.player.member, angel)
-    await angel.send("Skorzystałeś ze swojej umiejętności twoja nowa rola to: {}".format(self.name))
+    await angel.send("Skorzystałeś ze swojej umiejętności twoja nowa rola to:\n {}".format(get_role_details(self.name, self.name)))
     c = "{} jako Anioł przejął rolę {}, czyli {}".format(angel.display_name, self.player.member.display_name, self.name)
+    globals.current_game.swap(self.player.member, angel)
     await send_to_manitou(c)
     await get_manitou_notebook().send(c)
 
@@ -245,7 +244,10 @@ class Activity:
     except discord.HTTPException:
       role = list(self.name.split('_'))
       role[0] = role[0][:3] + '.'
-      await member.edit(nick=nickname +'({})'.format(" ".join(role)))
+      if len(nickname +'({})'.format(" ".join(role)))<32:
+        await member.edit(nick=nickname +'({})'.format(" ".join(role)))
+      else:
+        await member.send(f"Wepchnij jakoś swoją rolę ({' '.join(role)}) do nicka")
 
   def if_duel(self):
     if not self.member is None:

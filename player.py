@@ -1,6 +1,5 @@
 import discord
 
-from permissions import can_refuse
 
 class Player:
 
@@ -12,9 +11,7 @@ class Player:
     self.protected = False
     self.killing_protected = False
     self.role_class = None
-  
-  def can_refuse(self):
-    return self.role in can_refuse
+    self.follower = None
 
   async def new_day(self):
     self.sleeped = False

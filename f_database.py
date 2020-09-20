@@ -1,3 +1,7 @@
+FACTION_FEATURES = {
+  "START_WITH_STATUE":"Bandyci"
+}
+
 factions_roles = {
   "Bandyci":["Herszt","Mściciel","Złodziej","Zły_Rew","Szantażysta","Szuler"],
   "Indianie":["Wódz","Szaman","Szamanka","Samotny_Kojot", "Wojownik", "Płonący_Szał","Lornecie_Oko","Cicha_Stopa"],

@@ -1,5 +1,6 @@
 from discord.ext import commands
 import random
+import typing
 
 from utility import manitou_cmd, get_nickname, InvalidRequest, get_player_role, get_searched_role
 import votings
@@ -31,7 +32,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
 
   @commands.command(name='vote')
   @manitou_cmd
-  async def glosowanie_custom(self, ctx, title, count, *options):
+  async def glosowanie_custom(self, ctx, title, count : typing.Optional[int], *options):
     """ⓂRozpoczyna customowe głosowanie:
     Argumentami są:
       -tytuł głosowania.

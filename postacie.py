@@ -103,7 +103,27 @@ roles={
 
 "anioł":"**Anioł (Inkwizycja)** przejmuje kartę pierwszego zabitego w nocy Inkwizytora innego niż Biskup",
 
-"wikary":"**Wikary (Inkwizycja)** co noc może dowiedzieć się, czy dana osoba należy do frakcji posiadaczy posążka"
+"wikary":"**Wikary (Inkwizycja)** co noc może dowiedzieć się, czy dana osoba należy do frakcji posiadaczy posążka",
+
+"miastowy":"**Miastowy (Miasto)** zwykły mieszkaniec miasta",
+
+"mafiozo":"**Mafiozo (Mafia)** szeregowy członek mafii",
+
+"boss":"**Boss (Mafia)** szef mafii",
+
+"detektyw":"**Detektyw (Miasto)** co noc może sprawdzić frakcję jednej osoby",
+
+"cattani":"**Cattani (Miasto)** co noc może sprawdzić frakcję jednej osoby",
+
+"komisarz":"**Komisarz (Miasto)** co noc może sprawdzić frakcję jednej osoby",
+
+"lekarz":"**Lekarz (Miasto)** co noc leczy jedną osobę, jeśli trafi na osobę zastrzeloną przez mafię ta osoba nie ginie",
+
+"kurtyzana":"**Kurtyzana (Miasto)** co noc śpi z  jedną osobą, jeśli trafi na osobę zastrzeloną przez mafię ta osoba nie ginie",
+
+"wariat":"**Wariat (Miasto)** w momencie śmierci wybiera jedną osobę, która ginie razem z nim",
+
+"drwal":"**Drwal (Miasto)** w momencie śmierci wybiera jedną osobę, która ginie razem z nim"
 }
 
 factions = {

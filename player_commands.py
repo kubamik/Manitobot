@@ -8,7 +8,7 @@ import globals
 import postacie
 import permissions
 
-ankietawka = '@everyone\n**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
+ankietawka = '**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
 
 ankietawka_emoji = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷', '🚫', '👁️']
 
@@ -17,7 +17,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   def __init__(self, bot):
         self.bot = bot
 
-  @bot.listen('on_member_join')
+  """@bot.listen('on_member_join')
   async def new_member_guild(member):
     await member.add_roles(get_newcommer_role())
 
@@ -32,7 +32,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
         break
     else:
       wbhk = await ch.create_webhook(name='System')
-    await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')
+    await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')"""
     
   
   @commands.command(name='postacie', aliases=['lista'])
@@ -44,10 +44,10 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
 
   @commands.command(name='postać')
   async def role_help(self, ctx,*role):
-    """Zwraca informacje o postaci podanej jako argument"""
+    '''Zwraca informacje o postaci podanej jako argument'''
     await postacie.role_details(ctx, role)
 
-  @commands.command(name='adminuj')
+  """@commands.command(name='adminuj')
   async def adminate(self, ctx, member):
     '''Mianuje nowego admina'''
     author = get_member(ctx.author.id)
@@ -107,7 +107,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     def proper_members(m):
       return m.author in new_members
     print(ctx.message.created_at-dt.timedelta(minutes=time))
-    await ctx.channel.purge(after=ctx.message.created_at-dt.timedelta(minutes=time), before=ctx.message.created_at, check=proper_members)
+    await ctx.channel.purge(after=ctx.message.created_at-dt.timedelta(minutes=time), before=ctx.message.created_at, check=proper_members)"""
     
   @commands.command(name='czy_gram')
   async def if_registered(command, ctx):

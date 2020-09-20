@@ -157,3 +157,24 @@ class Faction(Activity):
       await globals.current_game.nights[-1].night_next()
     except IndexError:
       pass
+
+  async def on_die(self, role):
+    try:
+      if globals.current_game.nights[-1].active_faction == self.faction:
+        if self.faction.leader == self.player:
+          for role in self.faction.roles.values():
+            if role.player.member not in get_dead_role() and not role.player.sleeped:
+              self.faction.leader = role.player
+              await self.faction.channel.send("Ginie {}\nNowym liderem zostaje {}".format(self.player.member.display_name, self.faction.leader.role))
+              break
+          else:
+            pass#Uśpienie frakcji
+        await self.faction.channel.set_permissions(self.player.member,overwrite=None)
+    except (KeyError, AttributeError, discord.errors.Forbidden):
+      pass
+
+  async def make_leader(self, overwrite):
+    leader = None
+    for role in self.faction.roles.values():
+      if role.player.member not in get_dead_role() and not role.player.sleeped:
+        leader = role.player

@@ -6,26 +6,22 @@ import utility
 from utility import *
 from duel_search import Search
 from duel import Duel
-from roles_commands import PoleceniaPostaci as PP
 
 night_order = ["Lucky_Luke", "Dziwka", "Szeryf", "Pastor", "Opój", "Pijany_Sędzia", "Hazardzista","Lusterko","Bandyci", "Mściciel", "Złodziej", "Szuler", "Szaman", "Indianie","Lornecie_Oko", "Ufoki", "Inkwizycja"]
 
 class Night:
   def __init__(self):
-    self.active_player = None
     self.active_faction = None
     self.active_number = 0
     self.active_role = None
-    self.sleeped_players = set()
-    self.protected_players = set()
-    self.killing_protected_players = set()
     self.used_roles = []
     self.active_number = 0
     self.output = ""
     self.last_mess = None
     self.herbed = None
     self.bishop_base = None
-    PP.lock = False
+    self.statue_owners = [None if not globals.current_game \
+    else globals.current_game.statue.faction_holder]
 
   def what_next(self):
     try:

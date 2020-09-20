@@ -1,5 +1,14 @@
 #Temporary file, work in progress
 
+#TODO
+#Blokada day, night
+#Reagowanie na emoji po id
+#Naprawa wysyłania sygnałów, lista posiadaczy posążka(Płonący Szał), lepsze pokazywanie następnej postaci, komunikaty przy skipowaniu, night_com
+#jedna deaktywacja warunkowa, 2 razy &no(work + unwork), poprawa komunikatów(baza, role), kładzenie frakcji spać po śmierci ostatniego członka
+#special keywords in permissions, join special_search with search
+#komunikat, że ktoś skończył akcję dla Manitou
+
+
 import discord
 
 from globals import bot

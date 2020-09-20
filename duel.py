@@ -47,8 +47,10 @@ class Duel:
     del self.dared[author][0]
     del self.duels_order[self.duels_order.index(author)]'''
     return "**{}** odrzucił pojedynek od **{}**".format(author.display_name,member.display_name)
+    
 
-  def remove_member(self, member):
+  def remove_member(self, member):#, role_cls):#use on die
+    #member = role_cls.player.member
     if member in self.daring:
       for player in self.daring[member]:
         if self.dared[player].index(member) == 0 and player in self.duels_queue:
@@ -71,29 +73,15 @@ class Duel:
       self.duels_queue.remove(member)
     while self.duels_order.count(member) > 0:
       self.duels_order.remove(member)
+    '''if role_cls in self.duelers and self.duel:
+      await self.interrupt()
+      await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
+    await self.if_next()'''
+
     #print("\n\n\n\ndared", self.dared.items())
     #print('daring', self.daring.items())
     #print('queue',self.duels_queue)
     #print('order',self.duels_order)
-    '''if member in self.daring:
-      for player in self.daring[member]:
-        if self.dared[player].index(member) == 0 and player in self.duels_queue:
-          del self.duels_queue[self.duels_queue.index(player)]
-          target = self.dared[player].index(member)
-        num = 0
-        for i,person in enumerate(self.duels_order):
-          if num == target:
-            del self.duels.order[i]
-        del self.dared[player][self.dared[player].index(member)]
-      del self.daring[member]
-    if member in self.dared:
-      for player in self.dared[member]:
-        del self.daring[player][self.daring[player].index(member)]
-      del self.dared[member]
-    while self.duels_queue.count(member) > 0:
-      del self.duels_queue[self.duels_queue.index(member)]
-    while self.duels_order.count(member) > 0:
-      del self.duels_order[self.duels_order.index(member)]'''
   
 
   def accept(self, author):
@@ -204,6 +192,7 @@ class Duel:
       try:
         await globals.current_game.player_map[member].role_class.new_activity(ctx, "revoling")
       except InvalidRequest as err:
+        #return err.flag == 0
         return err.reason == "Nie możesz więcej użyć tej zdolności"
     for member, vote in filter(lambda v: v[0] != "Wstrzymuję_Się",votes):
       member = await converter(ctx, member)

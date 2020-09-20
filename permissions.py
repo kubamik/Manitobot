@@ -1,13 +1,4 @@
-can_refuse = ["Pijany_Sędzia", "Opój"]
-
-activity_start = {
-  "Szeryf":0,
-  "Pijany_Sędzia":1,
-  "Opój":1,
-  "Pastor":0,
-  "Dziwka":-1
-}
-
+#(gets up until(-1 - only zero night), number of using usable ability, abilities with keywords)
 role_activities = {
   "Sędzia":(-1,1,{"wins":1}),
   "Szeryf":(0,-1,{"arrest":-1}),

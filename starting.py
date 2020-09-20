@@ -12,14 +12,13 @@ import globals
 from role import Role
 from player import Player
 from postacie import get_faction
+from mafia import Mafia
 
 
 
-async def start_game(ctx, *lista):
-  roles = open('Postacie.txt','w')
+async def start_game(ctx, *lista, mafia = False, faction_data = ()):
+  roles = open('Postacie.txt', 'w')
   gracze = list(get_player_role().members)
-  guild = get_guild()
-  member = get_member(ctx.author.id)
   if globals.current_game != None:
     await ctx.send("Musisz najpierw zakończyć trwającą grę, użyj `&end`.")
     return
@@ -30,7 +29,7 @@ async def start_game(ctx, *lista):
     return
   
   
-  globals.current_game = Game()
+  globals.current_game = Game() if not mafia else Mafia()
 
   lista_shuffled = list(lista)
   shuffle(lista_shuffled)
@@ -52,11 +51,9 @@ async def start_game(ctx, *lista):
 Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, role)))
     except discord.errors.Forbidden:
       await ctx.send(
-			    "Nie można wysłać wiadomości do {}\nGra nie została rozpoczęta".format(get_nickname(member.id)))
-      globals.current_game = None
-      return
+			    "Nie można wysłać wiadomości do {}\nKonieczne będzie ręczne przekazanie roli".format(get_nickname(member.id)))
     globals.current_game.add_pair(member, role)
-  globals.current_game.make_factions(lista)
+  globals.current_game.make_factions(lista, faction_data)
   for member in sorted(gracze, key = lambda m: get_nickname(m.id).lower()):
     c += "{};\t{}\n".format(get_nickname(member.id),globals.current_game.player_map[member].role)
     k = lambda m: get_nickname(m.id)
@@ -81,7 +78,7 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
   for channel in get_guild().text_channels:
     if channel.category_id == FRAKCJE_CATEGORY_ID  or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
       await channel.send(RULLER)
-  team = postacie.print_list(lista)
+  team = globals.current_game.print_list(lista, faction_data)
   globals.current_game.message = await get_town_channel().send("""Rozdałem karty. Liczba graczy: {}
 Gramy w składzie:{}""".format(len(lista), team))
   try:

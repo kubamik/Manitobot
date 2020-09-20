@@ -8,7 +8,7 @@ from globals import bot
 import globals
 import permissions
 from player import Player
-from night_comunicates import night_send, operation_send, new_night_com
+from night_comunicates import operation_send, new_night_com
 from postacie import get_faction, give_faction
 from activities import Activity
 
@@ -65,11 +65,12 @@ class Role(Activity):
 
 
 
-  async def new_activity(self, ctx, operation, member = None): #working in progress
+  async def new_activity(self, ctx, operation, member = None):
+    #works in progress
     if operation not in self.my_activities:
-      raise InvalidRequest("Nie możesz użyć tego polecenia")
+      raise InvalidRequest("Nie możesz użyć tego polecenia", 1)
     if self.my_activities[operation] == 0:
-      raise InvalidRequest("Nie możesz więcej użyć tej zdolności")
+      raise InvalidRequest("Nie możesz więcej użyć tej zdolności", 0)
     if not member is None:
       member = await converter(ctx, member)
       if member not in get_guild().members:
@@ -90,6 +91,8 @@ class Role(Activity):
     except InvalidRequest as err:
       raise InvalidRequest(err.reason)
     self.my_activities[operation] -= 1
+    #if self.my_activities[operation]>-1:
+      #self.count -= 1
     if output:
       await ctx.send(output)
     await operation_send(operation, self.player.member, self.name,  member)
@@ -99,18 +102,23 @@ class Role(Activity):
 
   async def die(self, reason = None):
     gracz = self.player.member
+    #duel + search
     try:
       globals.current_game.days[-1].remove_member(gracz)
       globals.current_game.days[-1].search_remove_member(gracz)
-      if self in globals.current_game.days[-1].duelers and globals.current_game.duel:
+      if self in globals.current_game.days[-1].duelers and globals.current_game.days[-1].duel:
         await globals.current_game.days[-1].interrupt()
         await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
     except (InvalidRequest, AttributeError):
       pass
+    
+    #reset player
     await gracz.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(), get_duel_winner_role())
     await gracz.add_roles(get_dead_role())
     nickname = gracz.display_name
     await get_town_channel().send("Ginie **{}**".format(nickname))
+
+    #actions in abilities
     self.die_reason = reason
     try:
       actions = self.my_activities["die"]
@@ -119,12 +127,12 @@ class Role(Activity):
           await f()
         else:
           f()
-    except KeyError:
+    except (KeyError,InvalidRequest):
       pass
-    except InvalidRequest:
-      pass
-    try:
-      globals.current_game.stats[give_faction(self.name)] -= 1
+
+    #faction: leader + channel
+    #globals.current_game.stats[give_faction(self.name)] -= 1#doing by Game.on_die
+    '''try:
       if globals.current_game.nights[-1].active_faction == self.faction:
         if self.faction.leader == self.player:
           for role in self.faction.roles.values():
@@ -136,18 +144,22 @@ class Role(Activity):
             pass#Uśpienie frakcji
         await self.faction.channel.set_permissions(self.player.member,overwrite=None)
     except (KeyError, AttributeError, discord.errors.Forbidden):
-      pass
+      pass'''
+
+    #reset player
     if not nickname.startswith('+'):
       try:
         await gracz.edit(nick = '+' + nickname)
-        await bot.wait_for('member_update', check=plused, timeout=3)
+        await bot.wait_for('member_update', check=plused, timeout=2)
       except discord.errors.Forbidden:
         await gracz.send("Dodaj sobie '+' przed nickiem")
       except asyncio.TimeoutError:
         pass
-    if not globals.current_game.night and not self.revealed:
+    if not any([globals.current_game.night, self.revealed, globals.current_game.reveal_dead]):
       await self.reveal()
-    if self.die_reason == "herbs":
+
+    #winning conditions
+    '''if self.die_reason == "herbs":
       globals.current_game.statue.day_search(self.player.member)
     self.indian_win()
     if not globals.current_game.night:
@@ -155,8 +167,12 @@ class Role(Activity):
       if self.die_reason != "herbs":
         globals.current_game.statue.day_search(self.player.member)
     else:
-      self.inqui_alone_win()
-    self.unfollow()
+      self.inqui_alone_win()'''
+    globals.current_game.on_die(reason, self.player)
+
+    #self.unfollow() - use with following
+    
+    #new duel
     try:
       await globals.current_game.days[-1].if_next()
     except AttributeError:
@@ -175,3 +191,10 @@ class Role(Activity):
     if self.player.member in get_dead_role().members and self.revealed:
       return False
     return True
+
+
+  def can_use(*abilities):
+    for a in abilities:
+      if a in self.my_activities:
+        return a
+    return abilities[0]

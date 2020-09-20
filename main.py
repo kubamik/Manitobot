@@ -1,5 +1,4 @@
 import os
-import discord
 import datetime as dt
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
@@ -11,6 +10,7 @@ import duels_commands
 import hang_commands
 import player_commands
 import voting_commands
+import management_commands
 import manitou_commands
 import roles_commands
 import roles_calling_commands
@@ -32,10 +32,12 @@ async def on_ready():
     bot.add_cog(manitou_commands.DlaManitou(bot))
     bot.add_cog(start_commands.Starting(bot))
     bot.add_cog(player_commands.DlaGraczy(bot))
+    bot.add_cog(management_commands.Management(bot))
     bot.get_command('g').help = playerhelp()
     bot.get_command('m').help = manitouhelp()
   except (discord.errors.ClientException, AttributeError):
     pass
+  #ctx = commands.Context(prefix='&', message=)
   
  
 @bot.command(name='pomoc')
@@ -185,14 +187,18 @@ async def on_command_error(ctx, error):
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
-    await ctx.send("Błędny parametr", delete_after=5)
+    await ctx.send(f"Błędny parametr\n||{error}||", delete_after=5)
+    #raise error
   elif isinstance(error, commands.CommandOnCooldown):
     await ctx.send("Mam okres ochronny", delete_after=5)
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
-    await ctx.send("Gra nie została rozpoczęta", delete_after=5)
+    await ctx.send("Gra nie została rozpoczęta lub rozpoczęty typ gry nie obsługuje tego polecenia", delete_after=5)
     await ctx.message.delete(delay=5)
     report_error(error)
+  elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
+    await ctx.send("Podano błędny rodzaj argumentu", delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.DisabledCommand):
     await ctx.send("Prace nad tą komendą trwają. Nie należy jej używać.", delete_after=5)
     await ctx.message.delete(delay=5)

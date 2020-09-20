@@ -1,4 +1,5 @@
 from utility import playing, GameEnd, send_to_manitou, get_town_channel, get_manitou_notebook
+from f_database import FACTION_FEATURES
 from postacie import give_faction
 import globals
 
@@ -6,7 +7,7 @@ import globals
 class Statue:
   def __init__(self):
     self.holder = None
-    self.faction_holder = "Bandyci"
+    self.faction_holder = FACTION_FEATURES["START_WITH_STATUE"]
     self.planted = False
     self.last_change = -1
     self.followed = {}
@@ -29,7 +30,7 @@ class Statue:
         role = globals.current_game.player_map[auth].role
         faction = give_faction(role)
         self.faction_holder = faction
-        c = "{} przejmuje posążek w wyniku śledzenia".format(globals.current_game.player_map[auth].role)
+        c = "{} przejmuje(-ą) posążek w wyniku śledzenia".format(globals.current_game.player_map[auth].role)
         await send_to_manitou(c)
         await get_manitou_notebook().send(c)
         return c[:-19]

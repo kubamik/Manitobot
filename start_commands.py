@@ -1,6 +1,7 @@
 from random import randint
 from discord.ext import commands
 import discord
+from collections import Counter
 
 from utility import *
 from settings import *
@@ -41,6 +42,41 @@ class Starting(commands.Cog, name='Początkowe'):
       await get_admin_role().edit(permissions = p)
     except (NameError, discord.errors.Forbidden):
       pass
+
+  async def add_cogs_lite(self):
+    try:
+      bot.add_cog(voting_commands.Glosowania(bot))
+    except discord.errors.ClientException:
+      pass
+    bot.get_command('g').help = playerhelp()
+    bot.get_command('m').help = manitouhelp()
+    p = discord.Permissions().all()
+    p.administrator = False
+    try:
+      await get_admin_role().edit(permissions = p)
+    except (NameError, discord.errors.Forbidden):
+      pass
+
+  @commands.command(name="start_mafia")
+  @manitou_cmd
+  async def mafia_start(self, ctx, *roles : str):
+    '''Rozpoczyna mafię.\nW argumencie należy podać listę postaci (oddzielonych spacją) z liczebnościami w nawiasie (jeśli są różne od 1) np. Miastowy(5).\nWażne jest zachowanie kolejności - rola mafijna jako ostatnia lub w przypadku większej ilości ról mafii oddzielenie ich '|'.\nnp. &start_mafia Miastowy(7) Detektyw Lekarz | Boss Mafiozo(2) lub\n&start_mafia Miastowy(3) Mafiozo'''
+    roles = list(roles)
+    stop = -1 if '|' not in roles else roles.index('|')
+    roles_list = Counter()
+    for role in roles:
+      if role == '|':
+        i = roles.index(role)
+        roles.remove(role)
+        role = roles[i]
+      count = 1
+      if role.endswith(')'):
+        count = int(role[:-1].rpartition('(')[2])
+        role = role[:-3]
+      roles_list[role] = count
+    await self.add_cogs_lite()
+    await start_game(ctx, *roles_list.elements(), mafia=True,\
+    faction_data=(list(roles_list)[ : stop], list(roles_list)[stop : ]))
 
   @commands.command(name='setlist',aliases=['składy'])
   async def składy(self, ctx):
