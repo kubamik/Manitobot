@@ -31,7 +31,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     bot.get_command('m').help = manitouhelp()
     p = discord.Permissions().all()
     try:
-      await get_admin_role().edit(permissions = p)
+      await get_admin_role().edit(permissions = p, colour = 0xffa9f9)
     except (NameError, discord.errors.Forbidden):
       pass
     

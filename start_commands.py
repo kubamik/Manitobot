@@ -39,7 +39,7 @@ class Starting(commands.Cog, name='Początkowe'):
     p = discord.Permissions().all()
     p.administrator = False
     try:
-      await get_admin_role().edit(permissions = p)
+      await get_admin_role().edit(permissions = p, colour = 0)
     except (NameError, discord.errors.Forbidden):
       pass
 

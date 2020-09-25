@@ -3,7 +3,7 @@ from functools import wraps
 import discord
 
 from settings import *
-from globals import bot
+from globals import bot, command_prefix
 
 lock = False
 
@@ -116,7 +116,7 @@ def help_format(command):
     if (len(c.aliases) > 0):
       txt += "*{pref}" + "*\n*{pref}".join(c.aliases) + "*\n"
     txt += c.help.rpartition('Ⓜ')[2].rpartition('/')[2]
-    return txt.format(pref=bot.command_prefix, name=c.name) + '\n\n'
+    return txt.format(pref=command_prefix, name=c.name) + '\n\n'
   except AttributeError:
     return ''
 

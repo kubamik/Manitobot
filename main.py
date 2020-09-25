@@ -16,7 +16,7 @@ import roles_commands
 import roles_calling_commands
 import start_commands
 import search_hang_commands
-#from keep_alive import keep_alive
+from keep_alive import keep_alive
 from utility import *
 import utility
 from settings import *
@@ -38,6 +38,13 @@ async def on_ready():
   except (discord.errors.ClientException, AttributeError):
     pass
   #ctx = commands.Context(prefix='&', message=)
+
+
+@bot.command(name='exec', hidden=True)
+@commands.is_owner()
+async def execute(ctx, *, string):
+  '''ⒹUruchamia podany kod'''
+  exec(string)
   
  
 @bot.command(name='pomoc')
@@ -227,7 +234,7 @@ async def on_command_error(ctx, error):
 #async def role_change(before, after):
 
 
-#keep_alive()
+keep_alive()
 token = os.environ.get("TOKEN")
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 bot.run(token)
