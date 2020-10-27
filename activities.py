@@ -240,7 +240,7 @@ class Activity:
     try:
       await member.edit(nick=nickname + "({})".format(self.name.replace('_',' ')))
     except discord.errors.Forbidden:
-      await member.send("Zmień swój nick na {}, bo ja nie mam uprawnień.".format(nickname+"({})".format(self.name.replace('_',' '))))
+      pass
     except discord.HTTPException:
       role = list(self.name.split('_'))
       role[0] = role[0][:3] + '.'

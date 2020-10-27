@@ -3,6 +3,7 @@ from discord.ext import commands
 import discord
 from collections import Counter
 
+import control_panel
 from utility import *
 from settings import *
 import globals
@@ -32,6 +33,7 @@ class Starting(commands.Cog, name='Początkowe'):
       bot.add_cog(duels_commands.Pojedynki(bot))
       bot.add_cog(search_hang_commands.Przeszukania(bot))
       bot.add_cog(search_hang_commands.Wieszanie(bot))
+      bot.add_cog(control_panel.ControlPanel(bot))
     except discord.errors.ClientException:
       pass
     bot.get_command('g').help = playerhelp()
@@ -96,7 +98,7 @@ class Starting(commands.Cog, name='Początkowe'):
     #await resetuj_grajacych(ctx) #dopisałem resetowanie nicku w pętli wysyłaniu graczom roli na PM
     async with ctx.typing():
       await self.add_cogs()
-      await start_game(ctx,*lista)
+      await start_game(ctx, *lista)
     
       
 
@@ -118,7 +120,7 @@ class Starting(commands.Cog, name='Początkowe'):
   @manitou_cmd
   async def come_back(self, ctx):
     """ⓂRozpoczyna grę, używać gdy bot się wykrzaczy a potrzeba zrobić głosowanie"""
-    if globals.current_game != None:
+    if if_game():
       await ctx.message.delete(delay=5)
       await ctx.send("Gra już trwa", delete_after=5)
       return
@@ -147,7 +149,7 @@ class Starting(commands.Cog, name='Początkowe'):
     """Służy do wyrejestrowania się z gry."""
     guild = get_guild()
     member = get_member(ctx.author.id)
-    if not globals.current_game==None:
+    if if_game():
       await ctx.message.delete(delay=5)
       await ctx.send("Gra została rozpoczęta, nie możesz nie grać", delete_after=5)
       return

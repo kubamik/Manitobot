@@ -1,8 +1,10 @@
 from discord.ext import commands
 import discord
-from random import SystemRandom
+
+from basic_models import NotAGame
 
 command_prefix = '&'
+
 
 class Help(commands.DefaultHelpCommand):
   def __init__(self):
@@ -15,9 +17,16 @@ Skrócona pomoc dla Manitou:\t\t   {0}help m
 Skrócona pomoc dla graczy\t\t\t {0}help g'''.format(command_prefix)
 
 
-bot=commands.Bot(command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False)
+intents = discord.Intents.default()
+intents.members = True
 
-current_game = None
+
+bot = commands.Bot(
+  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False,
+  intents = intents)
+
+
+current_game = NotAGame()
 
 
 @bot.command(name='_HONK', hidden=True)
@@ -51,7 +60,6 @@ async def honk(ctx):
 @bot.command(name='pingu', hidden=True)
 async def honk(ctx):
   await ctx.send("NOOT NOOT")
-
 
 @bot.command(name='ważnawiadomość', hidden=True)
 async def honk(ctx, member=None):

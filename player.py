@@ -23,3 +23,9 @@ class Player:
         await self.member.edit(nick=nickname[:-1])
       except discord.errors.Forbidden:
         pass
+
+  def sleep(self):
+    self.sleeped = True
+
+  def unsleep(self):
+    self.sleeped = False

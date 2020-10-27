@@ -46,7 +46,6 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
     except KeyError as err:
       await ctx.message.delete(delay=5)
       await ctx.send("Nie grasz w tej grze", delete_after=5)
-      #raise err#to_delete
 
   @commands.command(name='śledź')
   @commands.dm_only()

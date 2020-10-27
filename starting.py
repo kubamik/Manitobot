@@ -4,6 +4,7 @@ from random import shuffle
 import datetime
 import os
 
+from basic_models import NotAGame
 from utility import *
 from settings import *
 from game import Game
@@ -19,7 +20,7 @@ from mafia import Mafia
 async def start_game(ctx, *lista, mafia = False, faction_data = ()):
   roles = open('Postacie.txt', 'w')
   gracze = list(get_player_role().members)
-  if globals.current_game != None:
+  if if_game():
     await ctx.send("Musisz najpierw zakończyć trwającą grę, użyj `&end`.")
     return
   if len(lista) != len(gracze):
@@ -27,7 +28,6 @@ async def start_game(ctx, *lista, mafia = False, faction_data = ()):
 		    "Błędna liczba postaci. Oczekiwano {}, Otrzymano {}".format(
 		        len(gracze), len(lista)))
     return
-  
   
   globals.current_game = Game() if not mafia else Mafia()
 
@@ -66,11 +66,7 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
       await send_to_manitou(file=discord.File(fp,'Postacie {}.txt'.format(time.strftime("%Y-%m-%d_%H-%M-%S"))))
     os.remove("Postacie.txt")
   except discord.errors.Forbidden:
-    await ctx.send(
-		    "Nie można wysłać wiadomości do Manitou\nGra nie została rozpoczęta"
-		)
-    globals.current_game = None
-    return
+    await ctx.send("Nie można wysłać wiadomości do Manitou")
   for member in gracze:
     if member in get_newcommer_role().members:
       await member.remove_roles(get_newcommer_role())
@@ -85,6 +81,7 @@ Gramy w składzie:{}""".format(len(lista), team))
     await globals.current_game.message.pin()
   except (discord.NotFound, discord.Forbidden, discord.HTTPException):
     pass
+  await bot.get_cog('Panel Sterowania').prepare_panel(globals.current_game)
   try:
     await get_town_channel().set_permissions(get_player_role(), send_messages = False)
   except (discord.Forbidden, discord.HTTPException):
@@ -92,4 +89,4 @@ Gramy w składzie:{}""".format(len(lista), team))
 
     
 def if_game():
-  return globals.current_game != None
+  return not isinstance(globals.current_game, NotAGame)

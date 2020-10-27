@@ -1,6 +1,7 @@
 from discord.ext import commands
 import datetime as dt
 
+from basic_models import NotAGame
 from utility import *
 from settings import *
 from starting import if_game
@@ -122,7 +123,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     """/&obs/Zmienia rolę usera na spectator."""
     guild = get_guild()
     member = get_member(ctx.author.id)
-    if not globals.current_game==None and member in get_player_role().members + get_dead_role().members:
+    if if_game() and member in get_player_role().members + get_dead_role().members:
       await ctx.send("Gra została rozpoczęta, nie możesz nie grać")
       return
     await member.remove_roles(get_player_role(), get_dead_role())
@@ -199,7 +200,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
         await member.remove_roles(dead_role, winner_role, loser_role, searched_role, hanged_role)
         if member in get_voice_channel().members:
           await member.add_roles(player_role)
-      globals.current_game = None
+      globals.current_game = NotAGame()
       await manit.remove_cogs()
     await ctx.message.add_reaction("👊")
       

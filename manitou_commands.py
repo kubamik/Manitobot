@@ -3,6 +3,7 @@ from discord.ext import commands
 import discord
 import asyncio
 
+from basic_models import NotAGame
 from utility import manitou_cmd, GameEnd
 from utility import *
 from settings import *
@@ -27,12 +28,21 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     bot.remove_cog("Pojedynki")
     bot.remove_cog("Przeszukania")
     bot.remove_cog("Wieszanie")
+    bot.remove_cog("Panel Sterowania")
     bot.get_command('g').help = playerhelp()
     bot.get_command('m').help = manitouhelp()
     p = discord.Permissions().all()
+    tasks = []
     try:
-      await get_admin_role().edit(permissions = p, colour = 0xffa9f9)
-    except (NameError, discord.errors.Forbidden):
+      tasks.append(get_admin_role().edit(permissions = p, colour = 0xffa9f9))
+    except NameError:
+      pass
+    for faction in FAC2CHANN_ID:
+      ch = get_faction_channel(faction)
+      tasks.append(ch.edit(sync_permissions=True))
+    try:
+      await asyncio.gather(*tasks)
+    except discord.errors.Forbidden:
       pass
     
   @commands.command(name='set_manitou_channel', aliases=['m_channel'])
@@ -101,33 +111,25 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     player_role = get_player_role()
     dead_role = get_dead_role()
     spec_role = get_spectator_role()
+    tasks = []
+    for member in dead_role.members:
+      tasks.append(member.remove_roles(dead_role))
+    for member in player_role.members:
+      tasks.append(member.remove_roles(player_role))
+    for member in spec_role.members:
+      tasks.append(member.remove_roles(spec_role))
+    for member in get_guild().members:
+      tasks.append(clear_nickname(member, ctx))
     async with ctx.typing():
       await self.remove_cogs()
-      for member in dead_role.members:
-        await member.remove_roles(dead_role)
-      for member in player_role.members:
-        await member.remove_roles(player_role)
-      for member in spec_role.members:
-        await member.remove_roles(spec_role)
-      for member in get_guild().members:
-        await clear_nickname(member, ctx)
+      await asyncio.gather(*tasks)
     await ctx.message.add_reaction('❤️')
 
 
   @commands.command(name='kill')
   @manitou_cmd
-  async def kill(self, ctx,*, gracz):
+  async def kill(self, ctx, *, gracz: MyMemberConverter): # type: ignore
     """ⓂZabija otagowaną osobę"""
-    gracz = await converter(ctx, gracz)
-    if gracz is None or gracz not in get_guild().members:
-      await ctx.send("Nie ma takiego gracza")
-      return
-    if gracz in get_dead_role().members:
-      await ctx.send("Ten gracz już nie żyje")
-      return
-    if not if_game() or gracz not in get_player_role().members:
-      await ctx.send("Ten gracz musi grać, aby mógł zginąć")
-      return
     await globals.current_game.player_map[gracz].role_class.die()
     await ctx.message.add_reaction('✅')
 
@@ -218,7 +220,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await get_town_channel().set_permissions(get_player_role(), send_messages = True)
       except (discord.Forbidden, discord.HTTPException):
         pass
-      globals.current_game = None
+      globals.current_game = NotAGame()
       await self.remove_cogs()
       await bot.change_presence(activity = None)
       await get_town_channel().send("Gra została zakończona")
@@ -359,19 +361,19 @@ Pozostali:{}""".format(len(alive_roles),team))
     globals.current_game.bandit_morning = True
     await ctx.message.add_reaction('✅')
 
-  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
   @manitou_cmd
   async def revealing_on(self, ctx):
     globals.current_game.reveal_dead = True
 
-  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
   @manitou_cmd
   async def revealing_on(self, ctx):
     '''Ⓜ/rev_on/Włącza ujawnianie postaci po śmierci'''
     globals.current_game.reveal_dead = True
     await ctx.message.add_reaction('✅')
 
-  @commands.command(name='switch_revealing_off', aliases=['rev_off'])
+  @commands.command(name='switch_revealing_off', aliases=['rev_off'], hidden=True)
   @manitou_cmd
   async def revealing_off(self, ctx):
     '''Ⓜ/rev_off/Wyłącza ujawnianie postaci po śmierci'''
@@ -394,9 +396,12 @@ Pozostali:{}""".format(len(alive_roles),team))
       await get_town_channel().set_permissions(get_player_role(), send_messages = True)
     except (discord.Forbidden, discord.HTTPException):
       pass
+    tasks = []
     for member in get_dead_role().members:
       if not globals.current_game.player_map[member].role_class.revealed:
-        await globals.current_game.player_map[member].role_class.reveal()
+        tasks.append(globals.current_game.player_map[member].role_class.reveal())
+    tasks.append(bot.get_cog("Panel Sterowania").morning_reset())
+    await asyncio.gather(*tasks)
     await ctx.message.add_reaction('✅')
 
   @commands.command(name="night")

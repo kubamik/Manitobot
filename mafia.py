@@ -1,5 +1,6 @@
 import discord
 from collections import defaultdict
+from typing import NoReturn
 
 import utility
 from daynight import Day, Night
@@ -29,6 +30,9 @@ class Mafia(Vote):
       "Miasto":0,
       "Mafia":0
     }
+
+  def __getattr__(self, name:str) -> NoReturn:
+    raise utility.WrongGameType('Current game type does not support this attribute.')
 
   async def new_day(self):
     self.day += 1

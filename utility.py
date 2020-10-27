@@ -1,5 +1,7 @@
-from discord.ext import commands
 from functools import wraps
+from typing import Optional, Callable
+
+from discord.ext import commands
 import discord
 
 from settings import *
@@ -15,11 +17,68 @@ def manitou_cmd(func):
     await func(self, ctx, *args, **kwargs)
   return wrapper
 
+"""removed, because of MyMemberConverter
+def transform_nickname(nick):
+  if nick.startswith(('+', '!')):
+    nick = nick[1:]
+  if all(nick.rpartition('(')):
+    nick = nick.rpartition('(')[0]
+  return nick.lower()
+
+
+def nickname_fit(nick):
+  nick = transform_nickname(nick)
+  for player in get_player_role().members + get_dead_role().members:
+    if transform_nickname(player.display_name) == nick:
+      return player
+  return None
+"""
+
+def player_cmd() -> Callable:
+  def predicate(ctx: commands.Context) -> bool:
+    if get_member(ctx.author.id) not in get_player_role().members:
+      raise AuthorNotPlaying("You have to be playing to run this command.")
+    return True
+  return commands.check(predicate)
+
+
+class MyMemberConverter(commands.MemberConverter):
+  def __init__(self, *, player_only: Optional[bool] = True) -> None:
+    self.player_only = player_only
+    super().__init__()
+
+  @staticmethod
+  def transform_nickname(nick: str) -> str:
+    if nick.startswith(('+', '!')):
+      nick = nick[1:]
+    if all(nick.rpartition('(')):
+      nick = nick.rpartition('(')[0]
+    return nick.lower()
+
+  @classmethod
+  def nickname_fit(cls, nick: str) -> Optional[discord.Member]:
+    nick = cls.transform_nickname(nick)
+    for player in get_player_role().members + get_dead_role().members:
+      if cls.transform_nickname(player.display_name) == nick:
+        return player
+    return None
+
+  async def convert(self, ctx: commands.Context, name: str
+                   ) -> discord.Member:
+    member = self.nickname_fit(name)
+    if member is None:
+      try:
+        member = await super().convert(ctx, name)
+      except commands.BadArgument:
+        raise commands.MemberNotFound(name)
+    if member not in get_guild().members:
+      raise commands.MemberNotFound(name)
+    if self.player_only and member not in get_player_role().members:
+      raise MemberNotPlaying("This person is not playing.")
+    return member
+
 
 def get_guild():
-  """guild = ctx.guild
-  if guild is not None:
-    return guild"""
   return discord.utils.get(bot.guilds, id=GUILD_ID)
 
 def get_player_role():
@@ -56,6 +115,9 @@ def get_hanged_role():
 def get_newcommer_role():
   return get_guild().get_role(NEWCOMMER_ID)
 
+def get_control_panel():
+  return get_guild().get_channel(CONTROL_PANEL_ID) # TODO: Add this ID to settings
+
 def get_glosowania_channel():
   guild=get_guild()
   return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
@@ -78,7 +140,7 @@ def get_voice_channel():
 def on_voice(ctx):
   return get_member(ctx.author.id) in get_voice_channel().members
 
-def get_faction_channel(faction):
+def get_faction_channel(faction: str) -> discord.TextChannel:
   guild = bot.get_guild(GUILD_ID)
   return guild.get_channel(FAC2CHANN_ID[faction])
 
@@ -135,26 +197,13 @@ def manitouhelp():
   return mess
 
 
-def transform_nickname(nick):
-  if nick.startswith(('+', '!')):
-    nick = nick[1:]
-  if all(nick.rpartition('(')):
-    nick = nick.rpartition('(')[0]
-  return nick.lower()
-
-def nickname_fit(nick):
-  nick = transform_nickname(nick)
-  for player in get_player_role().members + get_dead_role().members:
-    if transform_nickname(player.display_name) == nick:
-      return player
-  return None
-
 async def send_to_manitou(c=None, embed: discord.Embed = None, file: discord.File = None):
   if CONFIG['DM_Manitou']:
     for member in get_manitou_role().members:
       await member.send(c, embed=embed, file=file)
   else:
     await get_manitou_notebook().send(c, embed=embed, file=file)
+
 
 async def clear_nickname(member, ctx):
   old_nickname = get_nickname(member.id)
@@ -171,14 +220,14 @@ async def clear_nickname(member, ctx):
     except discord.errors.Forbidden:
       await ctx.send("Nie mam uprawnień aby zresetować nick użytkownika {}".format(new_nickname))
 
-async def converter(ctx, name):
-  _member = nickname_fit(name)
-  if _member is None:
-    try:
-      _member = await commands.MemberConverter().convert(ctx, name)
-    except commands.BadArgument:
-      pass
-  return _member
+
+async def converter(ctx: commands.Context, name: str) -> Optional[discord.Member]:
+  """Deprecated"""
+  try:
+    return await MyMemberConverter(player_only=False).convert(ctx, name)
+  except commands.MemberNotFound:
+    return None
+
 
 def playing(gracz = -1, *, author = -1):
   if gracz != -1 and (gracz is None or gracz not in get_guild().members):
@@ -192,20 +241,31 @@ def playing(gracz = -1, *, author = -1):
   if author != -1 and author not in get_player_role().members:
     raise InvalidRequest("Nie grasz")
 
+
 class InvalidRequest(commands.CommandError):
   def __init__(self, reason = None, flag = None):
     self.reason = reason
     self.flag = flag
 
+
 class NoEffect(commands.CommandError):
   def __init__(self, reason = "No reason"):
     self.reason = reason
+
 
 class GameEnd(commands.CommandError):
   def __init__(self, reason, winner):
     self.winner = winner
     self.reason = reason
 
+class AuthorNotPlaying(commands.CheckFailure):
+  pass
+
+class MemberNotPlaying(commands.CheckFailure):
+  pass
+
+class WrongGameType(commands.CommandError):
+  pass
 
 def plused(before, after):
   return before.display_name[0] != after.display_name[0] and after.display_name.startswith('+')

@@ -1,11 +1,13 @@
 import os
 import datetime as dt
-from discord.ext import commands
-from discord.ext.commands import CommandNotFound
 import asyncio
 import inspect
 import traceback
 
+from discord.ext import commands
+from discord.ext.commands import CommandNotFound
+
+from basic_models import GameNotStarted
 import duels_commands
 import hang_commands
 import player_commands
@@ -37,8 +39,6 @@ async def on_ready():
     bot.get_command('m').help = manitouhelp()
   except (discord.errors.ClientException, AttributeError):
     pass
-  #ctx = commands.Context(prefix='&', message=)
-
 
 @bot.command(name='exec', hidden=True)
 @commands.is_owner()
@@ -46,12 +46,13 @@ async def execute(ctx, *, string):
   '''ⒹUruchamia podany kod'''
   exec(string)
   
- 
+
 @bot.command(name='pomoc')
 async def help1(ctx):
   """Wzywa bota do pomocy"""
   m = await ctx.send("Nie mogę ci pomóc, jestem botem")
   await ctx.message.add_reaction('✅')
+
 
 @bot.command(name='przeproś')
 async def przeproś(ctx):
@@ -86,16 +87,13 @@ async def not_lose(ctx):
 async def przegrałeś(ctx):
 	"""Przypomina przegrywom o grze."""
 	loser = get_guild().get_role(PRZEGRALEM_ROLE_ID)
+	await get_member(ctx.author.id).add_roles(loser)
 	await ctx.send("Przegrałem!")
 	for i in loser.members:
 		try:
 			await i.send("Przegrałem!")
 		except:
 			await ctx.send("Nie można wysłać wiadomości do {}".format(get_nickname(i.id)))
-
-'''@bot.listen('on_message')
-async def mess(m):
-  print(m.content)'''
 
 @bot.listen('on_message_edit')
 async def message_change(before, after):
@@ -193,16 +191,19 @@ async def on_command_error(ctx, error):
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
+  elif isinstance(error, commands.MemberNotFound):
+    await ctx.send("Nie ma takiej osoby", delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
     await ctx.send(f"Błędny parametr\n||{error}||", delete_after=5)
-    #raise error
   elif isinstance(error, commands.CommandOnCooldown):
     await ctx.send("Mam okres ochronny", delete_after=5)
     await ctx.message.delete(delay=5)
-  elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, AttributeError):
-    await ctx.send("Gra nie została rozpoczęta lub rozpoczęty typ gry nie obsługuje tego polecenia", delete_after=5)
+  elif isinstance(error, GameNotStarted):
+    await ctx.send('Gra nie została rozpoczęta', delete_after=5)
     await ctx.message.delete(delay=5)
-    report_error(error)
+  elif isinstance(error, WrongGameType):
+    await ctx.send('Aktualny typ gry nie obsługuje tego polecenia', delete_after=5)
+    await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
     await ctx.send("Podano błędny rodzaj argumentu", delete_after=5)
     await ctx.message.delete(delay=5)
@@ -212,6 +213,12 @@ async def on_command_error(ctx, error):
   elif isinstance(error, commands.PrivateMessageOnly):
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.NoPrivateMessage):
+    await ctx.message.delete(delay=5)
+  elif isinstance(error, AuthorNotPlaying):
+    await ctx.send('Musisz grać, aby użyć tej komendy', delete_after=5)
+    await ctx.message.delete(delay=5)
+  elif isinstance(error, MemberNotPlaying):
+    await ctx.send('Ta osoba nie gra lub nie żyje', delete_after=5)
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CheckFailure):
     await ctx.message.delete(delay=5)
@@ -229,9 +236,14 @@ async def on_command_error(ctx, error):
     
     
 
-
-#@bot.listen('on_member_update')
-#async def role_change(before, after):
+@bot.event
+async def on_error(event, *args, **kwargs):
+  print(event)
+  with open('error.log', 'a') as logs:
+    logs.write(f'{dt.datetime.now()}\n\n\n')
+    traceback.print_exc(file=logs)
+    logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+  print(args)
 
 
 keep_alive()

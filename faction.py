@@ -1,6 +1,7 @@
 import discord
 from collections import OrderedDict
 import inspect
+import typing
 
 from f_database import *
 import postacie
@@ -16,7 +17,7 @@ class Faction(Activity):
     self.name = name
     self.roles = OrderedDict()
     self.leader = None
-    self.channel = get_faction_channel(name)
+    self.channel: discord.TextChannel = get_faction_channel(name)
     self.actions = f_actions[name]
     self.operation = None
     self.act_number = -1
@@ -25,11 +26,23 @@ class Faction(Activity):
     for role in factions_roles[name]:
       try:
         obj = globals.current_game.role_map[role]
-        self.roles[role] = obj
-        globals.current_game.role_map[role].faction = self
       except KeyError:
         pass
-  
+      else:
+        self.roles[role] = obj
+        globals.current_game.role_map[role].faction = self
+
+  async def wake_up(self):
+    overwrites = self.channel.overwrites
+    for role in self.roles.values():
+      if not role.player.sleeped:
+        overwrites[role.player.member] = discord.PermissionOverwrite(
+          read_messages=True, send_messages=True, add_reactions=True)
+    await self.channel.edit(overwrites=overwrites)
+
+  async def put_to_sleep(self):
+      await self.channel.edit(sync_permissions=True)
+
   def what_next(self):
     try:
       for i in self.actions[self.act_number + 1:]:

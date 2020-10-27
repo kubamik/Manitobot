@@ -1,3 +1,5 @@
+from discord.ext import commands
+
 roles={
 "szeryf":"**Szeryf (Miasto)** Jeżeli szeryf żyje, można nie przyjąć pojedynku (nie musi być wiadomo, kto jest szeryfem - wystarczy, że jeszcze nie umarł). Ponadto szeryf, co noc (również zerowej nocy) zamyka w więzieniu jedną osobę. Jeżeli ta osoba miała posążek, przejmuje go szeryf. Jeżeli uda mu się przetrwać z posążkiem do końca nocy, miasto wygrywa. Osoba zamknięta w więzieniu nie budzi się przez resztę nocy, poza tym nie można jej w żaden sposób zabić, (choć można ją sprawdzić np. pastorem lub szamanem).",
 
@@ -228,17 +230,23 @@ factions = {
 "wikary":"Inkwizycja"
 }
 
-def get_role_details(role, no):
+def get_role_details(role: str, no: str) -> str:
+  """Returns :param role: details with bold :param no:
+  if details don't exist
+  """
   c="".join(role)
   c=c.replace("_","")
   c=c.replace("-","")
   c=c.lower()
   return roles.get(c, f"**{no}**")
 
-async def role_details(ctx, role):
+async def role_details(ctx: commands.Context, role: str) -> str:
+  """Sends to :param ctx: channel details of :param role: or "Nie ma takiej postaci" if there is no data
+  """
   await ctx.send(get_role_details(role, "Nie ma takiej postaci"))
 
-def give_faction(role):
+def give_faction(role: str) -> str:
+  """Returns original faction"""
   c = role.replace(" ","")
   c = c.replace("_","")
   c = c.replace("-","")
@@ -247,7 +255,8 @@ def give_faction(role):
     return role
   return factions[c]
 
-def send_faction(role):
+def send_faction(role: str) -> str:
+  """Returns original faction in bold format eventually with colon"""
   c=role.replace(" ","")
   c=c.replace("_","")
   c=c.replace("-","")
@@ -256,7 +265,8 @@ def send_faction(role):
     return "**{}**".format(role)
   return "**{}:**".format(factions[c])
 
-def get_faction(role):
+def get_faction(role: str) -> str:
+  """Replaces one-pearson factions with Town"""
   c=role.replace(" ","")
   c=c.replace("_","")
   c=c.replace("-","")
@@ -273,7 +283,6 @@ def print_list(role_list):
       faction_count[send_faction(role)] = 1
     else:
       faction_count[send_faction(role)] += 1
-
   prev_faction = None
   for role in role_list:
     faction = send_faction(role)

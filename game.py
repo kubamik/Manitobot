@@ -1,5 +1,7 @@
-import discord
 from collections import defaultdict
+from typing import NoReturn
+
+import discord
 
 import utility
 from daynight import Day,Night
@@ -9,7 +11,7 @@ from faction import Faction
 from role import Role
 from player import Player
 from postacie import get_faction, give_faction, print_list
-from utility import get_town_channel
+from utility import get_town_channel, WrongGameType
 
 class Game(Vote):
   def __init__(self):
@@ -45,6 +47,9 @@ class Game(Vote):
     }'''
     self.stats = defaultdict(int)
 
+  def __getattr__(self, name:str) -> NoReturn:
+    raise WrongGameType('Current game type does not support this attribute.')
+
   async def new_day(self):
     self.days.append(Day())
     self.day += 1
@@ -55,13 +60,10 @@ class Game(Vote):
     self.inqui_win()
     self.morning_bandits_win()
     
-    
-
   def new_night(self):
     self.nights.append(Night())
     self.night = True
     self.evening_bandits_win()
-
 
   def make_factions(self, roles, data):
     for role in roles:
@@ -72,7 +74,6 @@ class Game(Vote):
         except KeyError:
           pass
         
-
   def add_pair(self, member, role):
     try:
       self.stats[give_faction(role)] += 1
@@ -139,5 +140,3 @@ class Game(Vote):
 
   def print_list(self, roles, data):
     return print_list(roles)
-
-    
