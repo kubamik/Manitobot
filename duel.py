@@ -2,6 +2,7 @@ import discord.ext
 from discord.ext import commands
 
 import globals
+from settings import GUN_ID
 from utility import *
 
 class Duel:
@@ -166,7 +167,7 @@ class Duel:
     self.participants = (agresor, victim)
     #print(self.participants)
     self.duel = True
-    c = "Rozpoczynamy pojedynek:\n<:legacy_gun:717099650087387158> **{}** vs. :shield:**{}**".format(agresor.display_name, victim.display_name)
+    c = "Rozpoczynamy pojedynek:\n<:legacy_gun:{}> **{}** vs. :shield:**{}**".format(GUN_ID, agresor.display_name, victim.display_name)
     await get_town_channel().send(c)
 
 

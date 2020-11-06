@@ -231,8 +231,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   @manitou_cmd
   async def end_reset(self, ctx):
     """ⓂResetuje graczy i kończy grę"""
-    if globals.current_game is None:
-      raise AttributeError('Game not started')
+    globals.current_game.day # this checks if game is started
     m = await ctx.send("Czy na pewno chcesz zakończyć grę?")
     await m.add_reaction('✅')
     await m.add_reaction('⛔')

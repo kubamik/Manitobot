@@ -22,6 +22,7 @@ from keep_alive import keep_alive
 from utility import *
 import utility
 from settings import *
+from starting import if_game
 from globals import bot
 import globals
 from f_database import factions_roles
@@ -112,7 +113,7 @@ async def my_message(m):
 	if m.channel.type != discord.ChannelType.private:
 		return
 
-	if globals.current_game is None or not globals.current_game.voting_in_progress():
+	if not if_game() or not globals.current_game.voting_in_progress():
 		await m.channel.send("Nie rozumiem. Nie trwa teraz żadne głosowanie")
 		return
 

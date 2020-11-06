@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from basic_models import NotAGame
 import globals
 import utility
 from utility import *
@@ -20,8 +21,9 @@ class Night:
     self.last_mess = None
     self.herbed = None
     self.bishop_base = None
-    self.statue_owners = [None if not globals.current_game \
-    else globals.current_game.statue.faction_holder]
+    self.statue_owners = [
+      None if isinstance(globals.current_game, NotAGame)
+      else globals.current_game.statue.faction_holder]
 
   def what_next(self):
     try:

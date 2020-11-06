@@ -133,7 +133,7 @@ class Starting(commands.Cog, name='Początkowe'):
     """Służy do zarejestrowania się do gry."""
     guild = get_guild()
     member = get_member(ctx.author.id)
-    if not globals.current_game == None:
+    if if_game():
       await ctx.message.delete(delay=5)
       await ctx.send("Gra została rozpoczęta, nie możesz grać", delete_after=5)
       return
