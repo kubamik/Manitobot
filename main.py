@@ -41,6 +41,7 @@ async def on_ready():
   except (discord.errors.ClientException, AttributeError):
     pass
 
+
 @bot.command(name='exec', hidden=True)
 @commands.is_owner()
 async def execute(ctx, *, string):

@@ -7,7 +7,8 @@ from settings import *
 from game import Game
 import globals
 
-async def glosowanie(ctx, title, required_votes, options, not_voting = (), vtype = None):
+async def glosowanie(ctx, title, required_votes, 
+                     options, not_voting = (), vtype = None):
   if globals.current_game.voting_in_progress():
     await ctx.send("Najpierw zakończ bieżące głosowanie")
     return

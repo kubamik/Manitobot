@@ -100,7 +100,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await globals.current_game.nights[-1].night_next(emoji.message.channel)
 
 
-  @commands.command(name='nuke')
+  @commands.command()
   @manitou_cmd
   async def nuke(self, ctx):
     """ⓂOdbiera rolę Gram i Trup wszystkim userom"""

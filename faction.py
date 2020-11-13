@@ -35,7 +35,7 @@ class Faction(Activity):
   async def wake_up(self):
     overwrites = self.channel.overwrites
     for role in self.roles.values():
-      if not role.player.sleeped:
+      if not role.player.sleeped and role.alive():
         overwrites[role.player.member] = discord.PermissionOverwrite(
           read_messages=True, send_messages=True, add_reactions=True)
     await self.channel.edit(overwrites=overwrites)

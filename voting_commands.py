@@ -32,7 +32,9 @@ class Glosowania(commands.Cog, name="Głosowania"):
 
   @commands.command(name='vote')
   @manitou_cmd
-  async def glosowanie_custom(self, ctx, title, count : int, *options):
+  async def glosowanie_custom(
+      self, ctx, title, 
+      count : typing.Optional[int] = 1, *options):
     """ⓂRozpoczyna customowe głosowanie:
     Argumentami są:
       -tytuł głosowania.
