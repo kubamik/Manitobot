@@ -21,7 +21,7 @@ intents.members = True
 
 
 bot = commands.Bot(
-  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False,
+  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, 
   intents = intents)
 current_game = None
 
