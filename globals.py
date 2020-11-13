@@ -2,12 +2,27 @@ from discord.ext import commands
 import discord
 from random import SystemRandom
 
-help = commands.DefaultHelpCommand(
-  no_category = 'Pozostałe',
-  verify_checks = False,
-)
+command_prefix = '&'
 
-bot=commands.Bot(command_prefix = '&', help_command = help, owner_id=388764073191538688)
+
+class Help(commands.DefaultHelpCommand):
+  def __init__(self):
+    super().__init__(no_category='Pozostałe', verify_checks=False)
+
+  def get_ending_note(self):
+    return '''Informacje o konkretnej komendzie:\t{0}help <komenda>
+Informacje o konkretnej kategorii:\t{0}help <kategoria>
+Skrócona pomoc dla Manitou:\t\t   {0}help m
+Skrócona pomoc dla graczy\t\t\t {0}help g'''.format(command_prefix)
+
+
+intents = discord.Intents.default()
+intents.members = True
+
+
+bot = commands.Bot(
+  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False,
+  intents = intents)
 current_game = None
 
 
