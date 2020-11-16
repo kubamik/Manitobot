@@ -71,7 +71,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
     '''Służy do sprawdzenia czy osoba jest heretykiem'''
     await self.command_template(ctx, member, "heretic")
 
-  @commands.command(name='przesz',aliases = ['przeszukaj'])
+  @commands.command(name='przeszukaj',aliases = ['przesz'])
   @proper_channel()
   async def research(self, ctx):
     '''/&przesz/Służy do przeszukania sprawdzanej osoby'''
@@ -87,9 +87,9 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
   @proper_channel()
   async def finoff(self, ctx):
     '''Służy do zabicia sprawdzanej osoby'''
-    await self.command_template(ctx,None, "finoff")
+    await self.command_template(ctx, None, "finoff")
 
-  @commands.command(name='posiadacze',aliases = ['posiad'])
+  @commands.command(name='posiadacze', aliases = ['posiad'])
   @proper_channel()
   async def holders(self, ctx, *, member):
     '''/&posiad/Służy do sprawdzenia, czy osoba jest z frakcji posiadaczy posążka'''
@@ -106,9 +106,9 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
       await globals.current_game.player_map[author].role_class.new_activity(ctx, "burn", member)
     except InvalidRequest as err:
       await ctx.send(err.reason)
-    except KeyError as err:
+    except KeyError:
       await ctx.send("Nie grasz w tej grze")
-      raise err
+      raise
     utility.lock = False
 
   @commands.command(name='podłóż',aliases = ['podł'])
@@ -168,7 +168,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji", command
   @commands.command(name='posążek', aliases = ['pos'])
   @proper_channel()
   async def posag(self, ctx, *, member):
-    '''Służy do przeszukania osoby'''
+    '''Służy do przekazania posążka'''
     await self.command_template(ctx, member, "hold")
 
   @commands.command(name='szukaj')
