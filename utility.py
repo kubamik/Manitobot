@@ -89,6 +89,10 @@ def get_manitou_role():
   guild=get_guild()
   return discord.utils.get(guild.roles,id=MANITOU_ROLE_ID)
 
+def get_other_manitou_role():
+  guild=get_guild()
+  return discord.utils.get(guild.roles,id=OTHER_MANITOU_ROLE_ID)
+
 def get_dead_role():
   guild=get_guild()
   return discord.utils.get(guild.roles,id=TRUP_ROLE_ID)

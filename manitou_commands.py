@@ -44,6 +44,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await asyncio.gather(*tasks)
     except discord.errors.Forbidden:
       pass
+    for member in get_manitou_role().members:
+      await member.remove_roles(get_other_manitou_role())
     
   @commands.command(name='set_manitou_channel', aliases=['m_channel'])
   @manitou_cmd

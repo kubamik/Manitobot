@@ -31,7 +31,7 @@ class Mafia(Vote):
       "Mafia":0
     }
 
-  def __getattr__(self, name:str) -> NoReturn:
+  def __getattr__(self, name: str) -> NoReturn:
     raise utility.WrongGameType('Current game type does not support this attribute.')
 
   async def new_day(self):

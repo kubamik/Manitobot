@@ -25,21 +25,20 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     base = get_control_panel().send
     tasks = []
     players = sorted(game.player_map.keys(), key=lambda m: m.display_name)
+    messages = []
     for player in players:
-      tasks.append(base(player.display_name))
-    tasks.append(base("Aktywna frakcja"))
-    messages = await asyncio.gather(*tasks)
+      messages.append(await base(player.display_name))
+    messages.append(await base("Aktywna frakcja"))
     self.message = messages[-1]
     self.mess2mem = dict(zip(messages[:-1], players))
     self.mem2mess = dict(zip(players, messages[:-1]))
     tasks = []
     for m in messages[:-1]:
-      tasks.append(m.add_reaction('😴'))
+      await m.add_reaction('😴')
     for fac, id in FAC2EMOJI.items():
       if fac in game.faction_map:
-        tasks.append(self.message.add_reaction(self.bot.get_emoji(id)))
+        await self.message.add_reaction(self.bot.get_emoji(id))
         self.emoji2fac[id] = fac
-    await asyncio.gather(*tasks)
 
   @commands.Cog.listener()
   async def on_raw_reaction_add(self, event: discord.RawReactionActionEvent) -> None:

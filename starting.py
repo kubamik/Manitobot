@@ -44,7 +44,7 @@ async def start_game(ctx, *lista, mafia = False, faction_data = ()):
       await member.dm_channel.send(
 			    """{}\nWitaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. Jako gracz masz dostęp m.in. do następujących komend:
 `&help` pokazuje wszystkie dostępne komendy
-`help g` pokazuje komendy przydatne dla graczy
+`&help g` pokazuje komendy przydatne dla graczy
 `&postać <nazwa postaci>` pokazuje opis danej postaci
 `&żywi` przedstawia żywe postaci, które biorą udział w grze
 {}
@@ -67,6 +67,8 @@ Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, 
     os.remove("Postacie.txt")
   except discord.errors.Forbidden:
     await ctx.send("Nie można wysłać wiadomości do Manitou")
+  for member in get_manitou_role().members:
+    await member.add_roles(get_other_manitou_role())
   for member in gracze:
     if member in get_newcommer_role().members:
       await member.remove_roles(get_newcommer_role())

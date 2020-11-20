@@ -30,6 +30,8 @@ from f_database import factions_roles
 
 @bot.event
 async def on_ready():
+  #print(bot.get_guild(710039683798794270).get_role(779432457002156133).edit(position=15))
+  #bot.get_role(779432457002156133).edit()
   print("Hello world!")
   try:
     bot.add_cog(manitou_commands.DlaManitou(bot))
@@ -206,6 +208,7 @@ async def on_command_error(ctx, error):
   elif isinstance(error, WrongGameType):
     await ctx.send('Aktualny typ gry nie obsługuje tego polecenia', delete_after=5)
     await ctx.message.delete(delay=5)
+    report_error(error)
   elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
     await ctx.send("Podano błędny rodzaj argumentu", delete_after=5)
     await ctx.message.delete(delay=5)
