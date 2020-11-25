@@ -13,7 +13,7 @@ class Wieszanie(commands.Cog):
     self.bot = bot
 
   @commands.command(name='hangend',aliases=['hnd'])
-  @manitou_cmd
+  @manitou_cmd()
   async def hangend(self, ctx):
     '''Ⓜ/&hnd/Finalizuje wieszanie'''
     if globals.current_game.night:

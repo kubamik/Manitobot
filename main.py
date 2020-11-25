@@ -9,13 +9,11 @@ from discord.ext.commands import CommandNotFound
 
 from basic_models import GameNotStarted
 import duels_commands
-import hang_commands
 import player_commands
 import voting_commands
 import management_commands
 import manitou_commands
 import roles_commands
-import roles_calling_commands
 import start_commands
 import search_hang_commands
 from keep_alive import keep_alive
@@ -30,8 +28,6 @@ from f_database import factions_roles
 
 @bot.event
 async def on_ready():
-  #print(bot.get_guild(710039683798794270).get_role(779432457002156133).edit(position=15))
-  #bot.get_role(779432457002156133).edit()
   print("Hello world!")
   try:
     bot.add_cog(manitou_commands.DlaManitou(bot))
@@ -42,7 +38,6 @@ async def on_ready():
     bot.get_command('m').help = manitouhelp()
   except (discord.errors.ClientException, AttributeError):
     pass
-
 
 @bot.command(name='exec', hidden=True)
 @commands.is_owner()
@@ -61,6 +56,8 @@ async def help1(ctx):
 @bot.command(name='przeproś')
 async def przeproś(ctx):
 	"""Przepraszam"""
+	for line in traceback.format_stack():
+		print(line)
 	await ctx.send("Przepraszam")
 
 
@@ -204,6 +201,7 @@ async def on_command_error(ctx, error):
     await ctx.message.delete(delay=5)
   elif isinstance(error, GameNotStarted):
     await ctx.send('Gra nie została rozpoczęta', delete_after=5)
+    raise error
     await ctx.message.delete(delay=5)
   elif isinstance(error, WrongGameType):
     await ctx.send('Aktualny typ gry nie obsługuje tego polecenia', delete_after=5)
@@ -235,23 +233,31 @@ async def on_command_error(ctx, error):
       if channel.category_id == FRAKCJE_CATEGORY_ID  or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
         await channel.send(c)
   else:
-    await ctx.send(":robot:Bot did an uppsie :'( :robot:", delete_after=5)
+    await ctx.send(":robot:Bot did an uppsie :'( :robot:")
     print(ctx.command, type(error))
     report_error(error)
     
     
+@bot.listen()
+async def on_message(m):
+  for line in traceback.format_stack():
+    print(line)
 
-@bot.event
+
+@bot.listen()
 async def on_error(event, *args, **kwargs):
   print(event)
   with open('error.log', 'a') as logs:
     logs.write(f'{dt.datetime.now()}\n\n\n')
     traceback.print_exc(file=logs)
     logs.write(f'\n\n\n\n{RULLER}\n\n\n\n')
+  traceback.print_exc()
   print(args)
 
-
-keep_alive()
-token = os.environ.get("TOKEN")
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-bot.run(token)
+
+if __name__ == '__main__':
+  keep_alive()
+  token = os.environ.get("TOKEN")
+  bot.run(token)
+

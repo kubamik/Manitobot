@@ -9,106 +9,15 @@ import globals
 import postacie
 import permissions
 
-ankietawka = '**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
-
-ankietawka_emoji = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷', '🚫', '👁️']
-
 
 class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   def __init__(self, bot):
         self.bot = bot
 
-  """@bot.listen('on_member_join')
-  async def new_member_guild(member):
-    await member.add_roles(get_newcommer_role())
-
-  @bot.listen('on_member_remove')
-  async def member_leaves(member):
-    ch = get_guild().system_channel
-    if ch is None:
-      return
-    for wb in await ch.webhooks():
-      if wb.name == 'System':
-        wbhk = wb
-        break
-    else:
-      wbhk = await ch.create_webhook(name='System')
-    await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')"""
-    
-  
-  @commands.command(name='postacie', aliases=['lista'])
-  async def lista(self, ctx):
-    """Pokazuje listę dostępnych postaci, które bot obsługuje"""
-    mess = "__Lista dostępnych postaci:__\n:warning:Większość funkcji przedstawionych postaci nie była testowana, więc mogą być bardzo niestabilne:warning:\n"
-    mess += ", ".join(permissions.role_activities)
-    await ctx.send(mess)
-
   @commands.command(name='postać')
   async def role_help(self, ctx,*role):
     '''Zwraca informacje o postaci podanej jako argument'''
     await postacie.role_details(ctx, role)
-
-  """@commands.command(name='adminuj')
-  async def adminate(self, ctx, member):
-    '''Mianuje nowego admina'''
-    author = get_member(ctx.author.id)
-    member = await converter(ctx, member)
-    if author not in get_admin_role().members:
-      raise commands.MissingRole(get_admin_role())
-    if member is None:
-      await ctx.message.delete(delay=5)
-      await ctx.send("Nie ma takiej osoby", delete_after=5)
-      return
-    await member.add_roles(get_admin_role())
-    await ctx.message.add_reaction('✅')
-
-  @commands.command(name='nie_adminuj', hidden=True)
-  @commands.is_owner()
-  async def not_adminate(self, ctx, member):
-    '''Usuwa admina'''
-    member = await converter(ctx, member)
-    if member is None:
-      await ctx.send("Nie ma takiej osoby")
-      return
-    await member.remove_roles(get_admin_role())
-
-
-  @commands.command()
-  async def ankietka(self, ctx, *, date):
-    '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Zawiera oznaczenie @everyone'''
-    author = get_member(ctx.author.id)
-    if author not in get_admin_role().members:
-      raise commands.MissingRole(get_admin_role())
-    async with ctx.typing():
-      m = await get_ankietawka_channel().send(ankietawka.format(date=date))
-      for emoji in ankietawka_emoji:
-        await m.add_reaction(emoji)
-    await ctx.message.add_reaction('✅')
-
-  
-  @commands.command(name='usuń')
-  async def delete(self, ctx, time: int, *members):
-    '''Masowo usuwa wiadomości, używać tylko do spamu\nSkładnia &usuń <czas w minutach> [członkowie], w przypadku braku podania członków czyszczone są wszystkie wiadomości'''
-    author = get_member(ctx.author.id)
-    if author not in get_admin_role().members:
-      raise commands.MissingRole(get_admin_role())
-    if time > 24*60:
-      await ctx.send("Maksymalny czas to 24 godziny")
-    new_members = []
-    if not len(members):
-      new_members = list(get_guild().members)
-    else:
-      for member in members:
-        m = member
-        member = await converter(ctx, member)
-        if member is None:
-          await ctx.send(f"Nieznana osoba: {m}")
-        else:
-          new_members.append(member)
-    def proper_members(m):
-      return m.author in new_members
-    print(ctx.message.created_at-dt.timedelta(minutes=time))
-    await ctx.channel.purge(after=ctx.message.created_at-dt.timedelta(minutes=time), before=ctx.message.created_at, check=proper_members)"""
     
   @commands.command(name='czy_gram')
   async def if_registered(command, ctx):
@@ -118,7 +27,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     else:
       await ctx.send("NIE")
 
-  @commands.command(name='obserwuję',aliases=['obs'])
+  @commands.command(name='obserwuję', aliases=['obs'])
   async def spectate(self, ctx):
     """/&obs/Zmienia rolę usera na spectator."""
     guild = get_guild()
@@ -136,7 +45,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       except discord.errors.Forbidden:
         await ctx.send("Dodaj sobie '!' przed nickiem")
 
-  @commands.command(name='nie_obserwuję', aliases=['nie_obs'])
+  @commands.command(name='nie_obserwuję', aliases=['nie_obs', 'nieobs'])
   async def not_spectate(self, ctx):
     """/&nie_obs/Usuwa userowi rolę spectator."""
     guild = get_guild()
@@ -151,6 +60,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='pax')
+  @game_check()
   async def pax(self, ctx):
     '''Wyrejestrowuje gracza ze zbioru buntowników'''
     try:
@@ -161,6 +71,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
     
 
   @commands.command(name='bunt', aliases=['riot'])
+  @game_check()
   async def riot(self, ctx):
     '''/&riot/W przypadku poparcia przez co najmniej 67 % osób biorących udział w grze kończy grę'''
     if not ((czy_gram(ctx) or czy_trup(ctx)) and on_voice(ctx)):

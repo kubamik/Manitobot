@@ -21,7 +21,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
       await ctx.send("Tej komendy można używać tylko w dzień", delete_after=5)
   
   @commands.command(name='vote_cancel', aliases=['vclc'])
-  @manitou_cmd
+  @manitou_cmd()
   async def cancel_vote(self, ctx):
     '''Ⓜ/&vclc/Anuluje trwające głosowanie'''
     if not globals.current_game.voting_allowed:
@@ -31,7 +31,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='vote')
-  @manitou_cmd
+  @manitou_cmd()
   async def glosowanie_custom(
       self, ctx, title, 
       count : typing.Optional[int] = 1, *options):
@@ -48,7 +48,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await votings.glosowanie(ctx, title, int(count), options_parsed)
 
   @commands.command(name='duel')
-  @manitou_cmd
+  @manitou_cmd()
   async def pojedynek(self, ctx, *kandydaci):
     """ⓂRozpoczyna głosowanie: kto ma wygrać pojedynek?
     Argumentami są nazwy kandydatów."""
@@ -58,7 +58,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await self.glosowanie_custom(ctx, "Pojedynek\nMasz {} głos na osobę, która ma **wygrać** pojedynek", "1", *kandydaci, "3,Wstrzymuję_Się")
 
   @commands.command(name='duel_vote', aliases=['vdl'])
-  @manitou_cmd
+  @manitou_cmd()
   async def duel_vote(self, ctx):
     """Ⓜ/&vdl/Rozpoczyna głosowanie: kto ma wygrać pojedynek na podstawie automatycznie rozpoczętego pojedynku"""
     if not globals.current_game.days[-1].duel:
@@ -70,7 +70,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await votings.glosowanie(ctx, "Pojedynek\nMasz {} głos na osobę, która ma **wygrać** pojedynek", 1, options_parsed, (agresor, victim), "duel")
 
   @commands.command(name='search')
-  @manitou_cmd
+  @manitou_cmd()
   async def przeszukania(self, ctx, *kandydaci):
     """ⓂRozpoczyna głosowanie: kogo przeszukać?
     Argumentami są nazwy kandydatów.
@@ -82,7 +82,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
 
 
   @commands.command(name='search_vote', aliases=['vsch'])
-  @manitou_cmd
+  @manitou_cmd()
   @not_night()
   async def search_vote(self, ctx):
     '''Ⓜ/&vsch/Rozpoczyna głosowanie kogo przeszukać na podstawie zgłoszonych kandydatur'''
@@ -111,7 +111,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await votings.glosowanie(ctx, "Przeszukania\nMasz {} głosy na osoby, które mają **zostać przeszukane**", globals.current_game.searches, options_parsed, vtype="search")
 
   @commands.command(name='revote', aliases=['vre'])
-  @manitou_cmd
+  @manitou_cmd()
   @not_night()
   async def revote(self, ctx):
     '''Ⓜ/&vre/Uruchamia głosowanie uzupełniające'''
@@ -129,7 +129,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
       await ctx.send("Nie ma kandydatur na takie głosowanie")
 
   @commands.command(name='hangif', aliases=['vhif', 'hiv'])
-  @manitou_cmd
+  @manitou_cmd()
   @not_night()
   async def czy_wieszamy(self, ctx):
     """Ⓜ/&vhif/Rozpoczyna głosowanie: czy powiesić?"""
@@ -139,13 +139,13 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await votings.glosowanie(ctx, "Czy wieszamy?\nMasz {} głos na wybraną opcję.", 1, [["t", "Tak"], ["n", "Nie"]], vtype="hangif")
 
   @commands.command(name='force_hangif', aliases=['fhangif'])
-  @manitou_cmd
+  @manitou_cmd()
   async def hanging(self, ctx):
     """Ⓜ/&fhangif/Rozpoczyna głosowanie: czy powiesić?"""
     await votings.glosowanie(ctx, "Czy wieszamy?\nMasz {} głos na wybraną opcję.", 1, [["t", "Tak"], ["n", "Nie"]])
 
   @commands.command(name='hang')
-  @manitou_cmd
+  @manitou_cmd()
   async def kogo_wieszamy(self, ctx, *kandydaci):
     """ⓂRozpoczyna głosowanie: kogo powiesić?
     Argumentami są nazwy kandydatów"""
@@ -155,7 +155,7 @@ class Glosowania(commands.Cog, name="Głosowania"):
     await self.glosowanie_custom(ctx, "Wieszanie\nGłosujecie Głosujecie na osobę, która **ma być powieszona**", "1", *kandydaci)
 
   @commands.command(name='hang_vote',aliases=['vhg'])
-  @manitou_cmd
+  @manitou_cmd()
   @not_night()
   async def hang_vote(self,ctx):
     '''Ⓜ/&vhg/Rozpoczyna głosowanie kogo powiesić na podstawie przeszukiwanych osób'''
@@ -171,13 +171,13 @@ class Glosowania(commands.Cog, name="Głosowania"):
       await votings.glosowanie(ctx, "Wieszanie\nGłosujecie na osobę, która **ma być powieszona**", 1, options_parsed, vtype="hang")
 
   @commands.command(name='votend',aliases=['vend'])
-  @manitou_cmd
+  @manitou_cmd()
   async def glosowanie_koniec(self, ctx):
     """Ⓜ/&vend/Kończy głosowanie, wypisuje podsumowanie głosów, uruchamia akcje powiązane (przeszukania, pojedynki, wieszanie)"""
     await votings.see_voting(ctx, True)
 
   @commands.command(name='votesee',aliases=['vs'])
-  @manitou_cmd
+  @manitou_cmd()
   async def glosowanie_podgląd(self, ctx):
     """Ⓜ/&vs/Pisze do wszystkich manitou obecne wyniki głosowania"""
     await votings.see_voting(ctx, False)

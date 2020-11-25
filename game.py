@@ -137,6 +137,24 @@ class Game(Vote):
         self.statue.day_search(player.member)
     else:
       self.inqui_alone_win()
+    
+  @property
+  def bandit_morn(self):
+    return self.bandit_night if self.bandit_morning else None
 
+  @bandit_morn.setter
+  def bandit_morn(self, n):
+    self.bandit_night = n
+    self.bandit_morning = True
+
+  @property
+  def bandit_even(self):
+    return self.bandit_night if not self.bandit_morning else None
+
+  @bandit_even.setter
+  def bandit_even(self, n):
+    self.bandit_night = n
+    self.bandit_morning = False
+  
   def print_list(self, roles, data):
     return print_list(roles)

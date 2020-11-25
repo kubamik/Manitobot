@@ -3,6 +3,7 @@ import datetime as dt
 from collections import defaultdict
 import asyncio
 
+from settings import PING_GREEN_ID, PING_BLUE_ID, PING_MESSAGE_ID
 from utility import *
 
 ankietawka = '**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
@@ -25,7 +26,7 @@ class Management(commands.Cog, name='Dla Adminów'):
 
   @bot.listen('on_member_join')
   async def new_member_guild(member):
-    await member.add_roles(get_newcommer_role())
+    await member.add_roles(get_newcommer_role(), get_ping_reminder_role(), get_ping_game_role())
 
   @bot.listen('on_member_remove')
   async def member_leaves(member):
@@ -40,6 +41,33 @@ class Management(commands.Cog, name='Dla Adminów'):
       wbhk = await ch.create_webhook(name='System')
     await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')
 
+  @commands.Cog.listener('on_raw_reaction_add')
+  async def ping_reaction_add(
+      self, event: discord.RawReactionActionEvent) -> None:
+    if event.message_id != PING_MESSAGE_ID:
+      return
+    if event.user_id == self.bot.user.id:
+      return
+    if event.emoji.id == PING_GREEN_ID:
+      member = get_member(event.user_id)
+      await member.remove_roles(get_ping_reminder_role())
+    if event.emoji.id == PING_BLUE_ID:
+      member = get_member(event.user_id)
+      await member.remove_roles(get_ping_game_role())
+
+  @commands.Cog.listener('on_raw_reaction_remove')
+  async def ping_reaction_remove(
+      self, event: discord.RawReactionActionEvent) -> None:
+    if event.message_id != PING_MESSAGE_ID:
+      return
+    if event.user_id == self.bot.user.id:
+      return
+    if event.emoji.id == PING_GREEN_ID:
+      member = get_member(event.user_id)
+      await member.add_roles(get_ping_reminder_role())
+    if event.emoji.id == PING_BLUE_ID:
+      member = get_member(event.user_id)
+      await member.add_roles(get_ping_game_role())
 
   @commands.command(name='adminuj')
   @is_admin()
@@ -65,6 +93,7 @@ class Management(commands.Cog, name='Dla Adminów'):
     await member.remove_roles(get_admin_role())
 
   @commands.command()
+  @is_admin()
   async def ankietka(self, ctx, *, date):
     '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Nie zawiera oznaczeń.'''
     author = get_member(ctx.author.id)

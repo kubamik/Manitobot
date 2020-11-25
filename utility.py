@@ -6,16 +6,34 @@ import discord
 
 from settings import *
 from globals import bot, command_prefix
+import globals
+from basic_models import GameNotStarted, NotAGame
 
 lock = False
 
-def manitou_cmd(func):
-  @wraps(func)
-  async def wrapper(self, ctx, *args, **kwargs):
+def game_check() -> Callable:
+  async def predicate(ctx):
+    if isinstance(globals.current_game, NotAGame):
+      raise GameNotStarted()
+    return True
+  return commands.check(predicate)
+
+def manitou_cmd() -> Callable:
+  async def predicate(ctx: commands.Context) -> bool:
     if not czy_manitou(ctx):
       raise commands.MissingRole(get_manitou_role())
-    await func(self, ctx, *args, **kwargs)
-  return wrapper
+    return True
+  return commands.check(predicate)
+
+def manitou_cmd_old():
+  def predicate(func):
+    @wraps(func)
+    async def wrapper(self, ctx, *args, **kwargs):
+      if not czy_manitou(ctx):
+        raise commands.MissingRole(get_manitou_role())
+      await func(self, ctx, *args, **kwargs)
+    return wrapper
+  return predicate
 
 """removed, because of MyMemberConverter
 def transform_nickname(nick):
@@ -42,6 +60,13 @@ def player_cmd() -> Callable:
   return commands.check(predicate)
 
 
+class MyFlagConverter(commands.Converter):
+  async def convert(self, ctx: commands.Context, arg : str):
+    if arg.startswith('-'):
+      return arg[2:] if arg.startswith('--') else arg[1:]
+    raise commands.BadArgument('Invalid flag')
+
+
 class MyMemberConverter(commands.MemberConverter):
   def __init__(self, *, player_only: Optional[bool] = True) -> None:
     self.player_only = player_only
@@ -63,8 +88,7 @@ class MyMemberConverter(commands.MemberConverter):
         return player
     return None
 
-  async def convert(self, ctx: commands.Context, name: str
-                   ) -> discord.Member:
+  async def convert(self, ctx: commands.Context, name: str) -> discord.Member:
     member = self.nickname_fit(name)
     if member is None:
       try:
@@ -119,6 +143,12 @@ def get_hanged_role():
 def get_newcommer_role():
   return get_guild().get_role(NEWCOMMER_ID)
 
+def get_ping_reminder_role():
+  return get_guild().get_role(PING_REMINDER_ID)
+
+def get_ping_game_role():
+  return get_guild().get_role(PING_GAME_ID)
+
 def get_control_panel():
   return get_guild().get_channel(CONTROL_PANEL_ID) # TODO: Add this ID to settings
 
@@ -145,7 +175,7 @@ def on_voice(ctx):
   return get_member(ctx.author.id) in get_voice_channel().members
 
 def get_faction_channel(faction: str) -> discord.TextChannel:
-  guild = bot.get_guild(GUILD_ID)
+  guild = get_guild()
   return guild.get_channel(FAC2CHANN_ID[faction])
 
 def get_member(member_id):
@@ -154,7 +184,7 @@ def get_member(member_id):
 
 def get_nickname(member_id):
   member = get_member(member_id)
-  return member.nick if member.nick is not None else member.name
+  return member.display_name
 
 def czy_manitou(ctx):
   guild = get_guild()
@@ -170,7 +200,7 @@ def czy_gram(ctx):
 
 def czy_trup(ctx):
   guild = get_guild()
-  member = discord.utils.get(guild.members, id=ctx.author.id)
+  member = get_member(ctx.author.id)
   deads=list(get_dead_role().members)
   return member in deads
 

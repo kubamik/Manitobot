@@ -68,7 +68,7 @@ class Pojedynki(commands.Cog):
 
   
   @commands.command(name='break', aliases=['br'])
-  @manitou_cmd
+  @manitou_cmd()
   async def interrupt(self, ctx):
     '''Ⓜ/&br/Przerywa trwający pojedynek lub usuwa pierwsze wyzwanie z listy'''
     try:
@@ -81,7 +81,7 @@ class Pojedynki(commands.Cog):
 
 
   @commands.command(name='wyzwania', aliases=['pend'])
-  @manitou_cmd
+  @manitou_cmd()
   async def challenges(self, ctx):
     '''Ⓜ/&pend/Pokazuje aktualne wyzwania'''
     c = globals.current_game.days[-1].dares_print()
@@ -89,7 +89,7 @@ class Pojedynki(commands.Cog):
 
 
   @commands.command(name='duelend', aliases=['dnd'])
-  @manitou_cmd
+  @manitou_cmd()
   async def duel_end(self, ctx):
     '''Ⓜ/&dnd/Kończy pojedynek z wynikiem ogłoszonym automatycznie'''
     try:
@@ -99,7 +99,7 @@ class Pojedynki(commands.Cog):
 
 
   @commands.command(name='search_phase', aliases=['abend'])
-  @manitou_cmd
+  @manitou_cmd()
   async def no_duels(self, ctx):
     '''Ⓜ/&abend/Kończy turę pojedynków'''
     globals.current_game.days[-1].duels_today = globals.current_game.duels

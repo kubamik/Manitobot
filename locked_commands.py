@@ -6,6 +6,9 @@ from starting import if_game
 import globals
 import postacie
 
+# Removed
+
+
 class FunkcjeBlokowane(commands.Cog):
 
   def __init__(self,bot):

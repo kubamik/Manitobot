@@ -8,7 +8,7 @@ command_prefix = '&'
 
 class Help(commands.DefaultHelpCommand):
   def __init__(self):
-    super().__init__(no_category='Pozostałe', verify_checks=False)
+    super().__init__(no_category='Pozostałe', verify_checks=True)
 
   def get_ending_note(self):
     return '''Informacje o konkretnej komendzie:\t{0}help <komenda>
@@ -22,8 +22,9 @@ intents.members = True
 
 
 bot = commands.Bot(
-  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True, self_bot=False,
-  intents = intents)
+  command_prefix = commands.when_mentioned_or(command_prefix), help_command = Help(), owner_id=388764073191538688, case_insensitive=True,
+  intents = intents
+)
 
 
 current_game = NotAGame()

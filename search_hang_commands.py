@@ -50,21 +50,21 @@ class Przeszukania(commands.Cog):
 
   
   @commands.command(name='end_reports', aliases=['repblok'])
-  @manitou_cmd
+  @manitou_cmd()
   async def end_reports(self, ctx):
     '''ⓂBlokuje zgłaszanie nowych osób do przeszukania'''
     globals.current_game.days[-1].search_lock = True
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='reported', aliases=['rpt'])
-  @manitou_cmd
+  @manitou_cmd()
   async def reported(self, ctx):
     """ⓂPokazuje aktualne zgłoszenia"""
     await ctx.send(globals.current_game.days[-1].report_print())
 
 
   @commands.command(name='searchend', aliases=['snd'])
-  @manitou_cmd
+  @manitou_cmd()
   async def search_end(self, ctx):
     '''Ⓜ/&snd/Kończy przeszukania'''
     if globals.current_game.night:
@@ -99,7 +99,7 @@ class Wieszanie(commands.Cog):
       await ctx.send("Tej komendy można używać tylko w dzień", delete_after=5)
 
   @commands.command(name='hangend',aliases=['hnd'])
-  @manitou_cmd
+  @manitou_cmd()
   async def hangend(self, ctx):
     '''Ⓜ/&hnd/Finalizuje wieszanie'''
     if globals.current_game.night:
@@ -112,9 +112,9 @@ class Wieszanie(commands.Cog):
       pass
 
   @commands.command(name='hang_random', aliases=['hrnd'])
-  @manitou_cmd
+  @manitou_cmd()
   async def hangrand(self, ctx):
-    ''''Ⓜ/&hrnd/Wyłania drogą losową wieszaną osobę'''
+    '''Ⓜ/&hrnd/Wyłania drogą losową wieszaną osobę'''
     if globals.current_game.night:
       await ctx.send("Trwa noc!")
       return

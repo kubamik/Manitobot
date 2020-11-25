@@ -51,7 +51,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         await m.edit(content=m.content+'\t😴')
       return
     fac = self.emoji2fac.get(event.emoji.id)
-    if fac:
+    if fac and event.message_id == self.message.id:
       await self.game.faction_map[fac].wake_up()
 
   @commands.Cog.listener()
@@ -64,7 +64,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
           await m.edit(content=m.content[:-2])
       return
     fac = self.emoji2fac.get(event.emoji.id)
-    if fac:
+    if fac and event.message_id == self.message.id:
       await self.game.faction_map[fac].put_to_sleep()
 
   async def morning_reset(self) -> None:

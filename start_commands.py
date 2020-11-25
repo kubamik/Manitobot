@@ -60,7 +60,7 @@ class Starting(commands.Cog, name='Początkowe'):
       pass
 
   @commands.command(name="start_mafia")
-  @manitou_cmd
+  @manitou_cmd()
   async def mafia_start(self, ctx, *roles : str):
     '''Rozpoczyna mafię.\nW argumencie należy podać listę postaci (oddzielonych spacją) z liczebnościami w nawiasie (jeśli są różne od 1) np. Miastowy(5).\nWażne jest zachowanie kolejności - rola mafijna jako ostatnia lub w przypadku większej ilości ról mafii oddzielenie ich '|'.\nnp. &start_mafia Miastowy(7) Detektyw Lekarz | Boss Mafiozo(2) lub\n&start_mafia Miastowy(3) Mafiozo'''
     roles = list(roles)
@@ -92,7 +92,7 @@ class Starting(commands.Cog, name='Początkowe'):
     await ctx.send(sklady.print_set(nazwa_składu.upper().replace("_", "")))
 
   @commands.command(name='start')
-  @manitou_cmd
+  @manitou_cmd()
   async def rozdawanie(self, ctx,*lista):
     """ⓂRozpoczyna grę z składem podanym jako argumenty funkcji."""
     #await resetuj_grajacych(ctx) #dopisałem resetowanie nicku w pętli wysyłaniu graczom roli na PM
@@ -103,7 +103,7 @@ class Starting(commands.Cog, name='Początkowe'):
       
 
   @commands.command(name='startset',aliases=['start_skład'])
-  @manitou_cmd
+  @manitou_cmd()
   async def start_skład(self, ctx, nazwa_składu, *dodatkowe):
     """Ⓜ/&start_skład/Rozpoczyna grę jednym z predefiniowanych składów
     Argumentami są:
@@ -117,7 +117,7 @@ class Starting(commands.Cog, name='Początkowe'):
       await start_game(ctx, *(sklady.get_set(nazwa_składu) + list(dodatkowe)))
 
   @commands.command(name='resume')
-  @manitou_cmd
+  @manitou_cmd()
   async def come_back(self, ctx):
     """ⓂRozpoczyna grę, używać gdy bot się wykrzaczy a potrzeba zrobić głosowanie"""
     if if_game():

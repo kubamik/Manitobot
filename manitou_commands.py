@@ -40,15 +40,16 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     for faction in FAC2CHANN_ID:
       ch = get_faction_channel(faction)
       tasks.append(ch.edit(sync_permissions=True))
+    for member in get_manitou_role().members:
+      tasks.append(member.remove_roles(get_other_manitou_role()))
     try:
       await asyncio.gather(*tasks)
     except discord.errors.Forbidden:
       pass
-    for member in get_manitou_role().members:
-      await member.remove_roles(get_other_manitou_role())
+    
     
   @commands.command(name='set_manitou_channel', aliases=['m_channel'])
-  @manitou_cmd
+  @manitou_cmd()
   async def set_m_channel(self, ctx):
     '''Ⓜ/&m_channel/Użyte na serwerze ustawia kanał Manitou na #notatnik-manitou, użyte na DM ustawia na DM'''
     if (ctx.channel.type == discord.ChannelType.private):
@@ -59,7 +60,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name='tea', enabled=False, hidden=True)
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def tea(self, ctx):
     '''ⓂUruchamia śmierć od ziółek'''
     if globals.current_game.night:
@@ -77,7 +79,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='next', aliases=['n'], enabled=False, hidden=True)
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def next_night(self,ctx):
     """Ⓜ/&n/Rozpoczyna rundę następnej postaci w trakcie nocy."""
     if not globals.current_game.night:
@@ -103,7 +106,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command()
-  @manitou_cmd
+  @manitou_cmd()
   async def nuke(self, ctx):
     """ⓂOdbiera rolę Gram i Trup wszystkim userom"""
     if if_game():
@@ -129,14 +132,16 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name='kill')
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def kill(self, ctx, *, gracz: MyMemberConverter): # type: ignore
     """ⓂZabija otagowaną osobę"""
     await globals.current_game.player_map[gracz].role_class.die()
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='plant', aliases=[])
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def plant(self, ctx, *, member):
     '''ⓂPodkłada posążek wskazanegu graczowi, nie zmieniając frakcji posiadaczy'''
     member = await converter(ctx, member)
@@ -149,7 +154,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name='give',aliases=['statue'])
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def give(self, ctx, *, member):
     '''Ⓜ/&statue/&statuette/Daje posążek w posiadanie wskazanegu graczowi'''
     member = await converter(ctx, member)
@@ -161,7 +167,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await ctx.send(err.reason)
 
   @commands.command(name='who_has',aliases=['whos'])
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def who_has(self, ctx):
     '''Ⓜ/&whos/Wysyła do Manitou kto ma aktualnie posążek'''
     try:
@@ -172,7 +179,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='swap')
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def swap(self, ctx, first, second):
     '''ⓂZamienia role 2 wskazanych osób'''
     first = await converter(ctx, first)
@@ -187,19 +195,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await ctx.send("Ta osoba nie gra lub nie ma takiej osoby")
 
 
-  @commands.command(name='revealdead',aliases=['red'])
-  @manitou_cmd
-  async def dead_reveal(self,ctx):
-    """Ⓜ/&red/Dodaje w nicku rolę wszystkim martwym graczom"""
-    for member in get_dead_role().members:
-      if not globals.current_game.player_map[member].role_class.revealed:
-        await globals.current_game.player_map[member].role_class.reveal()
-    await ctx.message.add_reaction('✅')
-
-
   @commands.command(name='gra')
+  @manitou_cmd()
   async def if_game_started(self, ctx):
-    """Służy do sprawdzania czy gra została rozpoczęta"""
+    """ⓂSłuży do sprawdzania czy gra została rozpoczęta"""
     if if_game():
       await ctx.send("Gra została rozpoczęta")
     else:
@@ -207,7 +206,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name='end_game')
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def end_game(self, ctx):
     """ⓂKończy grę"""
     async with ctx.typing():
@@ -230,10 +230,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   
 
   @commands.command(name='end')
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def end_reset(self, ctx):
     """ⓂResetuje graczy i kończy grę"""
-    globals.current_game.day # this checks if game is started
     m = await ctx.send("Czy na pewno chcesz zakończyć grę?")
     await m.add_reaction('✅')
     await m.add_reaction('⛔')
@@ -256,9 +256,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     
 
   @commands.command(name='Manitou_help', aliases=['mhelp'])
-  @manitou_cmd
+  @manitou_cmd()
   async def manithelp(self, ctx):
-    '''Ⓜ/&mhelp/Pokazuje skrótową pomoc dla Manitou'''
+    '''Ⓜ/&mhelp/Pokazuje skrótową pomoc dla Manitou w kolorze żółtym'''
     comm = ['give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch', 'snd', 'vhif', 'vhg', 'hnd',  'night']
     mess = ""
     for c in comm:
@@ -266,7 +266,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await ctx.send(f'```fix\n{mess}```')
 
   @commands.command(name='random')
-  @manitou_cmd
+  @manitou_cmd()
   async def losuj(self, ctx, n):
     """ⓂLosuje liczbę naturalną z przedziału [1, n]"""
     try:
@@ -281,7 +281,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name='revive', aliases=['resetuj','reset'])
-  @manitou_cmd
+  @manitou_cmd()
   async def resetuj_grajacych(self, ctx):
     """Ⓜ/&resetuj/Przywraca wszystkim trupom rolę gram"""
     if if_game():
@@ -309,7 +309,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
 
   @commands.command(name="alives")
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def alives(self, ctx):
     """Ⓜ&żywi dla Manitou (nie używać publicznie)"""
     team = ""
@@ -327,27 +328,28 @@ Pozostali:{}""".format(len(alive_roles),team))
 
 
   @commands.command(name='rioters_count', aliases=['criot'])
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def countrioters(self, ctx):
     '''Ⓜ/criot/Zwraca liczbę zbuntowanych graczy'''
     await ctx.send("Liczba buntowników wynosi {}".format(len(globals.current_game.rioters)))
 
   @commands.command(name='searches')
-  @manitou_cmd
+  @manitou_cmd()
   async def searches(self, ctx, n: int):
     '''ⓂZmienia ilość przeszukań dziennie'''
     globals.current_game.searches = n
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='duels')
-  @manitou_cmd
+  @manitou_cmd()
   async def duels(self, ctx, n: int):
     '''ⓂZmienia ilość pojedynków dziennie'''
     globals.current_game.duels = n
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='evening', aliases=['even'])
-  @manitou_cmd
+  @manitou_cmd()
   async def evening(self, ctx, n: int):
     '''Ⓜ/&even/Ustawia czas odjazdu bandytów na podany wieczór'''
     globals.current_game.bandit_night = n
@@ -355,34 +357,57 @@ Pozostali:{}""".format(len(alive_roles),team))
     await ctx.message.add_reaction('✅')
   
   @commands.command(name='morning', aliases=['morn'])
-  @manitou_cmd
+  @manitou_cmd()
   async def morning(self, ctx, n: int):
     '''Ⓜ/&morn/Ustawia czas odjazdu bandytów na podany poranek'''
     globals.current_game.bandit_night = n
     globals.current_game.bandit_morning = True
     await ctx.message.add_reaction('✅')
 
+  @commands.command(aliases=['gd', 'num'])
+  @game_check()
+  async def number(self, ctx, name: str, n: int):
+    '''Ⓜ/&n/Zmienia liczby gry (pojedynki, przeszukania, odpływanie)
+    Argumenty: duels, searches, evening, morning lub pierwsze litery; liczba
+    '''
+    name2attr = {
+      'd': 'duels',
+      's': 'searches',
+      'm': 'bandit_morn',
+      'e': 'bandit_even'
+    }
+    try:
+      setattr(globals.current_game, name2attr[name[0]], n)
+    except KeyError:
+      await ctx.send('Podano błędny argument')
+    else:
+      await ctx.message.add_reaction('✅')
+
   @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def revealing_on(self, ctx):
     globals.current_game.reveal_dead = True
 
   @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def revealing_on(self, ctx):
     '''Ⓜ/rev_on/Włącza ujawnianie postaci po śmierci'''
     globals.current_game.reveal_dead = True
     await ctx.message.add_reaction('✅')
 
   @commands.command(name='switch_revealing_off', aliases=['rev_off'], hidden=True)
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def revealing_off(self, ctx):
     '''Ⓜ/rev_off/Wyłącza ujawnianie postaci po śmierci'''
     globals.current_game.reveal_dead = False
     await ctx.message.add_reaction('✅')
 
   @commands.command(name="day")
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def night_end(self, ctx):
     """ⓂRozpoczyna dzień"""
     if not globals.current_game.night:
@@ -406,7 +431,8 @@ Pozostali:{}""".format(len(alive_roles),team))
     await ctx.message.add_reaction('✅')
 
   @commands.command(name="night")
-  @manitou_cmd
+  @manitou_cmd()
+  @game_check()
   async def night_start(self, ctx):
     '''ⓂRozpoczyna noc'''
     if globals.current_game.night:
