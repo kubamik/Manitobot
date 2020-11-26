@@ -236,12 +236,6 @@ async def on_command_error(ctx, error):
     await ctx.send(":robot:Bot did an uppsie :'( :robot:")
     print(ctx.command, type(error))
     report_error(error)
-    
-    
-@bot.listen()
-async def on_message(m):
-  for line in traceback.format_stack():
-    print(line)
 
 
 @bot.listen()

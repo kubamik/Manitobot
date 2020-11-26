@@ -103,11 +103,13 @@ class MyMemberConverter(commands.MemberConverter):
 
 
 def get_guild():
-  return discord.utils.get(bot.guilds, id=GUILD_ID)
+  return bot.get_guild(GUILD_ID)
+  #return discord.utils.get(bot.guilds, name='Nazwa serwera')
 
 def get_player_role():
   guild=get_guild()
-  return discord.utils.get(guild.roles,id=PLAYER_ROLE_ID)
+  return guild.get_role(PLAYER_ROLE_ID)
+  return discord.utils.get(guild.roles, name='Gram!')
 
 def get_manitou_role():
   guild=get_guild()
