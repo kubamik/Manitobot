@@ -333,36 +333,7 @@ Pozostali:{}""".format(len(alive_roles),team))
   async def countrioters(self, ctx):
     '''Ⓜ/criot/Zwraca liczbę zbuntowanych graczy'''
     await ctx.send("Liczba buntowników wynosi {}".format(len(globals.current_game.rioters)))
-
-  @commands.command(name='searches')
-  @manitou_cmd()
-  async def searches(self, ctx, n: int):
-    '''ⓂZmienia ilość przeszukań dziennie'''
-    globals.current_game.searches = n
-    await ctx.message.add_reaction('✅')
-
-  @commands.command(name='duels')
-  @manitou_cmd()
-  async def duels(self, ctx, n: int):
-    '''ⓂZmienia ilość pojedynków dziennie'''
-    globals.current_game.duels = n
-    await ctx.message.add_reaction('✅')
-
-  @commands.command(name='evening', aliases=['even'])
-  @manitou_cmd()
-  async def evening(self, ctx, n: int):
-    '''Ⓜ/&even/Ustawia czas odjazdu bandytów na podany wieczór'''
-    globals.current_game.bandit_night = n
-    globals.current_game.bandit_morning = False
-    await ctx.message.add_reaction('✅')
-  
-  @commands.command(name='morning', aliases=['morn'])
-  @manitou_cmd()
-  async def morning(self, ctx, n: int):
-    '''Ⓜ/&morn/Ustawia czas odjazdu bandytów na podany poranek'''
-    globals.current_game.bandit_night = n
-    globals.current_game.bandit_morning = True
-    await ctx.message.add_reaction('✅')
+    
 
   @commands.command(aliases=['gd', 'num'])
   @game_check()
