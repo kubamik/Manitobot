@@ -16,7 +16,6 @@ import manitou_commands
 import roles_commands
 import start_commands
 import search_hang_commands
-from keep_alive import keep_alive
 from utility import *
 import utility
 from settings import *
@@ -251,7 +250,6 @@ async def on_error(event, *args, **kwargs):
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 if __name__ == '__main__':
-  keep_alive()
   token = os.environ.get("TOKEN")
   bot.run(token)
 
