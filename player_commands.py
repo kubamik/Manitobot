@@ -117,6 +117,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       
 
   @commands.command(name="żywi",aliases=['zywi'])
+  @game_check()
   async def living(self, ctx):
     """/&zywi/Wypisuje listę żywych graczy"""
     team = ""
