@@ -12,7 +12,7 @@ import permissions
 
 class DlaGraczy(commands.Cog, name = "Dla Graczy"):
   def __init__(self, bot):
-        self.bot = bot
+    self.bot = bot
 
   @commands.command(name='postać')
   async def role_help(self, ctx,*role):
@@ -26,6 +26,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       await ctx.send("TAK")
     else:
       await ctx.send("NIE")
+
 
   @commands.command(name='obserwuję', aliases=['obs'])
   async def spectate(self, ctx):
@@ -45,6 +46,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       except discord.errors.Forbidden:
         await ctx.send("Dodaj sobie '!' przed nickiem")
 
+
   @commands.command(name='nie_obserwuję', aliases=['nie_obs', 'nieobs'])
   async def not_spectate(self, ctx):
     """/&nie_obs/Usuwa userowi rolę spectator."""
@@ -58,6 +60,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       except discord.errors.Forbidden:
         pass
     await ctx.message.add_reaction('✅')
+
 
   @commands.command(name='pax')
   @game_check()
@@ -117,6 +120,7 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
       
 
   @commands.command(name="żywi",aliases=['zywi'])
+  @game_check()
   async def living(self, ctx):
     """/&zywi/Wypisuje listę żywych graczy"""
     team = ""
@@ -129,7 +133,6 @@ class DlaGraczy(commands.Cog, name = "Dla Graczy"):
 Liczba martwych o nieznanych rolach: {}
 Pozostali:{}""".format(len(get_player_role().members),len(alive_roles) - len(get_player_role().members),team))
 
-  
 
   @commands.command(name='g', help=playerhelp(), hidden=True)
   async def player_help(self, ctx):

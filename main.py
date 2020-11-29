@@ -192,6 +192,8 @@ async def on_command_error(ctx, error):
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.errors.MissingRequiredArgument):
     await ctx.send("Brakuje parametru: " + str(error.param), delete_after=5)
+  elif isinstance(error, MemberNotPlaying):
+    await ctx.send('Ta osoba nie gra lub nie żyje', delete_after=5)
   elif isinstance(error, commands.MemberNotFound):
     await ctx.send("Nie ma takiej osoby", delete_after=5)
   elif isinstance(error, commands.errors.BadArgument):
@@ -219,9 +221,6 @@ async def on_command_error(ctx, error):
     await ctx.message.delete(delay=5)
   elif isinstance(error, AuthorNotPlaying):
     await ctx.send('Musisz grać, aby użyć tej komendy', delete_after=5)
-    await ctx.message.delete(delay=5)
-  elif isinstance(error, MemberNotPlaying):
-    await ctx.send('Ta osoba nie gra lub nie żyje', delete_after=5)
     await ctx.message.delete(delay=5)
   elif isinstance(error, commands.CheckFailure):
     await ctx.message.delete(delay=5)
@@ -254,4 +253,3 @@ if __name__ == '__main__':
   keep_alive()
   token = os.environ.get("TOKEN")
   bot.run(token)
-

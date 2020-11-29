@@ -22,7 +22,7 @@ class Przeszukania(commands.Cog):
       await ctx.send("Tej komendy można używać tylko w dzień i nie w trakcie pojedynku", delete_after=5)
 
   @commands.command(name='zgłaszam')
-  async def duel_dare(self,ctx,*, gracz):
+  async def duel_dare(self, ctx, *, gracz):
     """Zgłasza podaną osobę do przeszukania"""
     gracz = await converter(ctx, gracz)
     member = get_member(ctx.author.id)
@@ -56,6 +56,7 @@ class Przeszukania(commands.Cog):
     globals.current_game.days[-1].search_lock = True
     await ctx.message.add_reaction('✅')
 
+
   @commands.command(name='reported', aliases=['rpt'])
   @manitou_cmd()
   async def reported(self, ctx):
@@ -67,9 +68,6 @@ class Przeszukania(commands.Cog):
   @manitou_cmd()
   async def search_end(self, ctx):
     '''Ⓜ/&snd/Kończy przeszukania'''
-    if globals.current_game.night:
-      await ctx.send("Trwa noc!")
-      return
     if not globals.current_game.days[-1].search_final:
       await ctx.send("Najpierw musisz przeprowadzić głosowanie")
       return
@@ -78,9 +76,22 @@ class Przeszukania(commands.Cog):
       return
     try:
       await globals.current_game.days[-1].search_finalize(ctx)
-      await ctx.message.add_reaction('✅')
     except InvalidRequest:
       pass
+    else:
+      await ctx.message.add_reaction('✅')
+
+
+  @commands.command(name='search_random', aliases=['srnd'])
+  @manitou_cmd()
+  async def searchrand(self, ctx):
+    '''Ⓜ/&hrnd/Wyłania drogą losową przeszukiwanych osobę'''
+    if globals.current_game.night:
+      await ctx.send("Trwa noc!")
+      return
+    c = await globals.current_game.days[-1].search_random()
+    if c:
+      await ctx.send(c)
 
 
 

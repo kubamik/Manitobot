@@ -46,6 +46,30 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await asyncio.gather(*tasks)
     except discord.errors.Forbidden:
       pass
+
+  
+  @commands.command(aliases=['MM'])
+  @manitou_cmd()
+  async def mass_mute(self, ctx):
+    '''ⓂMutuje wszystkich niebędących Manitou'''
+    tasks = []
+    for member in get_voice_channel().members:
+      if not member in get_manitou_role().members:
+        tasks.append(member.edit(mute=True))
+    await asyncio.gather(*tasks)
+    await ctx.message.add_reaction('✅')
+
+  
+  @commands.command(aliases=['MU'])
+  @manitou_cmd()
+  async def mass_unmute(self, ctx):
+    '''ⓂUnmutuje wszystkich niebędących Manitou'''
+    tasks = []
+    for member in get_voice_channel().members:
+      if not member in get_manitou_role().members:
+        tasks.append(member.edit(mute=False))
+    await asyncio.gather(*tasks)
+    await ctx.message.add_reaction('✅')
     
     
   @commands.command(name='set_manitou_channel', aliases=['m_channel'])
@@ -81,7 +105,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
   @commands.command(name='next', aliases=['n'], enabled=False, hidden=True)
   @manitou_cmd()
   @game_check()
-  async def next_night(self,ctx):
+  async def next_night(self, ctx):
     """Ⓜ/&n/Rozpoczyna rundę następnej postaci w trakcie nocy."""
     if not globals.current_game.night:
       await ctx.send("Tej komendy można użyć tylko w nocy", delete_after=5)
@@ -205,7 +229,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
       await ctx.send("Gra nie została rozpoczęta")
 
 
-  @commands.command(name='end_game')
+  @commands.command(name='end_game', hidden=True)
   @manitou_cmd()
   @game_check()
   async def end_game(self, ctx):
@@ -308,7 +332,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     await get_town_channel().send("Wszystkim z rolą 'Trup' na kanale głosowym nadano rolę 'Gram!'")
 
 
-  @commands.command(name="alives")
+  @commands.command()
   @manitou_cmd()
   @game_check()
   async def alives(self, ctx):
@@ -334,35 +358,6 @@ Pozostali:{}""".format(len(alive_roles),team))
     '''Ⓜ/criot/Zwraca liczbę zbuntowanych graczy'''
     await ctx.send("Liczba buntowników wynosi {}".format(len(globals.current_game.rioters)))
 
-  @commands.command(name='searches')
-  @manitou_cmd()
-  async def searches(self, ctx, n: int):
-    '''ⓂZmienia ilość przeszukań dziennie'''
-    globals.current_game.searches = n
-    await ctx.message.add_reaction('✅')
-
-  @commands.command(name='duels')
-  @manitou_cmd()
-  async def duels(self, ctx, n: int):
-    '''ⓂZmienia ilość pojedynków dziennie'''
-    globals.current_game.duels = n
-    await ctx.message.add_reaction('✅')
-
-  @commands.command(name='evening', aliases=['even'])
-  @manitou_cmd()
-  async def evening(self, ctx, n: int):
-    '''Ⓜ/&even/Ustawia czas odjazdu bandytów na podany wieczór'''
-    globals.current_game.bandit_night = n
-    globals.current_game.bandit_morning = False
-    await ctx.message.add_reaction('✅')
-  
-  @commands.command(name='morning', aliases=['morn'])
-  @manitou_cmd()
-  async def morning(self, ctx, n: int):
-    '''Ⓜ/&morn/Ustawia czas odjazdu bandytów na podany poranek'''
-    globals.current_game.bandit_night = n
-    globals.current_game.bandit_morning = True
-    await ctx.message.add_reaction('✅')
 
   @commands.command(aliases=['gd', 'num'])
   @game_check()
@@ -383,22 +378,25 @@ Pozostali:{}""".format(len(alive_roles),team))
     else:
       await ctx.message.add_reaction('✅')
 
-  @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
   @manitou_cmd()
   @game_check()
+  @mafia_check()
   async def revealing_on(self, ctx):
     globals.current_game.reveal_dead = True
 
-  @commands.command(name='turn_revealing_on', aliases=['rev_on'], hidden=True)
+  @commands.command(name='turn_revealing_on', aliases=['rev_on'])
   @manitou_cmd()
+  @mafia_check()
   @game_check()
   async def revealing_on(self, ctx):
     '''Ⓜ/rev_on/Włącza ujawnianie postaci po śmierci'''
     globals.current_game.reveal_dead = True
     await ctx.message.add_reaction('✅')
 
-  @commands.command(name='switch_revealing_off', aliases=['rev_off'], hidden=True)
+  @commands.command(name='switch_revealing_off', aliases=['rev_off'])
   @manitou_cmd()
+  @mafia_check()
   @game_check()
   async def revealing_off(self, ctx):
     '''Ⓜ/rev_off/Wyłącza ujawnianie postaci po śmierci'''

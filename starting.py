@@ -51,7 +51,7 @@ async def start_game(ctx, *lista, mafia = False, faction_data = ()):
 Twoja postać to:\n{}""".format(RULLER, RULLER, postacie.get_role_details(role, role)))
     except discord.errors.Forbidden:
       await ctx.send(
-			    "Nie można wysłać wiadomości do {}\nKonieczne będzie ręczne przekazanie roli".format(get_nickname(member.id)))
+			    "Nie można wysłać wiadomości do {}\nKonieczne będzie ręczne przekazanie roli i zezwolenie na wiadomości od bota".format(get_nickname(member.id)))
     globals.current_game.add_pair(member, role)
   globals.current_game.make_factions(lista, faction_data)
   for member in sorted(gracze, key = lambda m: get_nickname(m.id).lower()):

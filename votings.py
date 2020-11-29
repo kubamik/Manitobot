@@ -21,17 +21,6 @@ async def glosowanie(ctx, title, required_votes,
   description = title[1].format(required_votes) + '\n\n' + options_readable
   embed = discord.Embed(title=etitle, colour=discord.Colour(0x00aaff), description=description)
   embed.set_footer(text="INSTRUKCJA\nAby zagłosować wyślij tu dowolny wariant dowolnej opcji. Wiele głosów należy oddzielić przecinkami. Wielkość znaków nie ma znaczenia.")
-
-
-  '''message = """Rozpoczynamy głosowanie nad: {}
-Wymagana liczba głosów to: {}
-Opcje:
-{}
-
-  Aby zagłosować wyślij mi (botowi) na priv dowolny wariant dowolnej opcji. Wiele głosów należy oddzielić przecinkami. Wielkość znaków nie ma znaczenia.
-  """.format(title, required_votes, options_readable)'''
-
-  #await get_glosowania_channel().send(message)
   gracze = list(get_player_role().members)
   trupy = list(get_dead_role().members)
   nie_glos = list(globals.current_game.not_voting)

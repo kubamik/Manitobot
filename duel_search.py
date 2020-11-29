@@ -194,15 +194,29 @@ class Search(Hang):
     await get_town_channel().send(c)
 
 
+  async def search_random(self):
+    if len(get_searched_role().members) == globals.current_game.searches:
+      return "Wytypowano już poprawną liczbę osób"
+    if not self.search_final:
+      return "Musisz najpierw przeprowadzić głosowanie"
+    while len(self.to_search) < globals.current_game.searches:
+      self.to_search.append(random.choice(self.to_revote))
+    self.to_revote = []
+    await self.search_end(self.to_search)
+
+
   async def search_finalize(self, ctx):
-    self.hang_time = True
     if len(get_searched_role().members) > globals.current_game.searches:
       await ctx.send("Przeszukiwanych jest więcej niż przeszukań")
+      raise InvalidRequest
+    if len(get_searched_role().members) < globals.current_game.searches:
+      await ctx.send("Przeszukiwanych jest za mało. Przeprowadź dodatkowe głosowanie (`&revote`) lub przeszukaj losowo (`&srnd`)")
       raise InvalidRequest
     for member in get_searched_role().members:
       if member not in get_player_role().members:
         await ctx.send("**{}** jest przeszukiwany, a nie gra".format(member.display_name))
         raise InvalidRequest
+    self.hang_time = True
     self.to_search = list(get_searched_role().members)
     while len(self.to_search) < globals.current_game.searches:
       self.to_search.append(random.choice(list(set(get_player_role().members) - set(self.to_search))))

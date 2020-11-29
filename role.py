@@ -155,7 +155,7 @@ class Role(Activity):
         await gracz.send("Dodaj sobie '+' przed nickiem")
       except asyncio.TimeoutError:
         pass
-    if not any([globals.current_game.night, self.revealed, globals.current_game.reveal_dead]):
+    if not any([globals.current_game.night, self.revealed, not globals.current_game.reveal_dead]):
       await self.reveal()
 
     #winning conditions

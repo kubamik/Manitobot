@@ -10,11 +10,6 @@ from role import Role
 from player import Player
 
 
-
-
-def sth():
-  pass
-
 class Mafia(Vote):
   def __init__(self):
     Vote.__init__(self)

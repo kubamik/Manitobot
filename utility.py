@@ -11,10 +11,19 @@ from basic_models import GameNotStarted, NotAGame
 
 lock = False
 
+
 def game_check() -> Callable:
   async def predicate(ctx):
     if isinstance(globals.current_game, NotAGame):
       raise GameNotStarted()
+    return True
+  return commands.check(predicate)
+
+
+def mafia_check() -> Callable:
+  async def predicate(ctx):
+    if globals.current_game.__class__.__name__ != 'Mafia':
+      raise WrongGameType()
     return True
   return commands.check(predicate)
 
@@ -24,6 +33,7 @@ def manitou_cmd() -> Callable:
       raise commands.MissingRole(get_manitou_role())
     return True
   return commands.check(predicate)
+
 
 def manitou_cmd_old():
   def predicate(func):
@@ -35,22 +45,6 @@ def manitou_cmd_old():
     return wrapper
   return predicate
 
-"""removed, because of MyMemberConverter
-def transform_nickname(nick):
-  if nick.startswith(('+', '!')):
-    nick = nick[1:]
-  if all(nick.rpartition('(')):
-    nick = nick.rpartition('(')[0]
-  return nick.lower()
-
-
-def nickname_fit(nick):
-  nick = transform_nickname(nick)
-  for player in get_player_role().members + get_dead_role().members:
-    if transform_nickname(player.display_name) == nick:
-      return player
-  return None
-"""
 
 def player_cmd() -> Callable:
   def predicate(ctx: commands.Context) -> bool:
@@ -104,107 +98,107 @@ class MyMemberConverter(commands.MemberConverter):
 
 def get_guild():
   return bot.get_guild(GUILD_ID)
-  #return discord.utils.get(bot.guilds, name='Nazwa serwera')
+
 
 def get_player_role():
-  guild=get_guild()
-  return guild.get_role(PLAYER_ROLE_ID)
-  return discord.utils.get(guild.roles, name='Gram!')
+  return get_guild().get_role(PLAYER_ROLE_ID)
+
 
 def get_manitou_role():
-  guild=get_guild()
-  return discord.utils.get(guild.roles,id=MANITOU_ROLE_ID)
+  return get_guild().get_role(MANITOU_ROLE_ID)
+
 
 def get_other_manitou_role():
-  guild=get_guild()
-  return discord.utils.get(guild.roles,id=OTHER_MANITOU_ROLE_ID)
+  return get_guild().get_role(OTHER_MANITOU_ROLE_ID)
+
 
 def get_dead_role():
-  guild=get_guild()
-  return discord.utils.get(guild.roles,id=TRUP_ROLE_ID)
+  return get_guild().get_role(TRUP_ROLE_ID)
+
 
 def get_spectator_role():
-  guild=get_guild()
-  return discord.utils.get(guild.roles,id=SPECTATOR_ROLE_ID)
+  return get_guild().get_role(SPECTATOR_ROLE_ID)
+
 
 def get_admin_role():
-  return bot.get_guild(GUILD_ID).get_role(ADMIN_ROLE_ID)
+  return get_guild().get_role(ADMIN_ROLE_ID)
+
 
 def get_duel_winner_role():
-  return bot.get_guild(GUILD_ID).get_role(DUEL_WINNER_ID)
+  return get_guild().get_role(DUEL_WINNER_ID)
+
 
 def get_duel_loser_role():
-  return bot.get_guild(GUILD_ID).get_role(DUEL_LOSER_ID)
+  return get_guild().get_role(DUEL_LOSER_ID)
+
 
 def get_searched_role():
-  return bot.get_guild(GUILD_ID).get_role(SEARCHED_ID)
+  return get_guild().get_role(SEARCHED_ID)
+
 
 def get_hanged_role():
   return get_guild().get_role(HANGED_ID)
 
+
 def get_newcommer_role():
   return get_guild().get_role(NEWCOMMER_ID)
+
 
 def get_ping_reminder_role():
   return get_guild().get_role(PING_REMINDER_ID)
 
+
 def get_ping_game_role():
   return get_guild().get_role(PING_GAME_ID)
 
-def get_control_panel():
-  return get_guild().get_channel(CONTROL_PANEL_ID) # TODO: Add this ID to settings
 
-def get_glosowania_channel():
-  guild=get_guild()
-  return discord.utils.get(guild.text_channels, id=GLOSOWANIA_CHANNEL_ID)
+def get_control_panel():
+  return get_guild().get_channel(CONTROL_PANEL_ID)
+
 
 def get_ankietawka_channel():
   return get_guild().get_channel(ANKIETAWKA_CHANNEL_ID)
 
+
 def get_manitou_notebook():
-  guild = get_guild()
-  return discord.utils.get(guild.text_channels, id=NOTATNIK_MANITOU_CHANNEL_ID)
+  return get_guild().get_channel(NOTATNIK_MANITOU_CHANNEL_ID)
+
 
 def get_town_channel():
-  guild=get_guild()
-  return discord.utils.get(guild.text_channels, id=TOWN_CHANNEL_ID)
+  return get_guild().get_channel(TOWN_CHANNEL_ID)
+
 
 def get_voice_channel():
-  guild = get_guild()
-  return discord.utils.get(guild.voice_channels, id=VOICE_CHANNEL_ID)
+  return get_guild().get_channel(VOICE_CHANNEL_ID)
+
 
 def on_voice(ctx):
   return get_member(ctx.author.id) in get_voice_channel().members
 
+
 def get_faction_channel(faction: str) -> discord.TextChannel:
-  guild = get_guild()
-  return guild.get_channel(FAC2CHANN_ID[faction])
+  return get_guild().get_channel(FAC2CHANN_ID[faction])
+
 
 def get_member(member_id):
-  guild = get_guild()
-  return discord.utils.get(guild.members, id=member_id)
+  return get_guild().get_member(member_id)
+
 
 def get_nickname(member_id):
-  member = get_member(member_id)
-  return member.display_name
+  return get_member(member_id).display_name
+
 
 def czy_manitou(ctx):
-  guild = get_guild()
-  member = get_member(ctx.author.id)
-  manitou=list(get_manitou_role().members)
-  return member in manitou
+  return get_member(ctx.author.id) in get_manitou_role().members
+
 
 def czy_gram(ctx):
-  guild = get_guild()
-  member = discord.utils.get(guild.members, id=ctx.author.id)
-  players=list(get_player_role().members)
-  return member in players
+  return get_member(ctx.author.id) in get_player_role().members
+
 
 def czy_trup(ctx):
-  guild = get_guild()
-  member = get_member(ctx.author.id)
-  deads=list(get_dead_role().members)
-  return member in deads
+  return get_member(ctx.author.id) in get_dead_role().members
+
 
 def help_format(command):
   try:
@@ -218,6 +212,7 @@ def help_format(command):
   except AttributeError:
     return ''
 
+
 def playerhelp():
   comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
   mess = ""
@@ -225,8 +220,9 @@ def playerhelp():
     mess += help_format(c)
   return mess
 
+
 def manitouhelp():
-  comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch', 'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night']
+  comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch', 'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night', 'num']
   mess = ""
   for c in comm:
     mess += help_format(c)
@@ -297,7 +293,7 @@ class GameEnd(commands.CommandError):
 class AuthorNotPlaying(commands.CheckFailure):
   pass
 
-class MemberNotPlaying(commands.CheckFailure):
+class MemberNotPlaying(commands.MemberNotFound):
   pass
 
 class WrongGameType(commands.CommandError):
