@@ -53,8 +53,6 @@ async def see_voting(ctx, end_vote):
 
   if end_vote:
     await get_town_channel().send(embed=embed)
-    for member in get_player_role().members:
-      await member.send(embed=embed)
     if globals.current_game.vote_type == "duel":
       await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
     elif globals.current_game.vote_type == "hang":
