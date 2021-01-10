@@ -7,6 +7,7 @@ import traceback
 from discord.ext import commands
 from discord.ext.commands import CommandNotFound
 
+from keep_alive import keep_alive
 from basic_models import GameNotStarted
 import duels_commands
 import player_commands
@@ -248,4 +249,5 @@ started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 if __name__ == '__main__':
   token = os.environ.get("TOKEN")
+  keep_alive()
   bot.run(token)
