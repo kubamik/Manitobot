@@ -56,8 +56,6 @@ async def help1(ctx):
 @bot.command(name='przeproś')
 async def przeproś(ctx):
 	"""Przepraszam"""
-	for line in traceback.format_stack():
-		print(line)
 	await ctx.send("Przepraszam")
 
 
