@@ -130,3 +130,5 @@ dmypy.json
 
 
 error.log
+
+.idea/
