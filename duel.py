@@ -247,7 +247,7 @@ class Duel:
                 await player.die("duel")
         self.duelers = ()
         self.participants = ()
-        await ctx.message.add_reaction('✅')
+        await ctx.active_msg.add_reaction('✅')
         await self.if_next()
 
     async def change_winner(self, member):

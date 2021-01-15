@@ -236,10 +236,12 @@ class Activity:
     def signal(self):
         self.data += 1
 
-    async def reveal(self):
-        nickname = get_nickname(self.player.member.id)
+    async def reveal(self, dead=False):
         self.revealed = True
         member = self.player.member
+        nickname: str = member.display_name
+        if dead and not nickname.startswith('+'):
+            nickname = '+' + nickname
         await get_town_channel().send("**{}** to **{}**".format(nickname.replace('+', ''), self.name.replace('_', ' ')))
         try:
             await member.edit(nick=nickname + "({})".format(self.name.replace('_', ' ')))

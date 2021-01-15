@@ -1,14 +1,18 @@
+from typing import Optional
+
+import discord
+
 from utility import playing, send_to_manitou, get_town_channel, get_manitou_notebook
 from f_database import FACTION_FEATURES
 from errors import GameEnd
 from postacie import give_faction
-import bot_basics
+from bot_basics import bot
 
 
 class Statue:
     def __init__(self):
-        self.holder = None
-        self.faction_holder = FACTION_FEATURES["START_WITH_STATUE"]
+        self.holder: Optional[discord.Member] = None
+        self.faction_holder = FACTION_FEATURES['START_WITH_STATUE']
         self.planted = False
         self.last_change = -1
         self.followed = {}
@@ -53,18 +57,22 @@ class Statue:
         else:
             bot.game.nights[-1].output += f
 
-    def manitou_plant(self, member):
-        playing(member)
+    async def manitou_plant(self, member):
+        prev = self.holder
         self.holder = member
         self.planted = True
+        await bot.game.controller.statue_change(prev, member, self.faction_holder, True)
 
-    def give(self, member):
-        playing(member)
+    async def give(self, member):
+        """For manitou giving
+        """
+        prev = self.holder
         self.holder = member
         self.planted = False
         role = bot.game.player_map[member].role
         faction = give_faction(role)
         self.faction_holder = faction
+        await bot.game.controller.statue_change(prev, member, faction, False)
 
     def day_search(self, member):
         if self.holder == member:
