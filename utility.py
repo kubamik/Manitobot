@@ -1,303 +1,213 @@
-from functools import wraps
-from typing import Optional, Callable
+import asyncio
+from typing import Optional, List
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
+from errors import InvalidRequest
 from settings import *
-from globals import bot, command_prefix
-import globals
-from basic_models import GameNotStarted, NotAGame
-
-lock = False
+from bot_basics import bot, command_prefix
 
 
-def game_check() -> Callable:
-  async def predicate(ctx):
-    if isinstance(globals.current_game, NotAGame):
-      raise GameNotStarted()
-    return True
-  return commands.check(predicate)
+def get_guild() -> discord.Guild:
+    return bot.get_guild(GUILD_ID)
 
 
-def mafia_check() -> Callable:
-  async def predicate(ctx):
-    if globals.current_game.__class__.__name__ != 'Mafia':
-      raise WrongGameType()
-    return True
-  return commands.check(predicate)
-
-def manitou_cmd() -> Callable:
-  async def predicate(ctx: commands.Context) -> bool:
-    if not czy_manitou(ctx):
-      raise commands.MissingRole(get_manitou_role())
-    return True
-  return commands.check(predicate)
+def get_player_role() -> discord.Role:
+    return get_guild().get_role(PLAYER_ROLE_ID)
 
 
-def manitou_cmd_old():
-  def predicate(func):
-    @wraps(func)
-    async def wrapper(self, ctx, *args, **kwargs):
-      if not czy_manitou(ctx):
-        raise commands.MissingRole(get_manitou_role())
-      await func(self, ctx, *args, **kwargs)
-    return wrapper
-  return predicate
+def get_manitou_role() -> discord.Role:
+    return get_guild().get_role(MANITOU_ROLE_ID)
 
 
-def player_cmd() -> Callable:
-  def predicate(ctx: commands.Context) -> bool:
-    if get_member(ctx.author.id) not in get_player_role().members:
-      raise AuthorNotPlaying("You have to be playing to run this command.")
-    return True
-  return commands.check(predicate)
+def get_other_manitou_role() -> discord.Role:
+    return get_guild().get_role(OTHER_MANITOU_ROLE_ID)
 
 
-class MyFlagConverter(commands.Converter):
-  async def convert(self, ctx: commands.Context, arg : str):
-    if arg.startswith('-'):
-      return arg[2:] if arg.startswith('--') else arg[1:]
-    raise commands.BadArgument('Invalid flag')
+def get_dead_role() -> discord.Role:
+    return get_guild().get_role(TRUP_ROLE_ID)
 
 
-class MyMemberConverter(commands.MemberConverter):
-  def __init__(self, *, player_only: Optional[bool] = True) -> None:
-    self.player_only = player_only
-    super().__init__()
-
-  @staticmethod
-  def transform_nickname(nick: str) -> str:
-    if nick.startswith(('+', '!')):
-      nick = nick[1:]
-    if all(nick.rpartition('(')):
-      nick = nick.rpartition('(')[0]
-    return nick.lower()
-
-  @classmethod
-  def nickname_fit(cls, nick: str) -> Optional[discord.Member]:
-    nick = cls.transform_nickname(nick)
-    for player in get_player_role().members + get_dead_role().members:
-      if cls.transform_nickname(player.display_name) == nick:
-        return player
-    return None
-
-  async def convert(self, ctx: commands.Context, name: str) -> discord.Member:
-    member = self.nickname_fit(name)
-    if member is None:
-      try:
-        member = await super().convert(ctx, name)
-      except commands.BadArgument:
-        raise commands.MemberNotFound(name)
-    if member not in get_guild().members:
-      raise commands.MemberNotFound(name)
-    if self.player_only and member not in get_player_role().members:
-      raise MemberNotPlaying("This person is not playing.")
-    return member
+def get_spectator_role() -> discord.Role:
+    return get_guild().get_role(SPECTATOR_ROLE_ID)
 
 
-def get_guild():
-  return bot.get_guild(GUILD_ID)
+def get_admin_role() -> discord.Role:
+    return get_guild().get_role(ADMIN_ROLE_ID)
 
 
-def get_player_role():
-  return get_guild().get_role(PLAYER_ROLE_ID)
+def get_duel_winner_role() -> discord.Role:
+    return get_guild().get_role(DUEL_WINNER_ID)
 
 
-def get_manitou_role():
-  return get_guild().get_role(MANITOU_ROLE_ID)
+def get_duel_loser_role() -> discord.Role:
+    return get_guild().get_role(DUEL_LOSER_ID)
 
 
-def get_other_manitou_role():
-  return get_guild().get_role(OTHER_MANITOU_ROLE_ID)
+def get_searched_role() -> discord.Role:
+    return get_guild().get_role(SEARCHED_ID)
 
 
-def get_dead_role():
-  return get_guild().get_role(TRUP_ROLE_ID)
+def get_hanged_role() -> discord.Role:
+    return get_guild().get_role(HANGED_ID)
 
 
-def get_spectator_role():
-  return get_guild().get_role(SPECTATOR_ROLE_ID)
+def get_newcommer_role() -> discord.Role:
+    return get_guild().get_role(NEWCOMMER_ID)
 
 
-def get_admin_role():
-  return get_guild().get_role(ADMIN_ROLE_ID)
+def get_ping_reminder_role() -> discord.Role:
+    return get_guild().get_role(PING_REMINDER_ID)
 
 
-def get_duel_winner_role():
-  return get_guild().get_role(DUEL_WINNER_ID)
+def get_ping_game_role() -> discord.Role:
+    return get_guild().get_role(PING_GAME_ID)
 
 
-def get_duel_loser_role():
-  return get_guild().get_role(DUEL_LOSER_ID)
+def get_control_panel() -> discord.TextChannel:
+    return get_guild().get_channel(CONTROL_PANEL_ID)
 
 
-def get_searched_role():
-  return get_guild().get_role(SEARCHED_ID)
+def get_ankietawka_channel() -> discord.TextChannel:
+    return get_guild().get_channel(ANKIETAWKA_CHANNEL_ID)
 
 
-def get_hanged_role():
-  return get_guild().get_role(HANGED_ID)
+def get_manitou_notebook() -> discord.TextChannel:
+    return get_guild().get_channel(NOTATNIK_MANITOU_CHANNEL_ID)
 
 
-def get_newcommer_role():
-  return get_guild().get_role(NEWCOMMER_ID)
+def get_town_channel() -> discord.TextChannel:
+    return get_guild().get_channel(TOWN_CHANNEL_ID)
 
 
-def get_ping_reminder_role():
-  return get_guild().get_role(PING_REMINDER_ID)
-
-
-def get_ping_game_role():
-  return get_guild().get_role(PING_GAME_ID)
-
-
-def get_control_panel():
-  return get_guild().get_channel(CONTROL_PANEL_ID)
-
-
-def get_ankietawka_channel():
-  return get_guild().get_channel(ANKIETAWKA_CHANNEL_ID)
-
-
-def get_manitou_notebook():
-  return get_guild().get_channel(NOTATNIK_MANITOU_CHANNEL_ID)
-
-
-def get_town_channel():
-  return get_guild().get_channel(TOWN_CHANNEL_ID)
-
-
-def get_voice_channel():
-  return get_guild().get_channel(VOICE_CHANNEL_ID)
-
-
-def on_voice(ctx):
-  return get_member(ctx.author.id) in get_voice_channel().members
+def get_voice_channel() -> discord.VoiceChannel:
+    return get_guild().get_channel(VOICE_CHANNEL_ID)
 
 
 def get_faction_channel(faction: str) -> discord.TextChannel:
-  return get_guild().get_channel(FAC2CHANN_ID[faction])
+    return get_guild().get_channel(FAC2CHANN_ID[faction])
 
 
-def get_member(member_id):
-  return get_guild().get_member(member_id)
+def get_member(member_id: int) -> discord.Member:
+    return get_guild().get_member(member_id)
 
 
-def get_nickname(member_id):
-  return get_member(member_id).display_name
+def get_nickname(member_id: int) -> str:
+    """Deprecated"""
+    print('Using deprecated method: `utility.get_nickname`')
+    return get_member(member_id).display_name
 
 
-def czy_manitou(ctx):
-  return get_member(ctx.author.id) in get_manitou_role().members
+def on_voice(ctx: commands.Context) -> bool:
+    return ctx.author in get_voice_channel().members
 
 
-def czy_gram(ctx):
-  return get_member(ctx.author.id) in get_player_role().members
+def czy_manitou(ctx: commands.Context) -> bool:
+    return ctx.author in get_manitou_role().members
 
 
-def czy_trup(ctx):
-  return get_member(ctx.author.id) in get_dead_role().members
+def czy_gram(ctx: commands.Context) -> bool:
+    return ctx.author in get_player_role().members
 
 
-def help_format(command):
-  try:
-    c = bot.get_command(command)
-    txt = ""
-    txt += "**{pref}{name}**\n"
-    if (len(c.aliases) > 0):
-      txt += "*{pref}" + "*\n*{pref}".join(c.aliases) + "*\n"
-    txt += c.help.rpartition('Ⓜ')[2].rpartition('/')[2]
-    return txt.format(pref=command_prefix, name=c.name) + '\n\n'
-  except AttributeError:
-    return ''
+def czy_trup(ctx: commands.Context) -> bool:
+    return ctx.author in get_dead_role().members
 
 
-def playerhelp():
-  comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
-  mess = ""
-  for c in comm:
-    mess += help_format(c)
-  return mess
-
-
-def manitouhelp():
-  comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch', 'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night', 'num']
-  mess = ""
-  for c in comm:
-    mess += help_format(c)
-  return mess
-
-
-async def send_to_manitou(c=None, embed: discord.Embed = None, file: discord.File = None):
-  if CONFIG['DM_Manitou']:
-    for member in get_manitou_role().members:
-      await member.send(c, embed=embed, file=file)
-  else:
-    await get_manitou_notebook().send(c, embed=embed, file=file)
-
-
-async def clear_nickname(member, ctx):
-  old_nickname = get_nickname(member.id)
-  new_nickname = old_nickname
-  if new_nickname[0] == '+' or new_nickname[0] == '!':
-    new_nickname = new_nickname[1:]
-  if new_nickname[-1] == '#':
-    new_nickname = new_nickname[:-1]
-  if new_nickname[-1] == ')':
-    new_nickname = new_nickname.rpartition('(')[0]
-  if new_nickname != old_nickname:
+def help_format(command: str) -> str:
     try:
-      await get_member(member.id).edit(nick=new_nickname)
-    except discord.errors.Forbidden:
-      await ctx.send("Nie mam uprawnień aby zresetować nick użytkownika {}".format(new_nickname))
+        c = bot.get_command(command)
+        txt = ""
+        txt += "**{pref}{name}**\n"
+        if len(c.aliases) > 0:
+            txt += "*{pref}" + "*\n*{pref}".join(c.aliases) + "*\n"
+        txt += c.help.rpartition('Ⓜ')[2].rpartition('/')[2]
+        return txt.format(pref=command_prefix, name=c.name) + '\n\n'
+    except AttributeError:
+        return ''
 
 
-async def converter(ctx: commands.Context, name: str) -> Optional[discord.Member]:
-  """Deprecated"""
-  try:
-    return await MyMemberConverter(player_only=False).convert(ctx, name)
-  except commands.MemberNotFound:
-    return None
+def playerhelp() -> str:
+    comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
+    msg = ""
+    for c in comm:
+        msg += help_format(c)
+    return msg
 
 
-def playing(gracz = -1, *, author = -1):
-  if gracz != -1 and (gracz is None or gracz not in get_guild().members):
-    raise InvalidRequest("Nie ma takiego gracza")
-  if gracz != -1 and (gracz in get_dead_role().members):
-    raise InvalidRequest("Ten gracz nie żyje")
-  if gracz != -1 and (gracz not in get_player_role().members):
-    raise InvalidRequest("Ta osoba nie gra")
-  if author != -1 and author in get_dead_role().members:
-    raise InvalidRequest("Jesteś martwy")
-  if author != -1 and author not in get_player_role().members:
-    raise InvalidRequest("Nie grasz")
+def manitouhelp() -> str:
+    comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch',
+            'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night', 'num']
+    msg = ""
+    for c in comm:
+        msg += help_format(c)
+    return msg
 
 
-class InvalidRequest(commands.CommandError):
-  def __init__(self, reason = None, flag = None):
-    self.reason = reason
-    self.flag = flag
+async def add_roles(members: List[discord.Member], *roles: discord.Role) -> None:
+    tasks = []
+    for member in members:
+        tasks.append(member.add_roles(*roles))
+    await asyncio.gather(*tasks)
 
 
-class NoEffect(commands.CommandError):
-  def __init__(self, reason = "No reason"):
-    self.reason = reason
+async def remove_roles(members: List[discord.Member], *roles: discord.Role) -> None:
+    tasks = []
+    for member in members:
+        tasks.append(member.remove_roles(*roles))
+    await asyncio.gather(*tasks)
 
 
-class GameEnd(commands.CommandError):
-  def __init__(self, reason, winner):
-    self.winner = winner
-    self.reason = reason
+async def send_to_manitou(content: Optional[str] = None,
+                          embed: Optional[discord.Embed] = None,
+                          file: Optional[discord.File] = None) -> None:
+    if CONFIG['DM_Manitou']:
+        for member in get_manitou_role().members:
+            await member.send(content, embed=embed, file=file)
+    else:
+        await get_manitou_notebook().send(content, embed=embed, file=file)
 
-class AuthorNotPlaying(commands.CheckFailure):
-  pass
 
-class MemberNotPlaying(commands.MemberNotFound):
-  pass
+async def send_game_channels(content: str) -> None:
+    tasks = []
+    for channel in get_guild().text_channels:
+        if channel.category_id == FRAKCJE_CATEGORY_ID or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
+            tasks.append(channel.send(content))
+    await asyncio.gather(*tasks)
 
-class WrongGameType(commands.CommandError):
-  pass
 
-def plused(before, after):
-  return before.display_name[0] != after.display_name[0] and after.display_name.startswith('+')
+async def clear_nickname(member: discord.Member) -> None:
+    old_nickname = member.display_name
+    new_nickname = old_nickname
+    if new_nickname[0] == '+' or new_nickname[0] == '!':
+        new_nickname = new_nickname[1:]
+    if new_nickname[-1] == '#':
+        new_nickname = new_nickname[:-1]
+    if new_nickname[-1] == ')':
+        new_nickname = new_nickname.rpartition('(')[0]
+    if new_nickname != old_nickname:
+        try:
+            await member.edit(nick=new_nickname)
+        except discord.errors.Forbidden:
+            pass
+
+
+def playing(gracz=-1, *, author=-1):
+    """Deprecated
+    """
+    print('Using deprecated function: `utility.playing`')
+    if gracz != -1 and (gracz is None or gracz not in get_guild().members):
+        raise InvalidRequest("Nie ma takiego gracza")
+    if gracz != -1 and (gracz in get_dead_role().members):
+        raise InvalidRequest("Ten gracz nie żyje")
+    if gracz != -1 and (gracz not in get_player_role().members):
+        raise InvalidRequest("Ta osoba nie gra")
+    if author != -1 and author in get_dead_role().members:
+        raise InvalidRequest("Jesteś martwy")
+    if author != -1 and author not in get_player_role().members:
+        raise InvalidRequest("Nie grasz")
+
+
+def plused(before: discord.Member, after: discord.Member) -> bool:
+    return before.display_name[0] != after.display_name[0] and after.display_name.startswith('+')

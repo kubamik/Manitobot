@@ -1,169 +1,159 @@
-from discord.ext import commands
+import asyncio
 import datetime as dt
 from collections import defaultdict
-import asyncio
 
-from settings import PING_GREEN_ID, PING_BLUE_ID, PING_MESSAGE_ID
-from utility import *
+import discord
+from discord.ext import commands
 
-ankietawka = '**O której możesz grać {date}?**\nZaznacz __wszystkie__ opcje, które ci odpowiadają.\n\nZaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).\n\n:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'
+from converters import MyMemberConverter
+from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, PING_BLUE_ID
+from utility import get_newcommer_role, get_ping_reminder_role, get_ping_game_role, get_member, get_admin_role, \
+    get_ankietawka_channel, get_guild, get_voice_channel
+
+ankietawka = '''**O której możesz grać {date}?**
+Zaznacz __wszystkie__ opcje, które ci odpowiadają.
+
+Zaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).
+:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00\
+     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'''
 
 ankietawka_emoji = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷', '🚫', '👁️']
 
-zbiorka = 'Zaznaczyłeś, że będziesz grać, więc zapraszam na <#{}>'.format(TOWN_CHANNEL_ID)
+zbiorka = 'Zaraz gramy, więc zapraszam na <#{}>'.format(TOWN_CHANNEL_ID)
 
 
 class Management(commands.Cog, name='Dla Adminów'):
-  def __init__(self, bot):
-    self.bot = bot
+    def __init__(self, bot):
+        self.bot = bot
 
-  def is_admin():
-    def predicate(ctx):
-      if get_member(ctx.author.id) in get_admin_role().members:
-        return True
-      raise commands.MissingRole(get_admin_role())
-    return commands.check(predicate)
+    @commands.Cog.listener('on_member_join')
+    async def new_member_guild(self, member):
+        await member.add_roles(get_newcommer_role(), get_ping_reminder_role(), get_ping_game_role())
 
-  @bot.listen('on_member_join')
-  async def new_member_guild(member):
-    await member.add_roles(get_newcommer_role(), get_ping_reminder_role(), get_ping_game_role())
-
-  @bot.listen('on_member_remove')
-  async def member_leaves(member):
-    ch = get_guild().system_channel
-    if ch is None:
-      return
-    for wb in await ch.webhooks():
-      if wb.name == 'System':
-        wbhk = wb
-        break
-    else:
-      wbhk = await ch.create_webhook(name='System')
-    await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name), avatar_url='https://wallpaperaccess.com/full/765574.jpg')
-
-  @commands.Cog.listener('on_raw_reaction_add')
-  async def ping_reaction_add(
-      self, event: discord.RawReactionActionEvent) -> None:
-    if event.message_id != PING_MESSAGE_ID:
-      return
-    if event.user_id == self.bot.user.id:
-      return
-    if event.emoji.id == PING_GREEN_ID:
-      member = get_member(event.user_id)
-      await member.remove_roles(get_ping_reminder_role())
-    if event.emoji.id == PING_BLUE_ID:
-      member = get_member(event.user_id)
-      await member.remove_roles(get_ping_game_role())
-
-  @commands.Cog.listener('on_raw_reaction_remove')
-  async def ping_reaction_remove(
-      self, event: discord.RawReactionActionEvent) -> None:
-    if event.message_id != PING_MESSAGE_ID:
-      return
-    if event.user_id == self.bot.user.id:
-      return
-    if event.emoji.id == PING_GREEN_ID:
-      member = get_member(event.user_id)
-      await member.add_roles(get_ping_reminder_role())
-    if event.emoji.id == PING_BLUE_ID:
-      member = get_member(event.user_id)
-      await member.add_roles(get_ping_game_role())
-
-  @commands.command(name='adminuj')
-  @is_admin()
-  async def adminate(self, ctx, *, member):
-    '''Mianuje nowego admina'''
-    member = await converter(ctx, member)
-    if member is None:
-      await ctx.message.delete(delay=5)
-      await ctx.send("Nie ma takiej osoby", delete_after=5)
-      return
-    await member.add_roles(get_admin_role())
-    await ctx.message.add_reaction('✅')
-
-
-  @commands.command(name='nie_adminuj', hidden=True)
-  @commands.is_owner()
-  async def not_adminate(self, ctx, *, member):
-    '''Usuwa admina'''
-    member = await converter(ctx, member)
-    if member is None:
-      await ctx.send("Nie ma takiej osoby")
-      return
-    await member.remove_roles(get_admin_role())
-
-  @commands.command()
-  @is_admin()
-  async def ankietka(self, ctx, *, date):
-    '''Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie. Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Nie zawiera oznaczeń.'''
-    author = get_member(ctx.author.id)
-    if author not in get_admin_role().members:
-      raise commands.MissingRole(get_admin_role())
-    async with ctx.typing():
-      m = await get_ankietawka_channel().send(ankietawka.format(date=date))
-      tasks = []
-      for emoji in ankietawka_emoji:
-        tasks.append(m.add_reaction(emoji))
-      await asyncio.gather(*tasks)
-    await ctx.message.add_reaction('✅')
-
-  
-  @commands.command(name='usuń')
-  @is_admin()
-  async def delete(self, ctx, time: int, *members):
-    '''Masowo usuwa wiadomości, używać tylko do spamu!\nSkładnia &usuń <czas w minutach> [członkowie], w przypadku braku podania członków czyszczone są wszystkie wiadomości'''
-    if time > 24*60:
-      await ctx.send("Maksymalny czas to 24 godziny")
-    new_members = []
-    if not len(members):
-      new_members = list(get_guild().members)
-    else:
-      for member in members:
-        m = member
-        member = await converter(ctx, member)
-        if member is None:
-          await ctx.send(f"Nieznana osoba: {m}")
+    @commands.Cog.listener('on_member_remove')
+    async def member_leaves(self, member):
+        ch = member.guild.system_channel
+        if ch is None:
+            return
+        for wb in await ch.webhooks():
+            if wb.name == 'System':
+                wbhk = wb
+                break
         else:
-          new_members.append(member)
-    def proper_members(m):
-      return m.author in new_members
-    await ctx.channel.purge(after=ctx.message.created_at-dt.timedelta(minutes=time), before=ctx.message.created_at, check=proper_members)
-    try:
-      await ctx.message.add_reaction('✅')
-    except discord.errors.NotFound:
-      pass
+            wbhk = await ch.create_webhook(name='System')
+        await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name),
+                        avatar_url='https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png')
 
-  @commands.command(name='reakcje', hidden=True)
-  @is_admin()
-  async def reactions(self, ctx, m : discord.Message):
-    '''Wysyła podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link'''
-    members = defaultdict(list)
-    for reaction in m.reactions:
-      async for user in reaction.users():
-        members[user].append(str(reaction.emoji))
-    mess = ""
-    for user, r in members.items():
-      if user != self.bot.user:
-        mess += f'**{get_member(user.id).display_name}:**\t' + '\t'.join(r) + '\n'
-    await ctx.send(mess)
+    @commands.Cog.listener('on_raw_reaction_add')
+    async def ping_reaction_add(
+            self, event: discord.RawReactionActionEvent) -> None:
+        if event.message_id != PING_MESSAGE_ID:
+            return
+        if event.user_id == self.bot.user.id:
+            return
+        if event.emoji.id == PING_GREEN_ID:
+            member = get_member(event.user_id)
+            await member.remove_roles(get_ping_reminder_role())
+        if event.emoji.id == PING_BLUE_ID:
+            member = get_member(event.user_id)
+            await member.remove_roles(get_ping_game_role())
 
-  @commands.command(name='gramy', aliases=['zbiórka'])
-  @is_admin()
-  async def special_send(self, ctx, m : discord.Message, *emojis):
-    '''Wysyła wiadomości o grze do wszystkich, którzy oznaczyli dane opcje w podanej wiadomości. Należy podać link lub id wiadomości'''
-    reactions = filter(lambda r: r.emoji in emojis, m.reactions)
-    members = set()
-    tasks = []
-    async with ctx.typing():
-      for r in reactions:
-        async for member in r.users():
-          members.add(member)
-      members -= {self.bot.user, get_member(self.bot.user.id)}
-      members -= set(get_voice_channel().members)
-      for member in members:
-        tasks.append(member.send(zbiorka))
-      asyncio.gather(*tasks)
-    await ctx.message.add_reaction('✅')
+    async def cog_check(self, ctx):
+        if ctx.author.id in get_admin_role().members or self.bot.is_owner(ctx.author):
+            return True
+        raise commands.MissingRole(get_admin_role())
 
+    @commands.Cog.listener('on_raw_reaction_remove')
+    async def ping_reaction_remove(
+            self, event: discord.RawReactionActionEvent):
+        if event.message_id != PING_MESSAGE_ID or event.user_id == self.bot.user.id:
+            return
+        member = get_member(event.user_id)
+        if event.emoji.id == PING_GREEN_ID:
+            await member.add_roles(get_ping_reminder_role())
+        if event.emoji.id == PING_BLUE_ID:
+            await member.add_roles(get_ping_game_role())
 
+    @commands.command(name='adminuj')
+    async def adminate(self, ctx, *, osoba: MyMemberConverter(player_only=False)):
+        """Mianuje nowego admina
+        """
+        member = osoba
+        await member.add_roles(get_admin_role())
+        await ctx.message.add_reaction('✅')
 
+    @commands.command(name='nie_adminuj', hidden=True)
+    @commands.is_owner()
+    async def not_adminate(self, _, *, osoba: MyMemberConverter(player_only=False)):
+        """Usuwa admina
+        """
+        member = osoba
+        await member.remove_roles(get_admin_role())
+
+    @commands.command()
+    async def ankietka(self, ctx, *, date):
+        """Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie.
+        Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Nie zawiera oznaczeń.
+        """
+        async with ctx.typing():
+            m = await get_ankietawka_channel().send(ankietawka.format(date=date))
+            tasks = []
+            for emoji in ankietawka_emoji:
+                tasks.append(m.add_reaction(emoji))
+            await asyncio.gather(*tasks)
+
+    @commands.command(name='usuń')
+    @commands.guild_only()
+    async def delete(self, ctx, czas_w_minutach: int, *osoby: MyMemberConverter(player_only=False)):
+        """Masowo usuwa wiadomości, używać tylko do spamu!
+        W przypadku braku podania członków czyszczone są wszystkie wiadomości.
+        """
+        time = czas_w_minutach
+        members = osoby
+        if time > 24 * 60:
+            await ctx.send("Maksymalny czas to 24 godziny")
+            return
+
+        if not len(members):
+            members = list(get_guild().members)
+
+        await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),
+                                before=ctx.message.created_at, check=lambda mess: mess.author in members)
+        try:
+            await ctx.message.add_reaction('✅')
+        except discord.errors.NotFound:
+            pass
+
+    @commands.command(name='reakcje')
+    async def reactions(self, ctx, wiadomosc: discord.Message):
+        """Wysyła podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
+        """
+        m = wiadomosc
+        members = defaultdict(list)
+        for reaction in m.reactions:
+            async for user in reaction.users():
+                members[user].append(str(reaction.emoji))
+        msg = ""
+        for member, r in members.items():
+            if isinstance(member, discord.Member) and member.user != self.bot.user:
+                msg += f'**{member.display_name}:**\t' + '\t'.join(r) + '\n'
+        await ctx.send(msg)
+
+    @commands.command(name='gramy', aliases=['zbiórka'])
+    async def special_send(self, ctx, wiadomosc: discord.Message, *emoji):
+        """Wysyła wiadomości o grze do wszystkich, którzy oznaczyli dane opcje w podanej wiadomości.
+        Należy podać link lub id wiadomości.
+        """
+        m = wiadomosc
+        reactions = filter(lambda rn: rn.emoji in emoji, m.reactions)
+        members = set()
+        tasks = []
+        async with ctx.typing():
+            for r in reactions:
+                async for member in r.users():
+                    members.add(member)
+            members -= {self.bot.user, get_member(self.bot.user.id)}
+            members -= set(get_voice_channel().members)
+            for member in members:
+                tasks.append(member.send(zbiorka))
+            await asyncio.gather(*tasks)
