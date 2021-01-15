@@ -43,7 +43,7 @@ async def on_command_error(ctx, error):
         await ctx.send('Chcem coś zrobić, ale nie mogem.')
     elif isinstance(error, (commands.MissingRole, commands.CheckAnyFailure, commands.NotOwner)):
         await ctx.send('You have no power here!', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, commands.errors.MissingRequiredArgument):
         await ctx.send('Brakuje parametru: ' + str(error.param), delete_after=5)
     elif isinstance(error, MemberNotPlaying):
@@ -54,30 +54,30 @@ async def on_command_error(ctx, error):
         await ctx.send(f'Błędny parametr\n||{error}||', delete_after=5)
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send('Mam okres ochronny', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, GameNotStarted):
         await ctx.send('Gra nie została rozpoczęta', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
         raise error
     elif isinstance(error, WrongGameType):
         await ctx.send('Aktualny typ gry nie obsługuje tego polecenia', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
         report_error(ctx, error)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
         await ctx.send('Podano błędny argument', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, commands.DisabledCommand):
         await ctx.send('Prace nad tą komendą trwają. Nie należy jej używać.', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, commands.PrivateMessageOnly):
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, commands.NoPrivateMessage):
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, AuthorNotPlaying):
         await ctx.send('Musisz grać, aby użyć tej komendy', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, commands.CheckFailure):
-        await ctx.message.delete(delay=5)
+        await ctx.active_msg.delete(delay=5)
     elif isinstance(error, GameEnd):
         c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
         await bot.game.winning(error.reason, error.winner)
@@ -95,4 +95,5 @@ async def on_command_error(ctx, error):
 async def on_error(event, *args, **_):
     msg = SLIM_TEMPLATE.format(event, args, RULLER)
     logging.exception(msg)
-    await bot.owner_id.send('An event error occured')
+    info = await bot.application_info()
+    await info.owner.send('An event error occured')

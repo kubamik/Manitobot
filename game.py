@@ -1,10 +1,11 @@
 import asyncio
 from collections import defaultdict
-from typing import Optional, Dict, List, Set, Tuple
+from typing import Optional, Dict, List, Set, Tuple, Mapping
 
 import discord
 
 import postacie
+from controller import Controller
 from daynight import Day, Night
 from errors import GameEnd
 from utility import get_dead_role, get_player_role
@@ -36,7 +37,8 @@ class Game:
         self.new_night()
         self.reveal_dead: bool = True
         self.voting: Optional[Vote] = None
-        self.stats = defaultdict(int)
+        self.stats: Mapping[str, int] = defaultdict(int)
+        self.controller: Controller = Controller()
 
     def calculate_stats(self) -> None:
         self.stats = defaultdict(int)
@@ -49,6 +51,7 @@ class Game:
         self.day += 1
         self.night = False
         tasks = []
+        self.town_win()
         for player in self.player_map.values():
             tasks.append(player.new_day())
         for member in get_dead_role().members:
@@ -56,7 +59,6 @@ class Game:
                 tasks.append(self.player_map[member].role_class.reveal())
         await asyncio.gather(*tasks)
         self.calculate_stats()
-        self.town_win()
         self.inqui_win()
         self.morning_bandits_win()
 
@@ -137,8 +139,9 @@ class Game:
     def voting_in_progress(self) -> bool:
         return self.voting is not None
 
-    def on_die(self, reason, player) -> None:
-        self.stats[give_faction(player.role)] -= 1
+    async def on_die(self, reason, player) -> None:
+        await self.controller.on_die(player)
+        self.calculate_stats()
         if reason == 'herbs':
             self.statue.day_search(player.member)
         self.indian_win()

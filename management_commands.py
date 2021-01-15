@@ -80,7 +80,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         """
         member = osoba
         await member.add_roles(get_admin_role())
-        await ctx.message.add_reaction('✅')
+        await ctx.active_msg.add_reaction('✅')
 
     @commands.command(name='nie_adminuj', hidden=True)
     @commands.is_owner()
@@ -117,10 +117,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         if not len(members):
             members = list(get_guild().members)
 
-        await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),
-                                before=ctx.message.created_at, check=lambda mess: mess.author in members)
+        await ctx.channel.purge(after=ctx.active_msg.created_at - dt.timedelta(minutes=time),
+                                before=ctx.active_msg.created_at, check=lambda mess: mess.author in members)
         try:
-            await ctx.message.add_reaction('✅')
+            await ctx.active_msg.add_reaction('✅')
         except discord.errors.NotFound:
             pass
 

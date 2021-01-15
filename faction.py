@@ -159,7 +159,7 @@ class Faction(Activity):
         self.operation = None
         if output:
             await ctx.send(output)
-        await ctx.message.add_reaction('✅')
+        await ctx.active_msg.add_reaction('✅')
         c = f_coms_manit_end[operation].format(self.name, self.member.member.display_name)
         await send_to_manitou(c)
         await get_manitou_notebook().send(c)

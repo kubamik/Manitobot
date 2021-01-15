@@ -1,5 +1,4 @@
 import inspect
-import inspect
 
 from converters import converter
 from utility import *
@@ -81,7 +80,7 @@ class Role(Activity):
                     ret = await f()
                 else:
                     ret = f()
-                if not ret is None:
+                if ret is not None:
                     output += ret
         except InvalidRequest as err:
             raise InvalidRequest(err.reason)
@@ -92,7 +91,7 @@ class Role(Activity):
             await ctx.send(output)
         await operation_send(operation, self.player.member, self.name, member)
         self.roled_members.append(self.member)
-        await ctx.message.add_reaction('✅')
+        await ctx.active_msg.add_reaction('✅')
 
     async def die(self, reason=None):
         gracz = self.player.member
@@ -142,16 +141,13 @@ class Role(Activity):
           pass'''
 
         # reset player
-        if not nickname.startswith('+'):
+        if not any([bot.game.night, self.revealed, not bot.game.reveal_dead]):
+            await self.reveal(True)
+        elif not nickname.startswith('+'):
             try:
                 await gracz.edit(nick='+' + nickname)
-                await bot.wait_for('member_update', check=plused, timeout=2)
-            except discord.errors.Forbidden:
-                await gracz.send("Dodaj sobie '+' przed nickiem")
-            except asyncio.TimeoutError:
+            except discord.Forbidden:
                 pass
-        if not any([bot.game.night, self.revealed, not bot.game.reveal_dead]):
-            await self.reveal()
 
         # winning conditions
         '''if self.die_reason == "herbs":
@@ -163,7 +159,7 @@ class Role(Activity):
             bot.game.statue.day_search(self.player.member)
         else:
           self.inqui_alone_win()'''
-        bot.game.on_die(reason, self.player)
+        await bot.game.on_die(reason, self.player)
 
         # self.unfollow() - use with following
 

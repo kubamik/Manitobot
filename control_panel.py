@@ -14,9 +14,10 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     def __init__(self, bot):
         self.bot = bot
-        self.message: Optional[discord.Message] = None
+        self.active_msg: Optional[discord.Message] = None
+        self.statue_msg: Optional[discord.Message] = None
         self.msg2mbr: Optional[Dict[discord.Message, discord.Member]] = None
-        self.mem2mess: Optional[Dict[discord.Member, discord.Message]] = None
+        self.mbr2msg: Optional[Dict[discord.Member, discord.Message]] = None
         self.game: Game = self.bot.game
         self.emoji2fac: Dict[int, str] = {}
 
@@ -27,31 +28,37 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         messages = []
         for player in players:
             messages.append(await base(player.display_name))
-        messages.append(await base("Aktywna frakcja"))
-        self.message = messages[-1]
-        self.msg2mbr = dict(zip(messages[:-1], players))
-        self.mem2mess = dict(zip(players, messages[:-1]))
+        self.active_msg = await base('Aktywna frakcja')
+        self.statue_msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
+        self.msg2mbr = dict(zip(messages, players))
+        self.mbr2msg = dict(zip(players, messages))
         tasks = []
-        for m in messages[:-1]:
+        for m in messages:
             tasks.append(m.add_reaction('😴'))
+            tasks.append(m.add_reaction('🗿'))
+            tasks.append(m.add_reaction('☠️'))
         for fac, id_ in FAC2EMOJI.items():
             if fac in self.bot.game.faction_map:
-                tasks.append(self.message.add_reaction(self.bot.get_emoji(id_)))
+                tasks.append(self.active_msg.add_reaction(self.bot.get_emoji(id_)))
                 self.emoji2fac[id_] = fac
         await asyncio.gather(*tasks)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event: discord.RawReactionActionEvent):
-        if event.user_id == self.bot.user.id:
+        if event.user_id not in map(lambda mbr: mbr.id, get_manitou_role().members):
             return
-        if event.emoji.name == '😴':
+        if event.emoji.name in ('😴', '🗿', '☠️'):
             m = discord.utils.get(self.msg2mbr.keys(), id=event.message_id)
-            if m:
+            if m and event.emoji.name == '😴':
                 self.game.player_map[self.msg2mbr[m]].sleep()
                 await m.edit(content=m.content + '\t😴')
+            if m and event.emoji.name == '🗿':
+                await self.bot.game.controller.statue_reaction_add(self.msg2mbr[m])
+            if m and event.emoji.name == '☠️':
+                await self.bot.game.controller.kill_reaction_add(self.msg2mbr[m])
             return
         fac = self.emoji2fac.get(event.emoji.id)
-        if fac and event.message_id == self.message.id:
+        if fac and event.message_id == self.active_msg.id:
             await self.game.faction_map[fac].wake_up()
 
     @commands.Cog.listener()
@@ -60,18 +67,18 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             m = discord.utils.get(self.msg2mbr.keys(), id=event.message_id)
             if m:
                 self.game.player_map[self.msg2mbr[m]].unsleep()
-                if '\t' in m.content:
+                if '\t😴' in m.content:
                     await m.edit(content=m.content.replace('\t😴', ''))
             return
         fac = self.emoji2fac.get(event.emoji.id)
-        if fac and event.message_id == self.message.id:
+        if fac and event.message_id == self.active_msg.id:
             await self.game.faction_map[fac].put_to_sleep()
 
     async def morning_reset(self) -> None:
         tasks = []
         for m in self.msg2mbr:
-            if m.content.endswith('\t😴'):
-                tasks.append(m.edit(content=m.content[:-2]))
+            if '\t😴' in m.content:
+                tasks.append(m.edit(content=m.content.replace('\t😴', '')))
                 for member in get_manitou_role().members:
                     tasks.append(m.remove_reaction('😴', member))
         await asyncio.gather(*tasks)

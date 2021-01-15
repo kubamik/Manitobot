@@ -55,7 +55,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             self.bot.game.rioters.remove(ctx.author)
         except KeyError:
             pass
-        await ctx.message.add_reaction('🕊️')
+        await ctx.active_msg.add_reaction('🕊️')
 
     @commands.command(name='bunt', aliases=['riot'])
     @game_check()
@@ -86,7 +86,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             manit = self.bot.cogs['Dla Manitou']
             tasks.append(manit.reset())
             self.bot.game = NotAGame()
-        await ctx.message.add_reaction("👊")
+        await ctx.active_msg.add_reaction("👊")
 
     @commands.command(name="żywi", aliases=['zywi'])
     @game_check()
@@ -103,4 +103,4 @@ Pozostali:{}""".format(len(get_player_role().members), len(alive_roles) - len(ge
 
     @commands.command(name='g', help=playerhelp(), hidden=True)
     async def player_help(self, ctx):
-        await ctx.message.delete(delay=0)
+        await ctx.active_msg.delete(delay=0)

@@ -17,7 +17,7 @@ class MyFlagConverter(commands.Converter):
 class MyMemberConverter(commands.MemberConverter):
     """Converter from string with name or mention to discord.Member
     """
-    def __init__(self, *, player_only: Optional[bool] = True):
+    def __init__(self, *, player_only: bool = True):
         self.player_only = player_only
         super().__init__()
 
@@ -50,7 +50,7 @@ class MyMemberConverter(commands.MemberConverter):
                 if member is None:
                     raise commands.MemberNotFound(name)
         if self.player_only and member not in get_player_role().members:
-            raise MemberNotPlaying("This person is not playing.")
+            raise MemberNotPlaying('This person is not playing.')
         return member
 
 

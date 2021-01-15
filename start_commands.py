@@ -100,7 +100,7 @@ class Starting(commands.Cog, name='Początkowe'):
     @commands.command(name='start')
     @manitou_cmd()
     @game_check(rev=True)
-    async def rozdawanie(self, ctx, *postacie):
+    async def start_game(self, ctx, *postacie):
         """ⓂRozpoczyna grę ze składem podanym jako argumenty funkcji.
         """
         roles = postacie
