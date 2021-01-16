@@ -2,6 +2,7 @@ import bot_basics
 import utility
 from basic_models import NotAGame
 from duel import Duel
+from errors import NoEffect
 from hang_search import Search
 from utility import *
 

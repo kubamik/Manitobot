@@ -34,7 +34,7 @@ async def start_voting(title: str, required_votes: int, options: List[List[str]]
     for player in players:
         if player not in not_voting:
             tasks.append(player.send(embed=embed))
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def see_end_voting(ctx: commands.Context, end: bool):
@@ -57,4 +57,5 @@ async def see_end_voting(ctx: commands.Context, end: bool):
         if vtype in type2func:
             tasks.append(getattr(bot.game.days[-1], type2func[vtype])(ctx, summary))
     else:
-        await send_to_manitou(embed=embed)
+        tasks.append(send_to_manitou(embed=embed))
+    await asyncio.gather(*tasks, return_exceptions=True)

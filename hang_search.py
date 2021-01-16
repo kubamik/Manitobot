@@ -25,11 +25,14 @@ class Hang:
             c = "Miasto idzie spać"
         await get_town_channel().send(c)
 
+    def hang_remember_nicks(self):
+        self.data = {member.display_name: member for member in self.searched.keys()}
+
     async def hang_sumarize(self, ctx, votes):
         votes = votes.items()
         results = []
         for member, vote in sorted(votes, key=lambda v: len(v[1]), reverse=True):
-            results.append((await converter(ctx, member), len(vote)))
+            results.append((self.data[member], len(vote)))
         i = 0
         self.to_hang = [results[0][0]]
         self.hang_final = True
@@ -159,11 +162,14 @@ class Search(Hang):
         except KeyError:
             pass
 
+    def search_remember_nicks(self):
+        self.data = {member.display_name: member for member in self.searched.keys()}
+
     async def search_summary(self, ctx, votes: dict):
         votes = votes.items()
         results = []
         for member, vote in sorted(votes, key=lambda v: len(v[1]), reverse=True):
-            results.append((await converter(ctx, member), len(vote)))
+            results.append((self.data[member], len(vote)))
         ser_num = 1 + len(self.to_search)
         last = results[0][1]
         self.to_revote = [results[0][0]]

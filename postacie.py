@@ -322,23 +322,21 @@ factions = {
 }
 
 
+def refactor(role: str) -> str:
+    return role.replace(" ", "").replace("_", "").replace("-", "").lower()
+
+
 def get_role_details(role: str, no: str = 'Nie ma takiej postaci') -> str:
     """Returns :param role: details with bold :param no:
     if details don't exist
     """
-    c = "".join(role)
-    c = c.replace("_", "")
-    c = c.replace("-", "")
-    c = c.lower()
+    c = refactor(role)
     return roles.get(c, f"**{no}**")
 
 
 def give_faction(role: str) -> str:
     """Returns original faction"""
-    c = role.replace(" ", "")
-    c = c.replace("_", "")
-    c = c.replace("-", "")
-    c = c.lower()
+    c = refactor(role)
     if c not in factions:
         return role
     return factions[c]
@@ -346,10 +344,7 @@ def give_faction(role: str) -> str:
 
 def send_faction(role: str) -> str:
     """Returns original faction in bold format eventually with colon"""
-    c = role.replace(" ", "")
-    c = c.replace("_", "")
-    c = c.replace("-", "")
-    c = c.lower()
+    c = refactor(role)
     if c not in factions:
         return "**{}**".format(role)
     return "**{}:**".format(factions[c])
@@ -357,10 +352,7 @@ def send_faction(role: str) -> str:
 
 def get_faction(role: str) -> str:
     """Replaces one-pearson factions with Town"""
-    c = role.replace(" ", "")
-    c = c.replace("_", "")
-    c = c.replace("-", "")
-    c = c.lower()
+    c = refactor(role)
     if c not in factions:
         return "Miasto"
     return factions[c]
@@ -372,7 +364,8 @@ def print_list(role_list: List[str]) -> str:
     for role in role_list:
         faction_count[send_faction(role)] += 1
     prev_faction = None
-    for role in sorted(role_list, key=lambda r: list(roles.keys()).index(r)):
+    for role in sorted(role_list,
+                       key=lambda r: (list(roles.keys()) + list(map(refactor, role_list))).index(refactor(r))):
         faction = send_faction(role)
         role = role.replace("-", " ")
         role = role.replace("_", " ")

@@ -9,7 +9,7 @@ description = ""
 name = "Manitobot"
 version = "1.1beta"
 [tool.poetry.dependencies]
-"discord.py" = "^1.5.1"
+"discord.py" = "^1.6.0"
 flask = "^1.1"
 python = "^3.8"
 [tool.poetry.dev-dependencies]

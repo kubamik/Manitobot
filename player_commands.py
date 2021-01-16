@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 
@@ -48,6 +50,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
 
     @commands.command(name='pax')
     @game_check()
+    @playing_cmd()
     async def pax(self, ctx):
         """Wyrejestrowuje gracza ze zbioru buntowników
         """
@@ -55,7 +58,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             self.bot.game.rioters.remove(ctx.author)
         except KeyError:
             pass
-        await ctx.active_msg.add_reaction('🕊️')
+        await ctx.message.add_reaction('🕊️')
 
     @commands.command(name='bunt', aliases=['riot'])
     @game_check()
@@ -74,7 +77,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
                 if person in self.bot.game.rioters:
                     self.bot.game.rioters.remove(person)
         if len(self.bot.game.rioters) == 1:
-            await get_town_channel().send('{}\nKtoś rozpoczął bunt. Użyj `&riot` jeśli chcesz dołączyć'.format(
+            await get_town_channel().send('{}\nKtoś rozpoczął bunt. Użyj `&bunt` jeśli chcesz dołączyć'.format(
                 get_player_role().mention))
             await send_to_manitou('Ktoś rozpoczął bunt.')
 
@@ -84,18 +87,20 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
                 tasks.append(manitou.remove_roles(get_manitou_role()))
             tasks.append(self.bot.game.end())
             manit = self.bot.cogs['Dla Manitou']
-            tasks.append(manit.reset())
+            tasks.append(manit.reset(ctx))
             self.bot.game = NotAGame()
-        await ctx.active_msg.add_reaction("👊")
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        await ctx.message.add_reaction("👊")
 
     @commands.command(name="żywi", aliases=['zywi'])
     @game_check()
     async def living(self, ctx):
         """/&zywi/Wypisuje listę żywych graczy"""
         alive_roles = []
-        for role in self.bot.game.roles:
+        for role in self.bot.game.role_map.values():
             if role.alive or not role.revealed:
-                alive_roles.append(role)
+                alive_roles.append(role.name)
         team = postacie.print_list(alive_roles)
         await ctx.send("""Liczba żywych graczy: {}
 Liczba martwych o nieznanych rolach: {}
@@ -103,4 +108,4 @@ Pozostali:{}""".format(len(get_player_role().members), len(alive_roles) - len(ge
 
     @commands.command(name='g', help=playerhelp(), hidden=True)
     async def player_help(self, ctx):
-        await ctx.active_msg.delete(delay=0)
+        await ctx.message.delete(delay=0)

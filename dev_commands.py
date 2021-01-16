@@ -10,12 +10,14 @@ from settings import LOG_FILE
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-class DevCommands(commands.Cog):
+class DevCommands(commands.Cog, name='Development'):
     def __init__(self, bot):
         self.bot = bot
 
     async def cog_check(self, ctx):
-        return self.bot.is_owner(ctx.author)
+        if not await self.bot.is_owner(ctx.author):
+            raise commands.NotOwner('Only bot owner can use this commands')
+        return True
 
     @commands.command(name='exec', hidden=True)
     async def execute(self, _, *, string):
@@ -32,7 +34,7 @@ class DevCommands(commands.Cog):
                 await ctx.send(file=logs)
         except FileNotFoundError:
             await ctx.send("Logs aren't available now.", delete_after=5)
-            await ctx.active_msg.delete(delay=5)
+            await ctx.message.delete(delay=5)
 
     @commands.command(name='started_at')
     async def start_time(self, ctx):

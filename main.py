@@ -3,6 +3,7 @@ import os
 
 
 import discord
+import dotenv
 from discord.ext import commands
 
 import dev_commands
@@ -12,7 +13,8 @@ import manitou_commands
 import player_commands
 import start_commands
 from bot_basics import bot
-from keep_alive import keep_alive
+from errors import MyBaseException
+# from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
 from starting import if_game
 from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
@@ -28,9 +30,10 @@ async def on_ready():
         bot.add_cog(start_commands.Starting(bot))
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(management_commands.Management(bot))
+        bot.load_extension('error_handler')
         bot.get_command('g').help = playerhelp()
         bot.get_command('m').help = manitouhelp()
-    except (discord.errors.ClientException, AttributeError):
+    except (discord.ClientException, AttributeError, commands.ExtensionError):
         pass
 
 
@@ -92,10 +95,14 @@ async def my_message(m):
         return
 
     votes = [vote.strip() for vote in m.content.split(',')]
-    res, control = bot.game.register_vote(get_member(m.author.id), votes)
-    await m.channel.send('Zarejestrowałem twój głos(-y) na {}'.format(', '.join(res)))
-    if control:
-        await send_to_manitou('Wszyscy grający oddali głosy')
+    try:
+        res, control = bot.game.voting.register_vote(get_member(m.author.id), votes)
+    except MyBaseException as e:
+        await m.channel.send(e.msg)
+    else:
+        await m.channel.send('Zarejestrowałem twój głos(-y) na {}'.format(', '.join(res)))
+        if control:
+            await send_to_manitou('Wszyscy grający oddali głosy')
 
 
 @bot.event
@@ -110,6 +117,7 @@ async def on_message(message):
 if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
+    dotenv.load_dotenv()
     token = os.environ.get('TOKEN')
-    keep_alive()
+    # keep_alive()
     bot.run(token)

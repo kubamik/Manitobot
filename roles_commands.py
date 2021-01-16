@@ -41,14 +41,14 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         author = get_member(ctx.author.id)
         try:
             faction = self.bot.game.nights[-1].active_faction
-            if faction != None and faction == self.bot.game.nights[-1].active_role:
+            if faction is not None and faction == self.bot.game.nights[-1].active_role:
                 await faction.new_activity(ctx, operation, member)
             else:
                 await self.bot.game.player_map[author].role_class.new_activity(ctx, operation, member)
         except InvalidRequest as err:
             await ctx.send(err.reason)
         except KeyError as err:
-            await ctx.active_msg.delete(delay=5)
+            await ctx.message.delete(delay=5)
             await ctx.send("Nie grasz w tej grze", delete_after=5)
 
     @commands.command(name='śledź')
@@ -229,11 +229,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         await self.command_template(ctx, None, "refuse")
 
     async def cog_command_error(self, ctx, error):
-        if isinstance(error, commands.PrivateMessageOnly):
-            await ctx.send("Tej komendy teraz można używać tylko w DM", delete_after=5)
-        elif isinstance(error, commands.NoPrivateMessage):
-            await ctx.send("Tej komendy teraz można używać tylko na kanale frakcji", delete_after=5)
-        elif isinstance(error, commands.CheckFailure):
+        if isinstance(error, commands.CheckFailure):
             await ctx.send("Spróbuj ponownie za chwilę", delete_after=5)
 
     """@commands.command(name='arrest')

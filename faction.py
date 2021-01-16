@@ -30,7 +30,7 @@ class Faction(Activity):
     async def wake_up(self):
         overwrites = self.channel.overwrites
         for role in self.roles.values():
-            if not role.player.sleeped and role.alive():
+            if not role.player.sleeped and role.alive:
                 overwrites[role.player.member] = discord.PermissionOverwrite(
                     read_messages=True, send_messages=True, add_reactions=True)
         await self.channel.edit(overwrites=overwrites)
@@ -159,7 +159,7 @@ class Faction(Activity):
         self.operation = None
         if output:
             await ctx.send(output)
-        await ctx.active_msg.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
         c = f_coms_manit_end[operation].format(self.name, self.member.member.display_name)
         await send_to_manitou(c)
         await get_manitou_notebook().send(c)

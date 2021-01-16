@@ -91,7 +91,7 @@ class Role(Activity):
             await ctx.send(output)
         await operation_send(operation, self.player.member, self.name, member)
         self.roled_members.append(self.member)
-        await ctx.active_msg.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
 
     async def die(self, reason=None):
         gracz = self.player.member

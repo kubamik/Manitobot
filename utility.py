@@ -149,14 +149,14 @@ async def add_roles(members: List[discord.Member], *roles: discord.Role) -> None
     tasks = []
     for member in members:
         tasks.append(member.add_roles(*roles))
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def remove_roles(members: List[discord.Member], *roles: discord.Role) -> None:
     tasks = []
     for member in members:
         tasks.append(member.remove_roles(*roles))
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def send_to_manitou(content: Optional[str] = None,
@@ -174,21 +174,21 @@ async def send_game_channels(content: str) -> None:
     for channel in get_guild().text_channels:
         if channel.category_id == FRAKCJE_CATEGORY_ID or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
             tasks.append(channel.send(content))
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def clear_nickname(member: discord.Member) -> None:
     old_nickname = member.display_name
-    new_nickname = old_nickname
-    if new_nickname[0] == '+' or new_nickname[0] == '!':
-        new_nickname = new_nickname[1:]
-    if new_nickname[-1] == '#':
-        new_nickname = new_nickname[:-1]
-    if new_nickname[-1] == ')':
-        new_nickname = new_nickname.rpartition('(')[0]
-    if new_nickname != old_nickname:
+    nick = old_nickname
+    if nick.startswith(('+', '!')):
+        nick = nick[1:]
+    if nick.endswith('#'):
+        nick = nick[:-1]
+    if all(nick.rpartition('(')):
+        nick = nick.rpartition('(')[0]
+    if nick != old_nickname:
         try:
-            await member.edit(nick=new_nickname)
+            await member.edit(nick=nick)
         except discord.errors.Forbidden:
             pass
 
