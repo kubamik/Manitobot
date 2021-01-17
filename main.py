@@ -3,7 +3,6 @@ import os
 
 
 import discord
-import dotenv
 from discord.ext import commands
 
 import dev_commands
@@ -117,7 +116,6 @@ async def on_message(message):
 if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
-    dotenv.load_dotenv()
     token = os.environ.get('TOKEN')
     # keep_alive()
     bot.run(token)
