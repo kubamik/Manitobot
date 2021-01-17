@@ -183,10 +183,10 @@ class Glosowania(commands.Cog, name='Głosowania'):
             return
         self.bot.game.days[-1].hang = True
         kandydaci = self.bot.game.days[-1].candidates
+        self.bot.game.days[-1].hang_remember_nicks()
         if len(kandydaci) == 1:
-            await self.bot.game.days[-1].hang_sumarize(ctx, [[kandydaci[0].display_name, []]])
+            await self.bot.game.days[-1].hang_sumarize(ctx, {kandydaci[0].display_name: []})
         else:
-            self.bot.game.days[-1].hang_remember_nicks()
             options_parsed = [['{}'.format(number + 1), member.display_name] for number, member in enumerate(kandydaci)]
             await votings.start_voting('Wieszanie\nGłosujecie na osobę, która **ma być powieszona**', 1,
                                        options_parsed, vtype='hang')

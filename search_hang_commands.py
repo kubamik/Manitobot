@@ -83,7 +83,6 @@ class Wieszanie(commands.Cog):
         """Ⓜ/&hnd/Finalizuje wieszanie"""
         try:
             await bot.game.days[-1].hang_finalize(ctx)
-            await ctx.message.add_reaction('✅')
         except InvalidRequest:
             pass
 

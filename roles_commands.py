@@ -228,10 +228,6 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         '''Służy do odmowy skorzystania ze zdolności'''
         await self.command_template(ctx, None, "refuse")
 
-    async def cog_command_error(self, ctx, error):
-        if isinstance(error, commands.CheckFailure):
-            await ctx.send("Spróbuj ponownie za chwilę", delete_after=5)
-
     """@commands.command(name='arrest')
     async def arrest(self, ctx, *, member):
       '''Służy do zamknięcia osoby w więzieniu'''

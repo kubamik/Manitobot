@@ -4,8 +4,7 @@ import discord
 from discord.ext import commands
 
 from bot_basics import bot
-from errors import AuthorNotPlaying, GameEnd, WrongGameType, GameNotStarted, MemberNotPlaying, MyBaseException, \
-    InvalidRequest
+from errors import GameEnd, MyBaseException, InvalidRequest
 from settings import FRAKCJE_CATEGORY_ID, NIEPUBLICZNE_CATEGORY_ID, RULLER
 from utility import send_to_manitou, get_guild
 

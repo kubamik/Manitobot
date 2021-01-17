@@ -64,6 +64,7 @@ class Hang:
     async def hang_finalize(self, ctx):
         if not self.hang_final:
             await ctx.send("Najpierw głosowanie na wieszanie")
+            return
         if len(get_hanged_role().members) > 1:
             await ctx.send("Powiesić można tylko jedną osobę")
             raise InvalidRequest
