@@ -43,7 +43,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         tasks.append(get_town_channel().set_permissions(get_player_role(), send_messages=True))
         tasks.append(utility.remove_roles(get_manitou_role().members, get_other_manitou_role()))
         tasks.append(self.bot.change_presence(activity=None))
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @commands.command(aliases=['MM'])
     @manitou_cmd()
@@ -54,7 +54,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         for member in get_voice_channel().members:
             if member not in get_manitou_role().members:
                 tasks.append(member.edit(mute=True))
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @commands.command(aliases=['MU'])
     @manitou_cmd()
@@ -65,7 +65,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         for member in get_voice_channel().members:
             if member not in get_manitou_role().members:
                 tasks.append(member.edit(mute=False))
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @commands.command(name='set_manitou_channel', aliases=['m_channel'])
     @manitou_cmd()
@@ -87,7 +87,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         herb = self.bot.game.nights[-1].herbed
         if herb is None:
             await ctx.send("Nikt nie ma podłożonych ziółek", delete_after=5)  # TODO: Raise some error
-            await ctx.active_msg.delete(delay=5)
+            await ctx.message.delete(delay=5)
             return
         await get_town_channel().send("Ktoś robi się zielony(-a) na twarzy :sick: i...")
         await asyncio.sleep(3)
@@ -102,7 +102,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """
         if ctx.channel.type != discord.ChannelType.private and ctx.channel != get_manitou_notebook():
             await ctx.send("Tej komendy można użyć tylko w DM lub notatniku manitou", delete_after=5)
-            await ctx.active_msg.delete(delay=5)
+            await ctx.message.delete(delay=5)
             return
         await self.bot.game.nights[-1].night_next(ctx.channel)
 
@@ -131,22 +131,21 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             tasks.append(clear_nickname(member))
         async with ctx.typing():
             await self.remove_cogs()
-            await asyncio.gather(*tasks)
-        await ctx.active_msg.add_reaction('❤️')
+            await asyncio.gather(*tasks, return_exceptions=True)
+        await ctx.message.add_reaction('❤️')
 
     @commands.command()
     @manitou_cmd()
     @game_check()
-    async def kill(self, _, *, gracz: MyMemberConverter):
+    async def kill(self, _, *, player: MyMemberConverter):
         """ⓂZabija otagowaną osobę
         """
-        player = gracz
         await self.bot.game.player_map[player].role_class.die()
 
     @commands.command()
     @manitou_cmd()
     @ktulu_check()
-    async def refresh_dead(self, ctx):
+    async def refresh_dead(self, _):
         """ⓂAktualizuje wskrzeszone osoby w Panelu Manitou
         """
         await self.bot.game.controller.update_dead()
@@ -154,20 +153,18 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command()
     @manitou_cmd()
     @game_check()
-    async def plant(self, _, *, gracz: MyMemberConverter):
+    async def plant(self, _, *, player: MyMemberConverter):
         """ⓂPodkłada posążek wskazanegu graczowi, nie zmieniając frakcji posiadaczy
         """
-        member = gracz
-        await self.bot.game.statue.manitou_plant(member)  # TODO: Remove raising InvalidRequest
+        await self.bot.game.statue.manitou_plant(player)
 
     @commands.command(name='give', aliases=['statue'])
     @manitou_cmd()
     @game_check()
-    async def give(self, _, *, gracz: MyMemberConverter):
+    async def give(self, _, *, player: MyMemberConverter):
         """Ⓜ/&statue/Daje posążek w posiadanie wskazanegu graczowi
         """
-        member = gracz
-        await self.bot.game.statue.give(member)  # TODO: Remove InvalidRequest
+        await self.bot.game.statue.give(player)
 
     @commands.command(name='who_has', aliases=['whos'])
     @manitou_cmd()
@@ -186,11 +183,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command(name='swap')
     @manitou_cmd()
     @game_check()
-    async def swap(self, ctx, gracz1: MyMemberConverter(), gracz2: MyMemberConverter()):
+    async def swap(self, ctx, player1: MyMemberConverter(), player2: MyMemberConverter()):
         """ⓂZamienia role 2 wskazanych osób
         """
-        first = gracz1
-        second = gracz2
+        first = player1
+        second = player2
         role1, role2 = self.bot.game.swap(first, second)
         await first.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role1, role1)))
         await second.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role2, role2)))
@@ -214,7 +211,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         async with ctx.typing():
             tasks.append(self.bot.game.end())
             tasks.append(self.remove_cogs())
-            await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks, return_exceptions=True)
             self.bot.game = NotAGame()
             await get_town_channel().send("Gra została zakończona")
 
@@ -236,7 +233,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             if reaction.emoji == '⛔':
                 raise asyncio.TimeoutError
         except asyncio.TimeoutError:
-            await ctx.active_msg.delete(delay=0)  # TODO: Some cancellation error
+            await ctx.message.delete(delay=0)  # TODO: Some cancellation error
         else:
             await self.end_game(ctx)
             await self.reset(ctx)
@@ -270,7 +267,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
                                               dead_role, winner_role, loser_role, searched_role, hanged_role))
             tasks.append(utility.add_roles(get_voice_channel().members, player_role))
             tasks.append(self.remove_cogs())
-            await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     @commands.command(name='revive', aliases=['resetuj', 'reset'])
     @manitou_cmd()
@@ -286,9 +283,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂŻywi dla Manitou (nie używać publicznie)
         """
         alive_roles = []
-        for role in self.bot.game.roles:
-            if self.bot.game.role_map[role].player.member in get_player_role().members:
-                alive_roles.append(role)
+        for role in self.bot.game.role_map.values():
+            if role.alive:
+                alive_roles.append(role.name)
         team = postacie.print_list(alive_roles)
         await ctx.send(
             '''Liczba żywych graczy: {}
@@ -303,12 +300,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await ctx.send("Liczba buntowników wynosi {}".format(len(self.bot.game.rioters)))
 
     @commands.command(aliases=['gd', 'num'])
+    @manitou_cmd()
     @ktulu_check()
-    async def number(self, _, nazwa: str, n: int):
+    async def number(self, _, name: str, n: int):
         """Ⓜ/&n/Zmienia liczby gry (pojedynki, przeszukania, odpływanie)
         Argumenty: <duels, searches, evening, morning lub pierwsze litery> <liczba>
         """
-        name = nazwa
         name2attr = {
             'd': 'duels',
             's': 'searches',
@@ -347,7 +344,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         tasks.append(utility.send_game_channels('=\nDzień {}'.format(self.bot.game.day)))
         tasks.append(get_town_channel().edit(sync_permissions=True))
         tasks.append(self.bot.get_cog("Panel Sterowania").morning_reset())
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @commands.command(name="night")
     @manitou_cmd()
@@ -364,4 +361,4 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
 
     @commands.command(name='m', help=manitouhelp(), hidden=True)
     async def manitou_help(self, ctx):
-        await ctx.active_msg.delete(delay=0)
+        await ctx.message.delete(delay=0)

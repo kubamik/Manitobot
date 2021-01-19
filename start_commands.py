@@ -85,12 +85,14 @@ class Starting(commands.Cog, name='Początkowe'):
                          faction_data=(list(roles_list)[: stop], list(roles_list)[stop:]))
 
     @commands.command(aliases=['składy'])
+    @game_check(rev=True)
     async def setlist(self, ctx):
         """/&składy/Wypisuje listę predefiniowanych składów.
         """
         await ctx.send(sklady.list_sets())
 
     @commands.command(name='set', aliases=['skład'])
+    @game_check(rev=True)
     async def set_(self, ctx, nazwa_skladu):
         """/&skład/Wypisuje listę postaci w składzie podanym jako argument.
         """

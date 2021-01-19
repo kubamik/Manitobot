@@ -9,7 +9,7 @@ from errors import AuthorNotPlaying, GameNotStarted, WrongGameType, GameStartedE
 from basic_models import NotAGame
 import mafia
 from starting import if_game
-from utility import czy_manitou, get_manitou_role, get_player_role, on_voice
+from utility import czy_manitou, get_manitou_role, get_player_role, on_voice, get_town_channel
 
 
 # ===================== Game checks =====================
@@ -109,3 +109,6 @@ def voting_check(rev=False):
         return True
 
     return commands.check(predicate)
+
+
+# ===================== Place checks =====================

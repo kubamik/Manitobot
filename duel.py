@@ -97,7 +97,7 @@ class Duel:
     async def if_start(self, author, member):
         c = "**{}** wyzwał **{}** na pojedynek.\n".format(author.display_name, member.display_name)
         try:
-            if bot.game.role_map["Szeryf"].alive():
+            if bot.game.role_map["Szeryf"].alive:
                 c += "<@{}> czy przyjmujesz? Użyj `&przyjmuję` lub `&odrzucam`".format(member.id)
                 await get_town_channel().send(c)
             else:
@@ -176,20 +176,16 @@ class Duel:
         self.participants = ()
         return "Manitou anulował trwający pojedynek"
 
+    def duel_remember_nicks(self):
+        self.data = {member.display_name: member for member in self.participants}
+
     async def result_duel(self, ctx, votes: dict):
         votes = votes.items()
         results = []
 
-        async def rew(member):
-            try:
-                await bot.game.player_map[member].role_class.new_activity(ctx, 'revoling')
-            except InvalidRequest as err:
-                # return err.flag == 0
-                return err.reason == "Nie możesz więcej użyć tej zdolności"
-
         for member, vote in filter(lambda v: v[0] != "Wstrzymuję_Się", votes):
-            member = await converter(ctx, member)
-            rev = await rew(member)
+            member = self.data[member]
+            rev = 'revoling' in bot.game.player_map[member].role_class.my_activities
             results.append((member, len(vote) + rev * 100000))
         results = sorted(results, key=lambda r: r[1], reverse=True)
         # print(results)
@@ -247,7 +243,7 @@ class Duel:
                 await player.die("duel")
         self.duelers = ()
         self.participants = ()
-        await ctx.active_msg.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
         await self.if_next()
 
     async def change_winner(self, member):

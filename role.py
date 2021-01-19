@@ -83,7 +83,7 @@ class Role(Activity):
                 if ret is not None:
                     output += ret
         except InvalidRequest as err:
-            raise InvalidRequest(err.reason)
+            raise InvalidRequest(err.msg)
         self.my_activities[operation] -= 1
         # if self.my_activities[operation]>-1:
         # self.count -= 1
@@ -91,7 +91,7 @@ class Role(Activity):
             await ctx.send(output)
         await operation_send(operation, self.player.member, self.name, member)
         self.roled_members.append(self.member)
-        await ctx.active_msg.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
 
     async def die(self, reason=None):
         gracz = self.player.member

@@ -42,7 +42,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         else:
             wbhk = await ch.create_webhook(name='System')
         await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name),
-                        avatar_url='https://discord.com/assets/28174a34e77bb5e5310ced9f95cb480b.png')
+                        avatar_url='https://discord.com/assets/2c21aeda16de354ba5334551a883b481.png')
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def ping_reaction_add(
@@ -59,7 +59,7 @@ class Management(commands.Cog, name='Dla Adminów'):
             await member.remove_roles(get_ping_game_role())
 
     async def cog_check(self, ctx):
-        if ctx.author.id in get_admin_role().members or self.bot.is_owner(ctx.author):
+        if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
             return True
         raise commands.MissingRole(get_admin_role())
 
@@ -80,7 +80,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         """
         member = osoba
         await member.add_roles(get_admin_role())
-        await ctx.active_msg.add_reaction('✅')
+        await ctx.message.add_reaction('✅')
 
     @commands.command(name='nie_adminuj', hidden=True)
     @commands.is_owner()
@@ -91,16 +91,14 @@ class Management(commands.Cog, name='Dla Adminów'):
         await member.remove_roles(get_admin_role())
 
     @commands.command()
-    async def ankietka(self, ctx, *, date):
+    async def ankietka(self, ctx, *, data):
         """Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie.
         Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Nie zawiera oznaczeń.
         """
         async with ctx.typing():
-            m = await get_ankietawka_channel().send(ankietawka.format(date=date))
-            tasks = []
+            m = await get_ankietawka_channel().send(ankietawka.format(date=data))
             for emoji in ankietawka_emoji:
-                tasks.append(m.add_reaction(emoji))
-            await asyncio.gather(*tasks)
+                await m.add_reaction(emoji)
 
     @commands.command(name='usuń')
     @commands.guild_only()
@@ -117,10 +115,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         if not len(members):
             members = list(get_guild().members)
 
-        await ctx.channel.purge(after=ctx.active_msg.created_at - dt.timedelta(minutes=time),
-                                before=ctx.active_msg.created_at, check=lambda mess: mess.author in members)
+        await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),
+                                before=ctx.message.created_at, check=lambda mess: mess.author in members)
         try:
-            await ctx.active_msg.add_reaction('✅')
+            await ctx.message.add_reaction('✅')
         except discord.errors.NotFound:
             pass
 
@@ -135,7 +133,7 @@ class Management(commands.Cog, name='Dla Adminów'):
                 members[user].append(str(reaction.emoji))
         msg = ""
         for member, r in members.items():
-            if isinstance(member, discord.Member) and member.user != self.bot.user:
+            if isinstance(member, discord.Member) and member.id != self.bot.user.id:
                 msg += f'**{member.display_name}:**\t' + '\t'.join(r) + '\n'
         await ctx.send(msg)
 
@@ -156,4 +154,4 @@ class Management(commands.Cog, name='Dla Adminów'):
             members -= set(get_voice_channel().members)
             for member in members:
                 tasks.append(member.send(zbiorka))
-            await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks, return_exceptions=True)

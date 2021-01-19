@@ -57,7 +57,7 @@ class Game:
         for member in get_dead_role().members:
             if not self.player_map[member].role_class.revealed:
                 tasks.append(self.player_map[member].role_class.reveal())
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
         self.calculate_stats()
         self.inqui_win()
         self.morning_bandits_win()
@@ -87,7 +87,7 @@ class Game:
             if not player.role_class.revealed:
                 tasks.append(player.role_class.reveal())
         tasks.append(self.message.unpin())
-        await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def winning(self, reason: str, faction: str):  # TODO: Chamge winning mechanizm
         c = ':scroll:{}:scroll:\n**WYGRALIŚCIE!**'.format(reason)
@@ -140,7 +140,7 @@ class Game:
         return self.voting is not None
 
     async def on_die(self, reason, player) -> None:
-        await self.controller.on_die(player)
+        await self.controller.die(player.member)
         self.calculate_stats()
         if reason == 'herbs':
             self.statue.day_search(player.member)

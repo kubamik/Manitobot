@@ -24,7 +24,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
     @voting_check(rev=True)
     async def cancel_vote(self, _):
         """Ⓜ/&vclc/Anuluje trwające głosowanie"""
-        self.bot.game.voting_allowed = False
+        self.bot.game.voting = None
 
     @commands.command(name='vote')
     @manitou_cmd()
@@ -66,6 +66,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
         agresor = self.bot.game.days[-1].participants[0]
         victim = self.bot.game.days[-1].participants[1]
         options_parsed = [['1', get_nickname(agresor.id)], ['2', get_nickname(victim.id)], ['3', 'Wstrzymuję_Się']]
+        self.bot.game.days[-1].duel_remember_nicks()
         await votings.start_voting('Pojedynek\nMasz {} głos na osobę, która ma **wygrać** pojedynek', 1,
                                    options_parsed, [agresor, victim], "duel")
 
@@ -94,7 +95,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
             await ctx.send("Przeszukania już były")
             return
         try:
-            if self.bot.game.nights[-1].herbed.alive():
+            if self.bot.game.nights[-1].herbed.alive:
                 await ctx.send("Nie zapomniałeś o czymś:herb:?")
                 return
         except AttributeError:
@@ -110,7 +111,8 @@ class Glosowania(commands.Cog, name='Głosowania'):
         if len(kandydaci) == self.bot.game.searches:
             await self.bot.game.days[-1].search_end(kandydaci)
             return
-        options_parsed = [['{}'.format(number + 1), get_nickname(member.id)] for number, member in enumerate(kandydaci)]
+        self.bot.game.days[-1].search_remember_nicks()
+        options_parsed = [['{}'.format(number + 1), member.display_name] for number, member in enumerate(kandydaci)]
         await votings.start_voting("Przeszukania\nMasz {} głosy na osoby, które mają **zostać przeszukane**",
                                    self.bot.game.searches, options_parsed, vtype="search")
 
@@ -181,8 +183,9 @@ class Glosowania(commands.Cog, name='Głosowania'):
             return
         self.bot.game.days[-1].hang = True
         kandydaci = self.bot.game.days[-1].candidates
+        self.bot.game.days[-1].hang_remember_nicks()
         if len(kandydaci) == 1:
-            await self.bot.game.days[-1].hang_sumarize(ctx, [[kandydaci[0].display_name, []]])
+            await self.bot.game.days[-1].hang_sumarize(ctx, {kandydaci[0].display_name: []})
         else:
             options_parsed = [['{}'.format(number + 1), member.display_name] for number, member in enumerate(kandydaci)]
             await votings.start_voting('Wieszanie\nGłosujecie na osobę, która **ma być powieszona**', 1,

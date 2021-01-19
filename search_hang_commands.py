@@ -20,6 +20,7 @@ class Przeszukania(commands.Cog):
 
     @commands.command(name='zgłaszam')
     @player_cmd()
+    @commands.guild_only()
     async def duel_dare(self, ctx, *, gracz: MyMemberConverter):
         """Zgłasza podaną osobę do przeszukania"""
         member = gracz
@@ -27,6 +28,7 @@ class Przeszukania(commands.Cog):
 
     @commands.command(name='cofam')
     @player_cmd()
+    @commands.guild_only()
     async def undo(self, ctx, *, gracz: MyMemberConverter):
         """Cofa zgłoszenie podanej osoby do przeszukania"""
         member = gracz
@@ -83,7 +85,6 @@ class Wieszanie(commands.Cog):
         """Ⓜ/&hnd/Finalizuje wieszanie"""
         try:
             await bot.game.days[-1].hang_finalize(ctx)
-            await ctx.active_msg.add_reaction('✅')
         except InvalidRequest:
             pass
 

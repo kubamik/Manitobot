@@ -19,6 +19,7 @@ class Pojedynki(commands.Cog):
 
     @commands.command(name='wyzywam')
     @player_cmd()
+    @commands.guild_only()
     async def duel_dare(self, ctx, *, gracz: MyMemberConverter):
         """Wyzywa podaną osobę na pojedynek"""
         member = gracz
@@ -30,6 +31,7 @@ class Pojedynki(commands.Cog):
 
     @commands.command(name='odrzucam', aliases=['spierdalaj'])
     @player_cmd()
+    @commands.guild_only()
     async def decline(self, ctx):
         """/&od/Służy do odrzucenia pojedynku"""
         msg = bot.game.days[-1].remove_dare(ctx.author)
@@ -38,6 +40,7 @@ class Pojedynki(commands.Cog):
 
     @commands.command(name='przyjmuję', aliases=['pr'])
     @player_cmd()
+    @commands.guild_only()
     async def accept(self, ctx):
         """/&pr/Służy do przyjęcia pojedynku"""
         c = bot.game.days[-1].accept(ctx.author)
@@ -48,12 +51,9 @@ class Pojedynki(commands.Cog):
     @manitou_cmd()
     async def interrupt(self, ctx):
         """Ⓜ/&br/Przerywa trwający pojedynek lub usuwa pierwsze wyzwanie z listy"""
-        try:
-            c = await bot.game.days[-1].interrupt()
-            await get_town_channel().send(c)
-            await bot.game.days[-1].if_next()
-        except InvalidRequest as err:
-            await ctx.send(err.reason)
+        c = await bot.game.days[-1].interrupt()
+        await get_town_channel().send(c)
+        await bot.game.days[-1].if_next()
 
     @commands.command(name='wyzwania', aliases=['pend'])
     @manitou_cmd()
@@ -66,10 +66,7 @@ class Pojedynki(commands.Cog):
     @manitou_cmd()
     async def duel_end(self, ctx):
         """Ⓜ/&dnd/Kończy pojedynek z wynikiem ogłoszonym automatycznie"""
-        try:
-            await bot.game.days[-1].end_duel(ctx)
-        except InvalidRequest as err:
-            await ctx.send(err.reason)
+        await bot.game.days[-1].end_duel(ctx)
 
     @commands.command(name='search_phase', aliases=['abend'])
     @manitou_cmd()

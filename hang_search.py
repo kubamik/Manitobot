@@ -25,11 +25,14 @@ class Hang:
             c = "Miasto idzie spać"
         await get_town_channel().send(c)
 
+    def hang_remember_nicks(self):
+        self.data = {member.display_name: member for member in self.searched.keys()}
+
     async def hang_sumarize(self, ctx, votes):
         votes = votes.items()
         results = []
         for member, vote in sorted(votes, key=lambda v: len(v[1]), reverse=True):
-            results.append((await converter(ctx, member), len(vote)))
+            results.append((self.data[member], len(vote)))
         i = 0
         self.to_hang = [results[0][0]]
         self.hang_final = True
@@ -61,6 +64,7 @@ class Hang:
     async def hang_finalize(self, ctx):
         if not self.hang_final:
             await ctx.send("Najpierw głosowanie na wieszanie")
+            return
         if len(get_hanged_role().members) > 1:
             await ctx.send("Powiesić można tylko jedną osobę")
             raise InvalidRequest
@@ -133,8 +137,7 @@ class Search(Hang):
     def report_print(self):
         c = "__Zgłoszenia ({}):__\n".format(len(self.searched.keys()))
         for player, members in self.searched.items():
-            c += "**{}** *przez* ".format(get_nickname(player.id)) + ", ".join(
-                map(lambda m: get_nickname(m.id), members))
+            c += "**{}** *przez* ".format(player.display_name) + ", ".join([m.display_name for m in members])
             c += "\n"
         c += "\nDo dyspozycji są {} przeszukania".format(bot.game.searches)
         return c
@@ -159,11 +162,14 @@ class Search(Hang):
         except KeyError:
             pass
 
+    def search_remember_nicks(self):
+        self.data = {member.display_name: member for member in self.searched.keys()}
+
     async def search_summary(self, ctx, votes: dict):
         votes = votes.items()
         results = []
         for member, vote in sorted(votes, key=lambda v: len(v[1]), reverse=True):
-            results.append((await converter(ctx, member), len(vote)))
+            results.append((self.data[member], len(vote)))
         ser_num = 1 + len(self.to_search)
         last = results[0][1]
         self.to_revote = [results[0][0]]
