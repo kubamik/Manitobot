@@ -83,7 +83,7 @@ class Role(Activity):
                 if ret is not None:
                     output += ret
         except InvalidRequest as err:
-            raise InvalidRequest(err.reason)
+            raise InvalidRequest(err.msg)
         self.my_activities[operation] -= 1
         # if self.my_activities[operation]>-1:
         # self.count -= 1

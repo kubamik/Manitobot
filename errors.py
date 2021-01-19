@@ -39,7 +39,10 @@ class NoSuchSet(commands.CommandError, MyBaseException):
 
 
 class WrongValidVotesNumber(commands.CommandError, MyBaseException):
-    msg: str = 'Podano złą liczbę głosów'
+    msg: str = 'Podano złą liczbę poprawnych głosów - {}. Oczekiwano - {}.'
+
+    def __init__(self, is_, should_be):
+        self.msg = self.msg.format(is_, should_be)
 
 
 class GameStartedException(commands.CheckFailure, MyBaseException):
@@ -94,12 +97,12 @@ class VotingInProgress(commands.CheckFailure, MyBaseException):
     msg: str = 'Tej komendy nie można używać w trakcie głosowania'
 
 
-class VotingNotInProgress(commands.CheckFailure):
+class VotingNotInProgress(commands.CheckFailure, MyBaseException):
     msg: str = 'Nie trwa głosowanie'
 
 
-class TooLessVotingOptions(commands.CommandError):
-    msg = 'Za mało kandydatur. Otrzymano {}, oczekiwano co najmniej {}'
+class TooLessVotingOptions(commands.CommandError, MyBaseException):
+    msg: str = 'Za mało kandydatur. Otrzymano {}, oczekiwano co najmniej {}'
 
     def __init__(self, is_: int, should_be: int = 1):
         self.msg = self.msg.format(is_, should_be)

@@ -155,7 +155,7 @@ class Faction(Activity):
                 if not ret is None:
                     output += ret
         except InvalidRequest as err:
-            raise InvalidRequest(err.reason)
+            raise InvalidRequest(err.msg)
         self.operation = None
         if output:
             await ctx.send(output)

@@ -46,10 +46,8 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.message.delete(delay=6)
 
-    if isinstance(error, MyBaseException):
+    if isinstance(error, (MyBaseException, InvalidRequest)):
         await ctx.send(error.msg, delete_after=5)
-    elif isinstance(error, InvalidRequest):
-        await ctx.send(error.msg)  # TODO: Remove raising InvalidRequest everywhere
     elif isinstance(error, commands.CommandNotFound):
         await ctx.send('HONK?', delete_after=5)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.Forbidden):
@@ -71,13 +69,13 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.PrivateMessageOnly):
         await ctx.send("Tej komendy teraz można używać tylko w DM", delete_after=5)
     elif isinstance(error, commands.NoPrivateMessage):
-        await ctx.send("Tej komendy teraz można używać tylko na kanale frakcji", delete_after=5)
+        await ctx.send("Tej komendy można używać tylko na serwerze", delete_after=5)
     elif isinstance(error, GameEnd):
         c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
         await bot.game.winning(error.reason, error.winner)
         await send_to_manitou(c)
         for channel in get_guild().text_channels:
-            if channel.category_id == FRAKCJE_CATEGORY_ID or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
+            if channel.category_id in (FRAKCJE_CATEGORY_ID, NIEPUBLICZNE_CATEGORY_ID):
                 await channel.send(c)
     else:
         await ctx.send(':robot:Bot did an uppsie :\'( :robot:')

@@ -137,8 +137,7 @@ class Search(Hang):
     def report_print(self):
         c = "__Zgłoszenia ({}):__\n".format(len(self.searched.keys()))
         for player, members in self.searched.items():
-            c += "**{}** *przez* ".format(get_nickname(player.id)) + ", ".join(
-                map(lambda m: get_nickname(m.id), members))
+            c += "**{}** *przez* ".format(player.display_name) + ", ".join([m.display_name for m in members])
             c += "\n"
         c += "\nDo dyspozycji są {} przeszukania".format(bot.game.searches)
         return c

@@ -25,15 +25,14 @@ class Vote:
             raise VotingNotAllowed('Author can\'t vote now.')
 
         voted = self.players_voted
-        options = list(map(lambda o: [v.lower() for v in o], self.voting_options))
-        votes = list(map(lambda v: v.lower(), votes))
-        votes_std = filter(lambda option: set(option) & set(votes), options)
+        options = [[v.lower() for v in o] for o in self.voting_options]
+        votes = set(v.lower() for v in votes)
+        votes_std = [self.voting_options[options.index(option)][-1] for option in options if set(option) & votes]
         # votes_std - list of options, which ecountered in votes
-        votes_std = list(map(lambda v: self.voting_options[options.index(v)][-1], votes_std))
         # standarize options to use last element and resolve original case
 
         if len(votes_std) != self.required_votes:
-            raise WrongValidVotesNumber('<--')
+            raise WrongValidVotesNumber(len(votes_std), self.required_votes)
         if player.id in self.voting_results:
             for vote in self.voting_results[player.id]:
                 self.summary[vote].remove(player)
@@ -49,7 +48,7 @@ class Vote:
         title = '**Głosowanie zakończone!**\n' if end else 'Podgląd głosowania\n'
         for option in self.voting_options:
             voters = self.summary[option[-1]]
-            voters_readable = list(map(lambda voter: voter.display_name, voters))
+            voters_readable = [voter.display_name for voter in voters]
             summary_readable += '**{}** na **{}**:\n {}\n\n'.format(len(voters_readable), option[-1],
                                                                     ", ".join(voters_readable))
         message = "**Wyniki**:\n\n{}".format(summary_readable)
@@ -62,7 +61,7 @@ class Vote:
                 message += "**Wszyscy grający oddali głosy**"
             else:
                 message += "**Nie zagłosowali tylko:**\n"
-                not_voted = list(map(lambda p: p.display_name, not_voted))
+                not_voted = [p.display_name for p in not_voted]
                 message += '\n'.join(not_voted)
         embed.description = message
         return embed

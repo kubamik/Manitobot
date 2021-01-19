@@ -65,10 +65,10 @@ class Night:
                     self.last_mess = await channel.send(mess + c)
                     await self.last_mess.add_reaction('➡️')
             except InvalidRequest as err:
-                if err.reason is None:
+                if err.msg is None:
                     await self.night_next()
                     return
-                self.last_mess = await channel.send(err.reason + c)
+                self.last_mess = await channel.send(err.msg + c)
                 if c:
                     await self.last_mess.add_reaction('➡️')
             except NoEffect as err:
@@ -82,11 +82,11 @@ class Night:
                 self.last_mess = await channel.send("Rozpoczynamy turę {}.".format(next.replace('_', ' ')) + c)
                 await self.last_mess.add_reaction('➡️')
             except InvalidRequest as err:
-                if err.reason is None:
+                if err.msg is None:
                     await channel.send("{} nie budzą się.".format(next))
                     await self.night_next(channel)
                     return
-                self.last_mess = await channel.send(err.reason + c)
+                self.last_mess = await channel.send(err.msg + c)
                 await self.last_mess.add_reaction('➡️')
         elif next in bot.game.role_map:
             c = self.what_next()
@@ -96,10 +96,10 @@ class Night:
                 self.last_mess = await channel.send("Wysłano instrukcje do {}".format(next.replace('_', ' ') + c))
                 await self.last_mess.add_reaction('➡️')
             except InvalidRequest as err:
-                if err.reason is None:
+                if err.msg is None:
                     await self.night_next(channel)
                     return
-                self.last_mess = await channel.send(err.reason + c)
+                self.last_mess = await channel.send(err.msg + c)
                 await self.last_mess.add_reaction('➡️')
         else:
             await self.night_next(channel)

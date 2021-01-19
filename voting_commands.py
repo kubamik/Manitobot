@@ -24,7 +24,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
     @voting_check(rev=True)
     async def cancel_vote(self, _):
         """Ⓜ/&vclc/Anuluje trwające głosowanie"""
-        self.bot.game.voting_allowed = False
+        self.bot.game.voting = None
 
     @commands.command(name='vote')
     @manitou_cmd()

@@ -366,6 +366,7 @@ def print_list(role_list: List[str]) -> str:
     prev_faction = None
     for role in sorted(role_list,
                        key=lambda r: (list(roles.keys()) + list(map(refactor, role_list))).index(refactor(r))):
+        # sort by order of roles list, `+ role_list` needed if some role not in rolse
         faction = send_faction(role)
         role = role.replace("-", " ")
         role = role.replace("_", " ")

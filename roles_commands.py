@@ -46,7 +46,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
             else:
                 await self.bot.game.player_map[author].role_class.new_activity(ctx, operation, member)
         except InvalidRequest as err:
-            await ctx.send(err.reason)
+            await ctx.send(err.msg)
         except KeyError as err:
             await ctx.message.delete(delay=5)
             await ctx.send("Nie grasz w tej grze", delete_after=5)
@@ -109,7 +109,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         try:
             await self.bot.game.player_map[author].role_class.new_activity(ctx, "burn", member)
         except InvalidRequest as err:
-            await ctx.send(err.reason)
+            await ctx.send(err.msg)
         except KeyError:
             await ctx.send("Nie grasz w tej grze")
             raise

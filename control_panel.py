@@ -47,7 +47,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, event: discord.RawReactionActionEvent):
-        if event.user_id not in map(lambda mbr: mbr.id, get_manitou_role().members):
+        if event.user_id not in [mbr.id for mbr in get_manitou_role().members]:
             return
         if event.emoji.name in ('😴', '🗿', '☠️'):
             m = discord.utils.get(self.msg2mbr.keys(), id=event.message_id)
