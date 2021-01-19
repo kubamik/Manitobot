@@ -1,84 +1,61 @@
+import asyncio
+from typing import List, Optional
+
 import discord
-import random
+from discord.ext import commands
+
+from bot_basics import bot
+from utility import get_player_role, get_town_channel, send_to_manitou
+from errors import TooLessVotingOptions
+from vote import Vote
+
+V_INSTRUCTION = '''INSTRUKCJA
+Aby zagłosować wyślij tu dowolny wariant dowolnej opcji. \
+Wiele głosów należy oddzielić przecinkami. Wielkość znaków nie ma znaczenia.'''
 
 
-from utility import *
-from settings import *
-from game import Game
-import globals
-
-async def glosowanie(ctx, title, required_votes, options, not_voting = ()):
-  if globals.current_game is None:
-    await ctx.send("Najpierw rozpocznij grę ;)")
-    return
-  if globals.current_game.voting_in_progress():
-    await ctx.send("Najpierw zakończ bieżące głosowanie")
-    return
-  globals.current_game.new_voting(required_votes, options, not_voting)
-  await ctx.message.add_reaction('✅')
-  options_readable=""
-  for option in options:
-    options_readable+="- {}\n".format(",".join(option))
-
-  message = """Rozpoczynamy głosowanie nad: {}
-Wymagana liczba głosów to: {}
-Opcje:
-{}
-
-  Aby zagłosować wyślij mi (botowi) na priv dowolny wariant dowolnej opcji. Wiele głosów należy oddzielić przecinkami. Wielkość znaków nie ma znaczenia.
-  """.format(title, required_votes, options_readable)
-
-  await get_glosowania_channel().send(message)
-  gracze = list(get_player_role().members)
-  trupy = list(get_dead_role().members)
-  for gracz in gracze:
-    if gracz not in trupy:
-      await gracz.create_dm()
-      await gracz.dm_channel.send(message)
+async def start_voting(title: str, required_votes: int, options: List[List[str]],
+                       not_voting: Optional[List[discord.Member]] = None, vtype: Optional[str] = None):
+    if len(options) < max(1, required_votes):
+        raise TooLessVotingOptions(len(options))
+    not_voting = not_voting or list()
+    bot.game.voting = Vote(required_votes, options, not_voting, vtype)
+    options_readable = ""
+    for option in options:
+        options_readable += "**{}**\n\n".format(", ".join(option))
+    title = title.split('\n')
+    etitle = "Głosowanie: {}".format(title[0])
+    description = title[1].format(required_votes) + '\n\n' + options_readable
+    embed = discord.Embed(title=etitle, colour=discord.Colour(0x00aaff), description=description)
+    embed.set_footer(text=V_INSTRUCTION)
+    players = get_player_role().members
+    not_voting = bot.game.voting.not_voting
+    tasks = []
+    for player in players:
+        if player not in not_voting:
+            tasks.append(player.send(embed=embed))
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def see_voting(ctx, end_vote):
-  if not globals.current_game.voting_allowed:
-    await ctx.send("Nie trwa teraz żadne głosowanie")
-    return
-  voing_summary = globals.current_game.summarize_votes()
-  summary_readable = ""
-  votes_count = 0
-  if end_vote:
-    globals.current_game.voting_allowed = False
-    message = "Głosowanie zakończone!\n"
-  else:
-    message = "Podgląd głosowania\n"
-  for option, voters in voing_summary.items():
-    voters_readable = [get_nickname(voter_id) for voter_id in voters]
-    summary_readable+= "- {} na {}: {}\n".format(len(voters_readable), option, ", ".join(voters_readable))
-    votes_count+=len(voters_readable)
-  await ctx.message.add_reaction('✅')
-  message += """Wyniki:
-{}
-Łączna liczba oddanych głosów: {}
-Liczba głosujących: {}\n""".format(summary_readable,votes_count,votes_count//globals.current_game.required_votes)
-
-  if end_vote:
-    await get_glosowania_channel().send(message)
-    for member in get_player_role().members:
-      await member.send(message)
-    try:
-      if globals.current_game.days[-1].duel:
-        await globals.current_game.days[-1].result_duel(ctx, voing_summary.items())
-      elif globals.current_game.days[-1].hang:
-        await globals.current_game.days[-1].hang_sumarize(ctx, voing_summary.items())
-      elif globals.current_game.days[-1].hang_time:
-        await globals.current_game.days[-1].if_hang(ctx, voing_summary)
-    except AttributeError:
-      if globals.current_game.days[-1].search:
-        await globals.current_game.days[-1].search_summary(ctx, voing_summary.items())
-  else:
-    not_voted=list(set(get_player_role().members) - set(list(get_dead_role().members)) - globals.current_game.players_voted - set(globals.current_game.not_voting))
-    if len(not_voted) == 0:
-      message += "Wszyscy grający oddali głosy"
+async def see_end_voting(ctx: commands.Context, end: bool):
+    summary = bot.game.voting.summary
+    embed = bot.game.voting.generate_embed(end)
+    tasks = []
+    if end:
+        await get_town_channel().send(embed=embed)
+        for member in set(get_player_role().members) - set(bot.game.voting.not_voting):
+            async for m in member.history(limit=1):
+                tasks.append(m.edit(embed=embed))
+        type2func = {
+            'duel': 'result_duel',
+            'hang': 'hang_sumarize',
+            'hangif': 'if_hang',
+            'search': 'search_summary'
+        }
+        vtype = bot.game.voting.vote_type
+        bot.game.voting = None
+        if vtype in type2func:
+            tasks.append(getattr(bot.game.days[-1], type2func[vtype])(ctx, summary))
     else:
-      message += "Nie zagłosowali tylko:\n"
-      for player in not_voted:
-        message += get_nickname(player.id) + "\n"
-    await send_to_manitou(message)
+        tasks.append(send_to_manitou(embed=embed))
+    await asyncio.gather(*tasks, return_exceptions=True)
