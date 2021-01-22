@@ -83,7 +83,7 @@ async def my_message(m):
     try:
         if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
             return
-    except discord.DiscordException:
+    except IndexError:
         pass
 
     if m.channel.type != discord.ChannelType.private:
