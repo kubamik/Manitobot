@@ -6,7 +6,7 @@ from discord.ext import commands
 
 
 from settings import FAC2EMOJI
-from utility import get_control_panel, get_manitou_role
+from utility import get_control_panel, get_manitou_role, get_player_role
 
 
 class ControlPanel(commands.Cog, name='Panel Sterowania'):
@@ -30,8 +30,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             messages.append(await base(f'{player.member.display_name} ({player.role.replace("_", " ")})'))
         self.active_msg = await base('Aktywna frakcja')
         self.statue_msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
-        self.msg2mbr = dict(zip(messages, players))
-        self.mbr2msg = dict(zip(players, messages))
+        members = sorted(get_player_role().members, key=lambda mbr: mbr.display_name)
+        self.msg2mbr = dict(zip(messages, members))
+        self.mbr2msg = dict(zip(members, messages))
         tasks1, tasks2, tasks3 = [], [], []
         for m in messages:
             tasks1.append(m.add_reaction('😴'))
