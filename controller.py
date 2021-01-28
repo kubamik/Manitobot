@@ -39,8 +39,8 @@ class Controller:
         await m.clear_reactions()
         await m.edit(content=f'~~{m.content}~~')
 
-    async def update_dead(self):
-        """Edit messages with deads who was back to live
+    async def update_panel(self):
+        """Edit messages with deads who was back to live and changes swaped roles
         """
         tasks1, tasks2, tasks3 = [], [], []
         for member in get_player_role().members:
@@ -50,6 +50,7 @@ class Controller:
                 tasks1.append(m.add_reaction('😴'))
                 tasks2.append(m.add_reaction('🗿'))
                 tasks3.append(m.add_reaction('☠️'))
+        # TODO: Change swaped roles
         await asyncio.gather(*tasks1)
         await asyncio.gather(*tasks2)
         await asyncio.gather(*tasks3)

@@ -80,7 +80,6 @@ class Management(commands.Cog, name='Dla Adminów'):
         """
         member = osoba
         await member.add_roles(get_admin_role())
-        await ctx.message.add_reaction('✅')
 
     @commands.command(name='nie_adminuj', hidden=True)
     @commands.is_owner()

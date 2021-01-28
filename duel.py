@@ -42,7 +42,7 @@ class Duel:
         '''del self.daring[member][self.daring[member].index(author)]
         del self.dared[author][0]
         del self.duels_order[self.duels_order.index(author)]'''
-        return "**{}** odrzucił pojedynek od **{}**".format(author.display_name, member.display_name)
+        return "**{}** odrzucił(-a) pojedynek od **{}**".format(author.display_name, member.display_name)
 
     def remove_member(self, member):  # , role_cls):#use on die
         # member = role_cls.player.member

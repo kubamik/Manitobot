@@ -24,10 +24,10 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def prepare_panel(self):
         await get_control_panel().purge()
         base = get_control_panel().send
-        players = sorted(self.bot.game.player_map.keys(), key=lambda mbr: mbr.display_name)
+        players = sorted(self.bot.game.player_map.values(), key=lambda pl: pl.member.display_name)
         messages = []
         for player in players:
-            messages.append(await base(player.display_name))
+            messages.append(await base(f'{player.member.display_name} ({player.role.replace("_", " ")})'))
         self.active_msg = await base('Aktywna frakcja')
         self.statue_msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
         self.msg2mbr = dict(zip(messages, players))
