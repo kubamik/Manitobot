@@ -24,7 +24,7 @@ class Vote:
         if player in self.not_voting:
             raise VotingNotAllowed('Author can\'t vote now.')
 
-        voted = self.players_voted
+        voted = self.players_voted.copy()
         options = [[v.lower() for v in o] for o in self.voting_options]
         votes = set(v.lower() for v in votes)
         votes_std = [self.voting_options[options.index(option)][-1] for option in options if set(option) & votes]

@@ -145,10 +145,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command()
     @manitou_cmd()
     @ktulu_check()
-    async def refresh_dead(self, _):
-        """ⓂAktualizuje wskrzeszone osoby w Panelu Manitou
+    async def refresh_panel(self, _):
+        """ⓂAktualizuje  osoby w Panelu Manitou
         """
-        await self.bot.game.controller.update_dead()
+        await self.bot.game.controller.update_panel()
 
     @commands.command()
     @manitou_cmd()
@@ -265,7 +265,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         async with ctx.typing():
             tasks.append(utility.remove_roles(dead_role.members + player_role.members,
                                               dead_role, winner_role, loser_role, searched_role, hanged_role))
-            tasks.append(utility.add_roles(get_voice_channel().members, player_role))
+            tasks.append(utility.add_roles(
+                list(set(get_voice_channel().members) & set(dead_role.members + player_role.members)), player_role))
             tasks.append(self.remove_cogs())
             await asyncio.gather(*tasks, return_exceptions=True)
 
