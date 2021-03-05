@@ -4,6 +4,7 @@ import os
 import discord
 from discord.ext import commands
 
+from converters import MyMemberConverter
 from settings import LOG_FILE
 
 
@@ -48,3 +49,12 @@ class DevCommands(commands.Cog, name='Development'):
             os.remove(LOG_FILE)
         except FileNotFoundError:
             pass
+
+    @commands.command(name='invoke')
+    async def invoke(
+            self, ctx, member: MyMemberConverter(player_only=False), *, txt):
+        """🤔"""
+        msg = ctx.message
+        msg.author = member
+        msg.content = '&' + txt if not txt.startswith('&') else txt
+        await self.bot.process_commands(msg)

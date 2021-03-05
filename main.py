@@ -13,10 +13,10 @@ import player_commands
 import start_commands
 from bot_basics import bot
 from errors import MyBaseException
-# from keep_alive import keep_alive
+from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
 from starting import if_game
-from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
+from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou, get_town_channel
 
 
 @bot.event
@@ -74,7 +74,7 @@ async def you_lost(ctx):
     for i in loser.members:
         try:
             await i.send("Przegrałem!")
-        except discord.DiscordException:
+        except (AttributeError, discord.DiscordException):
             pass
 
 
@@ -83,7 +83,7 @@ async def my_message(m):
     try:
         if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
             return
-    except discord.DiscordException:
+    except IndexError:
         pass
 
     if m.channel.type != discord.ChannelType.private:
@@ -117,5 +117,5 @@ if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
     token = os.environ.get('TOKEN')
-    # keep_alive()
+    keep_alive()
     bot.run(token)

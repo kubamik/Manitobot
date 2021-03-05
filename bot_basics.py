@@ -3,6 +3,7 @@ import sys
 from discord.ext import commands
 import discord
 
+import slash_http
 
 command_prefix = '&'
 
