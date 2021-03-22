@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Tuple, Optional, Dict, Set
+from typing import List, Tuple, Optional, Dict, Set, Mapping
 
 import discord
 
@@ -9,14 +9,14 @@ from utility import get_player_role
 
 class Vote:
     def __init__(self, required_votes: int, voting_options: List[List[str]],
-                 not_voting: List[discord.Member], vote_type: Optional[str] = None):
+            not_voting: List[discord.Member], vote_type: Optional[str] = None):
         self.required_votes = required_votes
         self.voting_options = voting_options
         self.voting_results: Dict[int, List[str]] = {}
         self.players_voted: Set[discord.Member] = set()
         self.not_voting = not_voting
         self.vote_type = vote_type
-        self.summary: Dict[str, List[discord.Member]] = defaultdict(list)
+        self.summary: Mapping[str, List[discord.Member]] = defaultdict(list)
 
     def register_vote(self, player: discord.Member, votes: List[str]) -> Tuple[List[str], bool]:
         if player not in get_player_role().members:

@@ -55,6 +55,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             if m and event.emoji.name == '😴':
                 self.bot.game.player_map[self.msg2mbr[m]].sleep()
                 await m.edit(content=m.content + '\t😴')
+                await self.msg2mbr[m].send('Zostałeś(-aś) uśpiony(-a). Nie budzisz się więcej tej nocy')
             if m and event.emoji.name == '🗿':
                 await self.bot.game.controller.statue_reaction_add(self.msg2mbr[m])
             if m and event.emoji.name == '☠️':
@@ -66,10 +67,13 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, event: discord.RawReactionActionEvent) -> None:
+        if event.user_id not in [mbr.id for mbr in get_manitou_role().members]:
+            return
         if event.emoji.name == '😴':
             m = discord.utils.get(self.msg2mbr.keys(), id=event.message_id)
             if m:
                 self.bot.game.player_map[self.msg2mbr[m]].unsleep()
+                await self.msg2mbr[m].send('Jednak nie zostałeś(-aś) uśpiony(-a). Obudź się na następne zawołanie')
                 if '\t😴' in m.content:
                     await m.edit(content=m.content.replace('\t😴', ''))
             return

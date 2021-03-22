@@ -2,6 +2,8 @@ import abc
 
 from discord.ext import commands
 
+from settings import TOWN_CHANNEL_ID
+
 
 class MyBaseException(abc.ABC, Exception):
     @property
@@ -50,7 +52,7 @@ class GameStartedException(commands.CheckFailure, MyBaseException):
 
 
 class SelfDareError(commands.CheckFailure, MyBaseException):
-    msg: str = 'Celujesz sam w siebie, ale przypominasz sobie, że twój pies będzie smutny'
+    msg: str = 'Nie możesz się sam wyzwać'
 
 
 class DayOnly(commands.CheckFailure, MyBaseException):
@@ -91,6 +93,10 @@ class WrongGameType(commands.CommandError, MyBaseException):
 
 class GameNotStarted(commands.CommandError, MyBaseException):
     msg: str = 'Gra nie została rozpoczęta'
+
+
+class NotTownChannel(commands.CheckFailure, MyBaseException):
+    msg: str = f'Tej komendy można używać tylko na kanale <#{TOWN_CHANNEL_ID}>'
 
 
 class VotingInProgress(commands.CheckFailure, MyBaseException):
