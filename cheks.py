@@ -5,7 +5,7 @@ from discord.ext import commands
 from bot_basics import bot
 import game
 from errors import AuthorNotPlaying, GameNotStarted, WrongGameType, GameStartedException, DayOnly, VotingInProgress, \
-    VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice
+    VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, NotTownChannel, DuelInProgress
 from basic_models import NotAGame
 import mafia
 from starting import if_game
@@ -111,4 +111,20 @@ def voting_check(rev=False):
     return commands.check(predicate)
 
 
+def duel_check():
+    def predicate(_):
+        if bot.game.days[-1].duel:
+            raise DuelInProgress('Can\'t use this command during duel')
+        return True
+
+    return commands.check(predicate)
+
 # ===================== Place checks =====================
+
+def town_only():
+    def predicate(ctx):
+        if ctx.channel != get_town_channel():
+            raise NotTownChannel
+        return True
+
+    return commands.check(predicate)

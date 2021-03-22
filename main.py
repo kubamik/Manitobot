@@ -5,6 +5,7 @@ import os
 import discord
 from discord.ext import commands
 
+import day_slash_commands
 import dev_commands
 import funny_commands
 import management_commands
@@ -13,27 +14,16 @@ import player_commands
 import start_commands
 from bot_basics import bot
 from errors import MyBaseException
-from keep_alive import keep_alive
+#from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
 from starting import if_game
 from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou, get_town_channel
 
 
+
 @bot.event
 async def on_ready():
     print("Hello world!")
-    try:
-        bot.add_cog(dev_commands.DevCommands(bot))
-        bot.add_cog(funny_commands.Funny(bot))
-        bot.add_cog(manitou_commands.DlaManitou(bot))
-        bot.add_cog(start_commands.Starting(bot))
-        bot.add_cog(player_commands.DlaGraczy(bot))
-        bot.add_cog(management_commands.Management(bot))
-        bot.load_extension('error_handler')
-        bot.get_command('g').help = playerhelp()
-        bot.get_command('m').help = manitouhelp()
-    except (discord.ClientException, AttributeError, commands.ExtensionError):
-        pass
 
 
 @bot.command(name='przeproś')
@@ -109,13 +99,40 @@ async def on_message(message):
     if message.author.bot:
         return
     ctx = await bot.get_context(message)
-    ctx.author = get_member(ctx.author.id)
+    if not isinstance(ctx.author, discord.Member):
+        ctx.author = get_member(ctx.author.id)
     await bot.invoke(ctx)
+
+
+@bot.event
+async def on_interaction(interaction):
+    try:
+        try:
+            interaction.command = bot.slash_commands[interaction.command_id]
+        except (KeyError, AttributeError):
+            raise commands.CommandNotFound(interaction.name)
+    except Exception as error:
+        bot.dispatch('interaction_error', interaction, error)
+    else:
+        await bot.invoke_slash(interaction)
 
 
 if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
     token = os.environ.get('TOKEN')
-    keep_alive()
+    #keep_alive()
+    try:
+        bot.add_cog(dev_commands.DevCommands(bot))
+        bot.add_cog(funny_commands.Funny(bot))
+        bot.add_cog(manitou_commands.DlaManitou(bot))
+        bot.add_cog(start_commands.Starting(bot))
+        bot.add_cog(player_commands.DlaGraczy(bot))
+        bot.add_cog(management_commands.Management(bot))
+        bot.load_extension('error_handler')
+        bot.get_command('g').help = playerhelp()
+        bot.get_command('m').help = manitouhelp()
+    except AttributeError:
+        pass
+    bot.loop.create_task(bot.overwrite_slash_commands())
     bot.run(token)

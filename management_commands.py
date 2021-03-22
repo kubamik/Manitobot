@@ -134,7 +134,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         for member, r in members.items():
             if isinstance(member, discord.Member) and member.id != self.bot.user.id:
                 msg += f'**{member.display_name}:**\t' + '\t'.join(r) + '\n'
-        await ctx.send(msg)
+        if msg:
+            await ctx.send(msg)
+        else:
+            await ctx.send('Do tej wiadomości nie dodano reakcji')
 
     @commands.command(name='gramy', aliases=['zbiórka'])
     async def special_send(self, ctx, wiadomosc: discord.Message, *emoji):

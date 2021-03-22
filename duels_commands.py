@@ -25,11 +25,10 @@ class Pojedynki(commands.Cog):
         member = gracz
         if member == ctx.author:
             raise SelfDareError('Player tried to dare itself')
-            # await ctx.send("Celujesz sam w siebie, ale przypominasz sobie, że Twój pies będzie smutny")
         bot.game.days[-1].add_dare(ctx.author, member)
         await bot.game.days[-1].if_start(ctx.author, member)  # TODO: Implement this line in duels
 
-    @commands.command(name='odrzucam', aliases=['spierdalaj'])
+    @commands.command(name='odrzucam', aliases=['spierdalaj', 'od'])
     @player_cmd()
     @commands.guild_only()
     async def decline(self, ctx):

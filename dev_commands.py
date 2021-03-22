@@ -50,7 +50,7 @@ class DevCommands(commands.Cog, name='Development'):
         except FileNotFoundError:
             pass
 
-    @commands.command(name='invoke')
+    @commands.command(name='invoke', hidden=True)
     async def invoke(
             self, ctx, member: MyMemberConverter(player_only=False), *, txt):
         """🤔"""

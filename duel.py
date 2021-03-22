@@ -23,7 +23,7 @@ class Duel:
             self.daring[author] = []
         try:
             if author in self.dared[member] or member in self.dared[author]:
-                raise InvalidRequest("Wyzwałeś już tego gracza lub on wyzwał ciebie")
+                raise InvalidRequest("Wyzwałeś(-aś) już tego gracza lub zostałeś(-aś) wyzwany(-a)")
         except KeyError:
             pass
         self.dared[member].append(author)
@@ -32,7 +32,7 @@ class Duel:
 
     def remove_dare(self, author):
         if author not in self.duels_order:
-            raise InvalidRequest("Nie zostałeś wyzwany")
+            raise InvalidRequest("Nie zostałeś(-aś) wyzwany(-a)")
         if author in self.duels_queue:
             raise InvalidRequest("Masz już oczekujący pojedynek")
         member = self.dared[author][0]

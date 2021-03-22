@@ -21,7 +21,7 @@ class Przeszukania(commands.Cog):
     @commands.command(name='zgłaszam')
     @player_cmd()
     @commands.guild_only()
-    async def duel_dare(self, ctx, *, gracz: MyMemberConverter):
+    async def search_dare(self, ctx, *, gracz: MyMemberConverter):
         """Zgłasza podaną osobę do przeszukania"""
         member = gracz
         bot.game.days[-1].add_report(ctx.author, member)
