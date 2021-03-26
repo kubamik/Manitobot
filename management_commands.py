@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from converters import MyMemberConverter
-from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, PING_BLUE_ID
+from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, PING_BLUE_ID, GUILD_ID
 from utility import get_newcommer_role, get_ping_reminder_role, get_ping_game_role, get_member, get_admin_role, \
     get_ankietawka_channel, get_guild, get_voice_channel
 
@@ -28,6 +28,8 @@ class Management(commands.Cog, name='Dla Adminów'):
 
     @commands.Cog.listener('on_member_join')
     async def new_member_guild(self, member):
+        if member.guild.id != GUILD_ID:
+            return
         await member.add_roles(get_newcommer_role(), get_ping_reminder_role(), get_ping_game_role())
 
     @commands.Cog.listener('on_member_remove')
