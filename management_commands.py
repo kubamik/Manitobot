@@ -34,6 +34,8 @@ class Management(commands.Cog, name='Dla Adminów'):
 
     @commands.Cog.listener('on_member_remove')
     async def member_leaves(self, member):
+        if member.guild.id != GUILD_ID:
+            return
         ch = member.guild.system_channel
         if ch is None:
             return
