@@ -1,9 +1,8 @@
 from discord.ext import commands
 import discord
-import asyncio
 
 import bot_basics
-from utility import send_to_manitou, czy_manitou, czy_gram, get_nickname, get_town_channel, get_member, InvalidRequest
+from utility import get_member, InvalidRequest
 import utility
 
 # TODO: IDEA: change commands to message reactions

@@ -1,4 +1,3 @@
-import bot_basics
 import utility
 from basic_models import NotAGame
 from duel import Duel

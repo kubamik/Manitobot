@@ -125,8 +125,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         player_role = get_player_role()
         dead_role = get_dead_role()
         spec_role = get_spectator_role()
-        tasks = [utility.remove_roles(dead_role.members + player_role.members + spec_role.members,
-                                      dead_role, player_role, spec_role)]
+        tasks = [
+            utility.remove_roles(dead_role.members + player_role.members + spec_role.members,
+                                 dead_role, player_role, spec_role)]
         for member in get_guild().members:
             tasks.append(clear_nickname(member))
         async with ctx.typing():
@@ -263,8 +264,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         hanged_role = get_hanged_role()
         tasks = []
         async with ctx.typing():
-            tasks.append(utility.remove_roles(dead_role.members + player_role.members,
-                                              dead_role, winner_role, loser_role, searched_role, hanged_role))
+            tasks.append(
+                utility.remove_roles(dead_role.members + player_role.members,
+                                     dead_role, winner_role, loser_role, searched_role, hanged_role))
             tasks.append(utility.add_roles(
                 list(set(get_voice_channel().members) & set(dead_role.members + player_role.members)), player_role))
             tasks.append(self.remove_cogs())
@@ -342,7 +344,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂRozpoczyna dzień"""
         tasks = []
         await self.bot.game.new_day()
-        tasks.append(utility.send_game_channels('=\nDzień {}'.format(self.bot.game.day)))
+        tasks.append(
+            utility.send_game_channels('=\nDzień {}'.format(self.bot.game.day)))
         tasks.append(get_town_channel().edit(sync_permissions=True))
         tasks.append(self.bot.get_cog("Panel Sterowania").morning_reset())
         await asyncio.gather(*tasks, return_exceptions=True)

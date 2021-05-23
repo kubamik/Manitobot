@@ -5,20 +5,14 @@ import os
 import discord
 from discord.ext import commands
 
-import day_slash_commands
-import dev_commands
-import funny_commands
-import management_commands
-import manitou_commands
-import player_commands
-import start_commands
-from bot_basics import bot
-from errors import MyBaseException
+from manitobot import start_commands, manitou_commands, funny_commands, \
+    management_commands, dev_commands, player_commands
+from manitobot.bot_basics import bot
+from manitobot.errors import MyBaseException
 #from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
-from starting import if_game
-from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou, get_town_channel
-
+from manitobot.starting import if_game
+from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
 
 
 @bot.event

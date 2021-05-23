@@ -69,8 +69,10 @@ async def start_game(*roles: str, mafia: bool = False, faction_data: Optional[Tu
         os.remove(ROLES_FILE)
     except PermissionError:
         pass
-    tasks.append(utility.add_roles(get_manitou_role().members, get_other_manitou_role()))
-    tasks.append(utility.remove_roles(list(set(players) & set(get_newcommer_role().members)), get_newcommer_role()))
+    tasks.append(
+        utility.add_roles(get_manitou_role().members, get_other_manitou_role()))
+    tasks.append(
+        utility.remove_roles(list(set(players) & set(get_newcommer_role().members)), get_newcommer_role()))
     tasks.append(bot.change_presence(activity=discord.Game('Ktulu')))
     tasks.append(utility.send_game_channels(RULLER))
     team = bot.game.print_list(list(roles), faction_data)
