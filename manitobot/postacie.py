@@ -1,8 +1,6 @@
 from collections import defaultdict
 from typing import List
 
-from discord.ext import commands
-
 roles = {
     "szeryf": "**Szeryf (Miasto)** Jeżeli szeryf żyje, można nie przyjąć pojedynku (nie musi być wiadomo, "
               "kto jest szeryfem - wystarczy, że jeszcze nie umarł). Ponadto szeryf, co noc (również zerowej nocy) "

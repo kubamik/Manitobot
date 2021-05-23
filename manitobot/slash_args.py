@@ -1,6 +1,6 @@
 import typing
 
-from slash_types import SlashOptionType
+from .slash_types import SlashOptionType
 
 
 class _Arg:

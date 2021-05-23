@@ -4,17 +4,17 @@ from typing import Optional, Dict, List, Set, Tuple, Mapping
 
 import discord
 
-import postacie
-from controller import Controller
-from daynight import Day, Night
-from errors import GameEnd
-from utility import get_dead_role, get_player_role
-from vote import Vote
-from statue import Statue
-from faction import Faction
-from role import Role
-from player import Player
-from postacie import get_faction, give_faction
+from . import postacie
+from .controller import Controller
+from .daynight import Day, Night
+from .errors import GameEnd
+from .faction import Faction
+from .player import Player
+from .postacie import get_faction, give_faction
+from .role import Role
+from .statue import Statue
+from .utility import get_dead_role, get_player_role
+from .vote import Vote
 
 
 class Game:

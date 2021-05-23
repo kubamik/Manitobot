@@ -1,10 +1,10 @@
 import sys
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-import slash_http
-import slash_core
+# noinspection PyUnresolvedReferences
+from . import slash_http, slash_core
 
 command_prefix = '&'
 

@@ -2,14 +2,17 @@ from typing import Callable
 
 from discord.ext import commands
 
-from bot_basics import bot
-import game
-from errors import AuthorNotPlaying, GameNotStarted, WrongGameType, GameStartedException, DayOnly, VotingInProgress, \
-    VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, NotTownChannel, DuelInProgress
-from basic_models import NotAGame
-import mafia
-from starting import if_game
-from utility import czy_manitou, get_manitou_role, get_player_role, on_voice, get_town_channel
+from . import game
+from . import mafia
+from .basic_models import NotAGame
+from .bot_basics import bot
+from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
+    GameStartedException, DayOnly, VotingInProgress, \
+    VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, \
+    NotTownChannel, DuelInProgress
+from .starting import if_game
+from .utility import czy_manitou, get_manitou_role, get_player_role, on_voice, \
+    get_town_channel
 
 
 # ===================== Game checks =====================

@@ -7,7 +7,7 @@ import typing
 import discord
 from discord.ext import commands
 
-import slash_args
+from . import slash_args
 
 
 class SlashCommand(commands.Command):

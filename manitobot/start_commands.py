@@ -3,18 +3,15 @@ from collections import Counter
 import discord
 from discord.ext import commands
 
-import control_panel
-import duels_commands
-import roles_commands
-import search_hang_commands
-import sklady
-import voting_commands
-from cheks import manitou_cmd, game_check
-from errors import NoSuchSet
-from game import Game
-from starting import start_game
-from utility import playerhelp, manitouhelp, get_admin_role, clear_nickname, get_spectator_role, get_dead_role, \
+from .cheks import manitou_cmd, game_check
+from .errors import NoSuchSet
+from .game import Game
+from .starting import start_game
+from .utility import playerhelp, manitouhelp, get_admin_role, clear_nickname, \
+    get_spectator_role, get_dead_role, \
     get_player_role
+from . import control_panel, duels_commands, roles_commands, \
+    search_hang_commands, sklady, voting_commands
 
 
 class Starting(commands.Cog, name='Początkowe'):

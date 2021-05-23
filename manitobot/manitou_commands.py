@@ -2,21 +2,24 @@ import asyncio
 from random import randint
 from typing import Union
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-import utility
-from basic_models import NotAGame
-from converters import MyMemberConverter
-from cheks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only
 from settings import FAC2CHANN_ID, CONFIG
-from utility import playerhelp, manitouhelp, get_faction_channel, get_admin_role, get_town_channel, get_player_role, \
-    get_other_manitou_role, get_manitou_role, get_voice_channel, get_manitou_notebook, get_member, get_dead_role, \
-    get_spectator_role, get_guild, clear_nickname, send_to_manitou, get_duel_winner_role, get_duel_loser_role, \
+from . import postacie
+from . import utility
+from .basic_models import NotAGame
+from .cheks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only
+from .converters import MyMemberConverter
+from .postacie import get_role_details
+from .starting import if_game
+from .utility import playerhelp, manitouhelp, get_faction_channel, \
+    get_admin_role, get_town_channel, get_player_role, \
+    get_other_manitou_role, get_manitou_role, get_voice_channel, \
+    get_manitou_notebook, get_member, get_dead_role, \
+    get_spectator_role, get_guild, clear_nickname, send_to_manitou, \
+    get_duel_winner_role, get_duel_loser_role, \
     get_searched_role, get_hanged_role
-from starting import if_game
-from postacie import get_role_details
-import postacie
 
 
 class DlaManitou(commands.Cog, name="Dla Manitou"):

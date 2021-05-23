@@ -1,11 +1,11 @@
 import discord
 
-from bot_basics import bot
-from cheks import game_check, player_cmd, day_only, town_only, duel_check
-from errors import SelfDareError, MemberNotPlaying
 from settings import GUILD_ID
-from slash_args import Arg
-from utility import get_player_role
+from .bot_basics import bot
+from .cheks import game_check, player_cmd, day_only, town_only, duel_check
+from .errors import SelfDareError, MemberNotPlaying
+from .slash_args import Arg
+from .utility import get_player_role
 
 
 @bot.slash(name='wyzywam', guild=GUILD_ID)

@@ -3,8 +3,8 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from errors import MemberNotPlaying
-from utility import get_player_role, get_dead_role, get_member, get_guild
+from .errors import MemberNotPlaying
+from .utility import get_player_role, get_dead_role, get_member, get_guild
 
 
 class MyFlagConverter(commands.Converter):

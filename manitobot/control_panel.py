@@ -4,9 +4,8 @@ from typing import Dict, Optional
 import discord
 from discord.ext import commands
 
-
 from settings import FAC2EMOJI
-from utility import get_control_panel, get_manitou_role, get_player_role
+from .utility import get_control_panel, get_manitou_role, get_player_role
 
 
 class ControlPanel(commands.Cog, name='Panel Sterowania'):

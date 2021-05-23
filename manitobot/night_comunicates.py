@@ -1,4 +1,4 @@
-from utility import *
+from .utility import *
 
 # [(text, activity to format number)], len can be greater than 1
 new_night_com = {

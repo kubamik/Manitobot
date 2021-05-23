@@ -1,12 +1,13 @@
-from discord.ext import commands
 import random
 import typing
 
-from errors import TooLessVotingOptions, GameNotStarted
-from cheks import manitou_cmd, voting_check, day_only
-from starting import if_game
-from utility import get_nickname, get_player_role, get_searched_role
-import votings
+from discord.ext import commands
+
+from . import votings
+from .cheks import manitou_cmd, voting_check, day_only
+from .errors import TooLessVotingOptions, GameNotStarted
+from .starting import if_game
+from .utility import get_nickname, get_player_role, get_searched_role
 
 
 class Glosowania(commands.Cog, name='Głosowania'):

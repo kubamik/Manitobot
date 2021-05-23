@@ -1,6 +1,6 @@
 import discord
 
-from interaction import Interaction
+from .interaction import Interaction
 
 
 def parse_interaction_create(self, data):

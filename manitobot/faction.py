@@ -1,10 +1,10 @@
-from collections import OrderedDict
 import inspect
+from collections import OrderedDict
 
-from converters import converter
-from f_database import *
-from utility import *
-from activities import Activity
+from .activities import Activity
+from .converters import converter
+from .f_database import *
+from .utility import *
 
 
 class Faction(Activity):

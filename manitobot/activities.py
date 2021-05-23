@@ -1,10 +1,11 @@
 import inspect
 
-from errors import GameEnd
-from utility import *
-import permissions
-from night_comunicates import webhook_com, meantime_operation_com, new_night_com
-from postacie import get_faction, send_faction, give_faction, get_role_details
+from . import permissions
+from .errors import GameEnd
+from .night_comunicates import webhook_com, meantime_operation_com, \
+    new_night_com
+from .postacie import get_faction, send_faction, give_faction, get_role_details
+from .utility import *
 
 
 class Activity:

@@ -1,9 +1,9 @@
-import utility
-from basic_models import NotAGame
-from duel import Duel
-from errors import NoEffect
-from hang_search import Search
-from utility import *
+from . import utility
+from .basic_models import NotAGame
+from .duel import Duel
+from .errors import NoEffect
+from .hang_search import Search
+from .utility import *
 
 night_order = ["Lucky_Luke", "Dziwka", "Szeryf", "Pastor", "Opój", "Pijany_Sędzia", "Hazardzista", "Lusterko",
                "Bandyci", "Mściciel", "Złodziej", "Szuler", "Szaman", "Indianie", "Lornecie_Oko", "Ufoki", "Inkwizycja"]

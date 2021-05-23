@@ -1,5 +1,5 @@
-from errors import GameNotStarted
-from bot_basics import bot
+from .bot_basics import bot
+from .errors import GameNotStarted
 
 
 class NotAGame:

@@ -3,10 +3,11 @@ import asyncio
 import discord
 from discord.ext import commands
 
-import postacie
-from basic_models import NotAGame
-from cheks import game_check, playing_cmd, on_voice_check
-from utility import get_player_role, get_dead_role, get_spectator_role, get_town_channel, send_to_manitou, \
+from . import postacie
+from .basic_models import NotAGame
+from .cheks import game_check, playing_cmd, on_voice_check
+from .utility import get_player_role, get_dead_role, get_spectator_role, \
+    get_town_channel, send_to_manitou, \
     get_voice_channel, get_manitou_role, playerhelp
 
 

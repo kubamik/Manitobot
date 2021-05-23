@@ -1,7 +1,6 @@
 import random
 
-from converters import converter
-from utility import *
+from .utility import *
 
 
 class Hang:

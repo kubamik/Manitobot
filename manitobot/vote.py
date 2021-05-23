@@ -3,8 +3,8 @@ from typing import List, Tuple, Optional, Dict, Set, Mapping
 
 import discord
 
-from errors import AuthorNotPlaying, VotingNotAllowed, WrongValidVotesNumber
-from utility import get_player_role
+from .errors import AuthorNotPlaying, VotingNotAllowed, WrongValidVotesNumber
+from .utility import get_player_role
 
 
 class Vote:

@@ -2,11 +2,11 @@ from typing import Optional
 
 import discord
 
-from utility import playing, send_to_manitou, get_town_channel, get_manitou_notebook
-from f_database import FACTION_FEATURES
-from errors import GameEnd
-from postacie import give_faction
-from bot_basics import bot
+from .bot_basics import bot
+from .errors import GameEnd
+from .f_database import FACTION_FEATURES
+from .postacie import give_faction
+from .utility import send_to_manitou, get_town_channel, get_manitou_notebook
 
 
 class Statue:

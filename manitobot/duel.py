@@ -1,5 +1,4 @@
-from converters import converter
-from utility import *
+from .utility import *
 
 
 class Duel:

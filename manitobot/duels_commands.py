@@ -1,9 +1,9 @@
 from discord.ext import commands
 
-from cheks import manitou_cmd, player_cmd
-from converters import MyMemberConverter
-from errors import DayOnly, DuelInProgress, SelfDareError
-from utility import *
+from .cheks import manitou_cmd, player_cmd
+from .converters import MyMemberConverter
+from .errors import DayOnly, DuelInProgress, SelfDareError
+from .utility import *
 
 
 class Pojedynki(commands.Cog):

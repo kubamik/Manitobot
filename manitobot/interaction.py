@@ -1,6 +1,6 @@
 import discord
 
-from slash_types import SlashOptionType
+from .slash_types import SlashOptionType
 
 
 class Interaction:

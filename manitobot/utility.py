@@ -4,9 +4,9 @@ from typing import Optional, List
 import discord
 from discord.ext import commands
 
-from errors import InvalidRequest
+from .bot_basics import bot, command_prefix
+from .errors import InvalidRequest
 from settings import *
-from bot_basics import bot, command_prefix
 
 
 def get_guild() -> discord.Guild:

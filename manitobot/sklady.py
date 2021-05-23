@@ -1,7 +1,7 @@
 from typing import Dict, List
 
-import postacie
-from errors import NoSuchSet
+from . import postacie
+from .errors import NoSuchSet
 
 SETS: Dict[str, List[str]] = {
     "1": ["Sędzia"],

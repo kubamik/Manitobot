@@ -1,9 +1,10 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-import bot_basics
-from utility import get_member, InvalidRequest
-import utility
+from . import bot_basics
+from . import utility
+from .utility import get_member, InvalidRequest
+
 
 # TODO: IDEA: change commands to message reactions
 

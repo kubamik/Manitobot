@@ -2,10 +2,10 @@ from typing import Dict
 
 import discord
 
-import utility
-from errors import GameEnd
-from player import Player
-from role import Role
+from . import utility
+from .errors import GameEnd
+from .player import Player
+from .role import Role
 
 
 class Mafia:

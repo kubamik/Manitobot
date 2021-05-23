@@ -5,9 +5,11 @@ from collections import defaultdict
 import discord
 from discord.ext import commands
 
-from converters import MyMemberConverter
-from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, PING_BLUE_ID
-from utility import get_newcommer_role, get_ping_reminder_role, get_ping_game_role, get_member, get_admin_role, \
+from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
+    PING_BLUE_ID
+from .converters import MyMemberConverter
+from .utility import get_newcommer_role, get_ping_reminder_role, \
+    get_ping_game_role, get_member, get_admin_role, \
     get_ankietawka_channel, get_guild, get_voice_channel
 
 ankietawka = '''**O której możesz grać {date}?**

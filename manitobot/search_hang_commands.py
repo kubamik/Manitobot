@@ -1,7 +1,7 @@
-from cheks import manitou_cmd, player_cmd
-from converters import MyMemberConverter
-from errors import DayOnly, DuelInProgress
-from utility import *
+from .cheks import manitou_cmd, player_cmd
+from .converters import MyMemberConverter
+from .errors import DayOnly, DuelInProgress
+from .utility import *
 
 
 # kolejność, kończenie głosowania przy przerwij, swap

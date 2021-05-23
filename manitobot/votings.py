@@ -4,10 +4,10 @@ from typing import List, Optional
 import discord
 from discord.ext import commands
 
-from bot_basics import bot
-from utility import get_player_role, get_town_channel, send_to_manitou
-from errors import TooLessVotingOptions
-from vote import Vote
+from .bot_basics import bot
+from .errors import TooLessVotingOptions
+from .utility import get_player_role, get_town_channel, send_to_manitou
+from .vote import Vote
 
 V_INSTRUCTION = '''INSTRUKCJA
 Aby zagłosować wyślij tu dowolny wariant dowolnej opcji. \

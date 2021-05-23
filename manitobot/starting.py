@@ -6,15 +6,16 @@ from typing import List, Tuple, Optional
 
 import discord
 
-import postacie
-import utility
-from basic_models import NotAGame
-from bot_basics import bot
-from errors import WrongRolesNumber
-from game import Game
-from mafia import Mafia
 from settings import RULLER
-from utility import get_player_role, clear_nickname, send_to_manitou, get_manitou_role, get_other_manitou_role, \
+from . import postacie
+from . import utility
+from .basic_models import NotAGame
+from .bot_basics import bot
+from .errors import WrongRolesNumber
+from .game import Game
+from .mafia import Mafia
+from .utility import get_player_role, clear_nickname, send_to_manitou, \
+    get_manitou_role, get_other_manitou_role, \
     get_newcommer_role, get_town_channel
 
 STARTING_INSTRUCTION = '''{0}

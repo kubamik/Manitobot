@@ -1,11 +1,11 @@
 import inspect
 
-from converters import converter
-from utility import *
-from bot_basics import bot
-import permissions
-from night_comunicates import operation_send, new_night_com
-from activities import Activity
+from . import permissions
+from .activities import Activity
+from .bot_basics import bot
+from .converters import converter
+from .night_comunicates import operation_send, new_night_com
+from .utility import *
 
 
 class Role(Activity):

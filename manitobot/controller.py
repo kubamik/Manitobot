@@ -2,9 +2,9 @@ import asyncio
 
 import discord
 
-from bot_basics import bot
-from control_panel import ControlPanel
-from utility import get_manitou_role, get_player_role
+from .bot_basics import bot
+from .control_panel import ControlPanel
+from .utility import get_manitou_role, get_player_role
 
 
 class Controller:

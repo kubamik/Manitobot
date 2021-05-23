@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-from converters import MyMemberConverter
+from .converters import MyMemberConverter
 
 
 class Funny(commands.Cog, name='HONK'):
