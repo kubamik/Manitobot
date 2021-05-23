@@ -7,9 +7,7 @@ from .cheks import manitou_cmd, game_check
 from .errors import NoSuchSet
 from .game import Game
 from .starting import start_game
-from .utility import playerhelp, manitouhelp, get_admin_role, clear_nickname, \
-    get_spectator_role, get_dead_role, \
-    get_player_role
+from . import utility
 from . import control_panel, duels_commands, roles_commands, \
     search_hang_commands, sklady, voting_commands
 
@@ -29,12 +27,12 @@ class Starting(commands.Cog, name='Początkowe'):
             self.bot.add_cog(control_panel.ControlPanel(self.bot))
         except discord.errors.ClientException:
             pass
-        self.bot.get_command('g').help = playerhelp()
-        self.bot.get_command('m').help = manitouhelp()
+        self.bot.get_command('g').help = utility.playerhelp()
+        self.bot.get_command('m').help = utility.manitouhelp()
         p = discord.Permissions.all()
         p.administrator = False
         try:
-            await get_admin_role().edit(permissions=p, colour=0)
+            await utility.get_admin_role().edit(permissions=p, colour=0)
         except (NameError, discord.errors.Forbidden):
             pass
 
@@ -43,12 +41,12 @@ class Starting(commands.Cog, name='Początkowe'):
             self.bot.add_cog(voting_commands.Glosowania(self.bot))
         except discord.errors.ClientException:
             pass
-        self.bot.get_command('g').help = playerhelp()
-        self.bot.get_command('m').help = manitouhelp()
+        self.bot.get_command('g').help = utility.playerhelp()
+        self.bot.get_command('m').help = utility.manitouhelp()
         p = discord.Permissions().all()
         p.administrator = False
         try:
-            await get_admin_role().edit(permissions=p)
+            await utility.get_admin_role().edit(permissions=p)
         except (NameError, discord.errors.Forbidden):
             pass
 
@@ -138,13 +136,13 @@ class Starting(commands.Cog, name='Początkowe'):
         """Służy do zarejestrowania się do gry.
         """
         member = ctx.author
-        await clear_nickname(member)
-        await member.remove_roles(get_spectator_role(), get_dead_role())
-        await member.add_roles(get_player_role())
+        await utility.clear_nickname(member)
+        await member.remove_roles(utility.get_spectator_role(), utility.get_dead_role())
+        await member.add_roles(utility.get_player_role())
 
     @commands.command(name='nie_gram', aliases=['niegram'])
     @game_check(rev=True)
     async def deregister(self, ctx):
         """Służy do wyrejestrowania się z gry.
         """
-        await ctx.author.remove_roles(get_player_role(), get_dead_role())
+        await ctx.author.remove_roles(utility.get_player_role(), utility.get_dead_role())

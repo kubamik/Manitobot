@@ -5,6 +5,7 @@ from discord.ext import commands
 
 # noinspection PyUnresolvedReferences
 from . import slash_http, slash_core
+from .basic_models import ManiBot
 
 command_prefix = '&'
 
@@ -23,7 +24,7 @@ Skrócona pomoc dla graczy\t\t\t {0}help g'''.format(command_prefix)
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(
+bot = ManiBot(
     command_prefix=commands.when_mentioned_or(command_prefix),
     help_command=Help(no_category='Pozostałe', verify_checks=True),
     case_insensitive=True,

@@ -1,4 +1,5 @@
-from .bot_basics import bot
+import discord.ext.commands
+
 from .errors import GameNotStarted
 
 
@@ -7,4 +8,7 @@ class NotAGame:
         raise GameNotStarted('This command can be run only during game')
 
 
-bot.game = NotAGame()
+class ManiBot(discord.ext.commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super(ManiBot, self).__init__(*args, **kwargs)
+        self.game = NotAGame()
