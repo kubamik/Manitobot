@@ -2,21 +2,17 @@ import unittest
 from unittest.mock import patch, AsyncMock
 
 from discord.ext.commands import Context, MissingRole
+from discord.ext.commands.view import StringView
 
 import manitobot.basic_models
 import manitobot.management_commands
+from .bases import BaseCommandTestCase
 
 
-class ManagmentCommands(unittest.IsolatedAsyncioTestCase):
-    def create_patch(self, *args, **kwargs):
-        patcher = patch(*args, **kwargs)
-        thing = patcher.start()
-        self.addCleanup(patcher.stop)
-        return thing
-
+class ManagmentCommands(BaseCommandTestCase):
     def setUp(self) -> None:
-        self.ctx = Context(prefix="&", message=AsyncMock(), bot=AsyncMock())
-        self.converter = self.create_patch('manitobot.management_commands.MyMemberConverter', autospec=True)
+        self.ctx = Context(prefix="", message=AsyncMock(), bot=AsyncMock(), view=StringView('command osoba'))
+        self.convert = self.create_patch('manitobot.management_commands.MyMemberConverter.convert', autospec=True)
         self.get_admin_role = self.create_patch('manitobot.management_commands.get_admin_role')
         self.admin_members = AsyncMock()
         self.admin_members.members = []
@@ -28,19 +24,19 @@ class ManagmentCommands(unittest.IsolatedAsyncioTestCase):
         bot.add_cog(self.mg)
 
 
-class GramTest(ManagmentCommands):
+class AdminujTest(ManagmentCommands):
     async def test_adminuj(self):
-        self.converter.convert.return_value = osoba = AsyncMock()
+        self.convert.return_value = osoba = AsyncMock()
         self.admin_members.members = [self.ctx.author]
-        #FIXME to na dole z jakiegos powodu nie uruchmia checku na admina
-        await self.ctx.invoke(self.mg.adminate, osoba=osoba)
+        await self.mg.adminate.invoke(self.ctx)
         osoba.add_roles.assert_called()
 
     async def test_adminuj_by_not_admin(self):
-        self.converter.convert.return_value = osoba = AsyncMock()
+        self.convert.return_value = osoba = AsyncMock()
         with self.assertRaises(MissingRole):
             await self.mg.adminate.invoke(self.ctx)
         osoba.add_roles.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()

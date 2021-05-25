@@ -124,6 +124,7 @@ if __name__ == '__main__':
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(management_commands.Management(bot))
         bot.load_extension('manitobot.error_handler')
+        bot.load_extension('manitobot.day_slash_commands')
         bot.get_command('g').help = playerhelp()
         bot.get_command('m').help = manitouhelp()
     except AttributeError:

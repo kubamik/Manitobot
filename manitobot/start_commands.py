@@ -7,7 +7,8 @@ from .cheks import manitou_cmd, game_check
 from .errors import NoSuchSet
 from .game import Game
 from .starting import start_game
-from . import utility
+from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
+    get_player_role
 from . import control_panel, duels_commands, roles_commands, \
     search_hang_commands, sklady, voting_commands
 
@@ -27,12 +28,12 @@ class Starting(commands.Cog, name='Początkowe'):
             self.bot.add_cog(control_panel.ControlPanel(self.bot))
         except discord.errors.ClientException:
             pass
-        self.bot.get_command('g').help = utility.playerhelp()
-        self.bot.get_command('m').help = utility.manitouhelp()
+        self.bot.get_command('g').help = playerhelp()
+        self.bot.get_command('m').help = manitouhelp()
         p = discord.Permissions.all()
         p.administrator = False
         try:
-            await utility.get_admin_role().edit(permissions=p, colour=0)
+            await get_admin_role().edit(permissions=p, colour=0)
         except (NameError, discord.errors.Forbidden):
             pass
 
@@ -41,19 +42,19 @@ class Starting(commands.Cog, name='Początkowe'):
             self.bot.add_cog(voting_commands.Glosowania(self.bot))
         except discord.errors.ClientException:
             pass
-        self.bot.get_command('g').help = utility.playerhelp()
-        self.bot.get_command('m').help = utility.manitouhelp()
+        self.bot.get_command('g').help = playerhelp()
+        self.bot.get_command('m').help = manitouhelp()
         p = discord.Permissions().all()
         p.administrator = False
         try:
-            await utility.get_admin_role().edit(permissions=p)
+            await get_admin_role().edit(permissions=p)
         except (NameError, discord.errors.Forbidden):
             pass
 
-    @commands.command(name='start_mafia')
+    @commands.command()
     @manitou_cmd()
     @game_check(rev=True)
-    async def mafia_start(self, _, *postacie: str):
+    async def start_mafia(self, _, *postacie: str):
         """Rozpoczyna mafię.
         W argumencie należy podać listę postaci (oddzielonych spacją) z liczebnościami w nawiasie (jeśli są różne od 1)
         np. Miastowy(5).
@@ -136,13 +137,13 @@ class Starting(commands.Cog, name='Początkowe'):
         """Służy do zarejestrowania się do gry.
         """
         member = ctx.author
-        await utility.clear_nickname(member)
-        await member.remove_roles(utility.get_spectator_role(), utility.get_dead_role())
-        await member.add_roles(utility.get_player_role())
+        await clear_nickname(member)
+        await member.remove_roles(get_spectator_role(), get_dead_role())
+        await member.add_roles(get_player_role())
 
     @commands.command(name='nie_gram', aliases=['niegram'])
     @game_check(rev=True)
     async def deregister(self, ctx):
         """Służy do wyrejestrowania się z gry.
         """
-        await ctx.author.remove_roles(utility.get_player_role(), utility.get_dead_role())
+        await ctx.author.remove_roles(get_player_role(), get_dead_role())

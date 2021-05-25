@@ -8,6 +8,12 @@ from .slash_args import Arg
 from .utility import get_player_role
 
 
+def setup(_):
+    """Do nothing while loading extension
+    """
+    pass
+
+
 @bot.slash(name='wyzywam', guild=GUILD_ID)
 @player_cmd()
 @game_check()

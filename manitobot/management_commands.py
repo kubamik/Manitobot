@@ -44,7 +44,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         else:
             wbhk = await ch.create_webhook(name='System')
         await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name),
-                        avatar_url='https://discord.com/assets/2c21aeda16de354ba5334551a883b481.png')
+                        avatar_url='https://cdn.discordapp.com/embed/avatars/5.png')
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def ping_reaction_add(
