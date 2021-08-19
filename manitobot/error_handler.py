@@ -20,11 +20,20 @@ AUTHOR:     {0.author.display_name}
 {1}
 '''
 
-INTER_ISSUE_TEMPLATE = '''
+INTER_ISSUE_TEMPLATE_2 = '''
 KWARGS:     {0.kwargs}
 COMMAND:    {0.command.name}
 CHANNEL:    {0.channel}
 AUTHOR:     {0.author.display_name}
+{1}
+'''
+
+INTER_ISSUE_TEMPLATE_3 = '''
+MESSAGE_ID: {0.message.id}
+COMPONENT:  {0.component_type}
+CHANNEL:    {0.channel}
+AUTHOR:     {0.author.display_name}
+VALUES:     {0.values}
 {1}
 '''
 
@@ -51,7 +60,10 @@ def report_error(ctx, error):
 
 
 def report_inter_error(inter, error):
-    msg = INTER_ISSUE_TEMPLATE.format(inter, RULLER)
+    if inter.type == 2:
+        msg = INTER_ISSUE_TEMPLATE_2.format(inter, RULLER)
+    else:
+        msg = INTER_ISSUE_TEMPLATE_3.format(inter, RULLER)
     try:
         raise error
     except Exception:

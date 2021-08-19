@@ -8,6 +8,7 @@ from discord.ext import commands
 from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
+from manitobot.components import Select, SelectOption, Button, ButtonStyle
 from manitobot.errors import MyBaseException
 #from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
@@ -15,10 +16,23 @@ from manitobot.starting import if_game
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
 
 
-
 @bot.event
 async def on_ready():
     print("Hello world!")
+
+
+async def send_voting_select():
+    embed = discord.Embed(title='Głosowanie: Przeszukania', colour=discord.Colour(0x00aaff),
+                          description='Masz 2 głosy na osoby, które mają **zostać przeszukane**')
+    options = [SelectOption('Trybul', 'Trybul'), SelectOption('Tomek', 'Tomek'), SelectOption('Anioła', 'Anioła'),
+               SelectOption('Kuba', 'Kuba'), SelectOption('KF', 'KF')]
+    components = [[Select('voting', options, min_values=2, max_values=2)]]
+    await bot.get_channel(814479709463117835).send_with_components(embed=embed, components=components)
+
+
+@bot.component_callback('voting')
+async def selector(ctx):
+    await ctx.respond('Zarejestrowałem twój(-oje) głos(y) na: {}'.format(', '.join(ctx.values)), ephemeral=True)
 
 
 @bot.command(name='przeproś')
@@ -100,7 +114,7 @@ async def on_message(message):
 
 
 @bot.event
-async def on_interaction(interaction):
+async def on_command_interaction(interaction):
     try:
         try:
             interaction.command = bot.slash_commands[interaction.command_id]
@@ -110,6 +124,19 @@ async def on_interaction(interaction):
         bot.dispatch('interaction_error', interaction, error)
     else:
         await bot.invoke_slash(interaction)
+
+
+@bot.event
+async def on_component_interaction(interaction):
+    if not hasattr(bot, 'component_callbacks'):
+        bot.component_callbacks = dict()
+    callback = bot.component_callbacks.get(interaction.custom_id)
+    try:
+        if not callback:
+            raise commands.CommandNotFound(interaction.custom_id)
+        await callback.callback(interaction)
+    except Exception as exc:
+        interaction.dispatch('interaction_error', interaction, exc)
 
 
 if __name__ == '__main__':

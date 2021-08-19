@@ -4,7 +4,6 @@ import os
 import discord
 from discord.ext import commands
 
-from converters import MyMemberConverter
 from settings import LOG_FILE
 from .converters import MyMemberConverter
 

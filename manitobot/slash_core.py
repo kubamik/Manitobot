@@ -5,9 +5,11 @@ import re
 import typing
 
 import discord
+from discord import InvalidArgument
 from discord.ext import commands
 
 from . import slash_args
+from .components import ComponentTypes, ComponentCallback
 
 
 class SlashCommand(commands.Command):
@@ -23,6 +25,8 @@ class SlashCommand(commands.Command):
         del self.ignore_extra
         self._max_concurency = None
         self.guild_id = kwargs.get('guild')
+        self.type = kwargs.get('type_', 1)
+        self.default_permission = kwargs.get('default_permission', True)
         self.id = None
         if not (1 <= len(self.help) <= 100):
             raise discord.InvalidArgument('Description for a command should have 1-100 characters')
@@ -120,11 +124,15 @@ class SlashCommand(commands.Command):
         ctx.dispatch('interaction_error', ctx, error)
 
     def to_dict(self):
-        return {
+        d = {
             'name': self.name,
             'description': self.help,
-            'options': [option.to_dict() for option in self.params.values()]
+            'type': self.type,
+            'default_permission': self.default_permission,
         }
+        if self.type == 1:
+            d['options'] = [option.to_dict() for option in self.params.values()]
+        return d
 
 
 def slash(name=None, **attrs):
@@ -235,7 +243,173 @@ async def overwrite_slash_commands(self):
         print('Commands registered')
 
 
+async def send_with_components(self, content=None, *, tts=False, embed=None, file=None,
+                               files=None, delete_after=None, nonce=None,
+                               allowed_mentions=None, reference=None,
+                               mention_author=None, components=None):
+    channel = await self._get_channel()
+    state = self._state
+    content = str(content) if content is not None else None
+    if embed is not None:
+        embed = embed.to_dict()
+
+    if allowed_mentions is not None:
+        if state.allowed_mentions is not None:
+            allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+        else:
+            allowed_mentions = allowed_mentions.to_dict()
+    else:
+        allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+
+    if mention_author is not None:
+        allowed_mentions = allowed_mentions or discord.AllowedMentions().to_dict()
+        allowed_mentions['replied_user'] = bool(mention_author)
+
+    if reference is not None:
+        try:
+            reference = reference.to_message_reference_dict()
+        except AttributeError:
+            raise InvalidArgument('reference parameter must be Message or MessageReference') from None
+
+    if components:
+        custom_ids = set()
+        for action in components:
+            for c in action:
+                if c.custom_id in custom_ids:
+                    raise discord.InvalidArgument('custom_ids have to be unique in one message')
+                custom_ids.add(c.custom_id)
+        components = [{'type': ComponentTypes.ActionRow, 'components': [comp.to_dict() for comp in action]}
+                      for action in components]
+
+    if file is not None and files is not None:
+        raise InvalidArgument('cannot pass both file and files parameter to send()')
+
+    if file is not None:
+        if not isinstance(file, discord.File):
+            raise InvalidArgument('file parameter must be File')
+
+        try:
+            data = await state.http.send_files_components(channel.id, files=[file], allowed_mentions=allowed_mentions,
+                                               content=content, tts=tts, embed=embed, nonce=nonce,
+                                               message_reference=reference, components=components)
+        finally:
+            file.close()
+
+    elif files is not None:
+        if len(files) > 10:
+            raise InvalidArgument('files parameter must be a list of up to 10 elements')
+        elif not all(isinstance(file, discord.File) for file in files):
+            raise InvalidArgument('files parameter must be a list of File')
+
+        try:
+            data = await state.http.send_files_components(channel.id, files=files, content=content, tts=tts,
+                                               embed=embed, nonce=nonce, allowed_mentions=allowed_mentions,
+                                               message_reference=reference, components=components)
+        finally:
+            for f in files:
+                f.close()
+    else:
+        data = await state.http.send_message_components(channel.id, content, tts=tts, embed=embed,
+                                             nonce=nonce, allowed_mentions=allowed_mentions,
+                                             message_reference=reference, components=components)
+
+    ret = state.create_message(channel=channel, data=data)
+    if delete_after is not None:
+        await ret.delete(delay=delete_after)
+    return ret
+
+
+async def edit(self, **fields):
+    try:
+        content = fields['content']
+    except KeyError:
+        pass
+    else:
+        if content is not None:
+            fields['content'] = str(content)
+
+    try:
+        embed = fields['embed']
+    except KeyError:
+        pass
+    else:
+        if embed is not None:
+            fields['embed'] = embed.to_dict()
+
+    try:
+        suppress = fields.pop('suppress')
+    except KeyError:
+        pass
+    else:
+        flags = discord.MessageFlags._from_value(self.flags.value)
+        flags.suppress_embeds = suppress
+        fields['flags'] = flags.value
+
+    delete_after = fields.pop('delete_after', None)
+
+    try:
+        allowed_mentions = fields.pop('allowed_mentions')
+    except KeyError:
+        pass
+    else:
+        if allowed_mentions is not None:
+            if self._state.allowed_mentions is not None:
+                allowed_mentions = self._state.allowed_mentions.merge(allowed_mentions).to_dict()
+            else:
+                allowed_mentions = allowed_mentions.to_dict()
+            fields['allowed_mentions'] = allowed_mentions
+
+    try:
+        custom_ids = set()
+        for action in fields['components']:
+            for c in action:
+                if c.custom_id in custom_ids:
+                    raise discord.InvalidArgument('custom_ids have to be unique in one message')
+                custom_ids.add(c.custom_id)
+
+        components = [{'type': ComponentTypes.ActionRow, 'components': [comp.to_dict() for comp in action]}
+                      for action in fields['components']]
+    except KeyError:
+        pass
+    else:
+        fields['components'] = components
+
+    if fields:
+        data = await self._state.http.edit_message(self.channel.id, self.id, **fields)
+        self._update(data)
+
+    if delete_after is not None:
+        await self.delete(delay=delete_after)
+
+
+def add_component_callback(self, callback):
+    if not isinstance(callback, ComponentCallback):
+        raise TypeError('callback has to be ComponentCallback')
+
+    if not hasattr(self, 'component_callbacks'):
+        self.component_callbacks = {}
+
+    if callback.custom_id in self.component_callbacks:
+        raise commands.CommandRegistrationError(callback.custom_id)
+
+    self.component_callbacks[callback.custom_id] = callback
+
+
+def component_callback(self, custom_id):
+    """Decorator converting function passed into ComponentCallback and registering it into bot"""
+    def decorator(func):
+        callback = ComponentCallback(custom_id, func)
+        self.add_component_callback(callback)
+        return callback
+
+    return decorator
+
+
+discord.abc.Messageable.send_with_components = send_with_components
 commands.GroupMixin.slash = bot_slash
 commands.GroupMixin.add_slash_command = add_slash_command
+commands.GroupMixin.add_component_callback = add_component_callback
+commands.GroupMixin.component_callback = component_callback
 commands.Bot.invoke_slash = invoke_slash
 commands.Bot.overwrite_slash_commands = overwrite_slash_commands
+discord.Message.edit = edit
