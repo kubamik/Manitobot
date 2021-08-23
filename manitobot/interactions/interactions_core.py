@@ -3,6 +3,7 @@ import inspect
 import logging
 import re
 import typing
+from collections import namedtuple
 
 import discord
 from discord import InvalidArgument
@@ -10,10 +11,14 @@ from discord.ext import commands
 
 from . import slash_args
 from .components import ComponentTypes, ComponentCallback
+from .commands_types import CommandsTypes
+
+Permissions = namedtuple('Permissions', ['id', 'permission', 'type'])
 
 
-class SlashCommand(commands.Command):
+class ApplicationCommand(commands.Command):
     def __init__(self, callback, **kwargs):
+        self.guild_id = kwargs.get('guild')
         super().__init__(callback, **kwargs)
         del self.aliases
         del self.usage
@@ -24,21 +29,28 @@ class SlashCommand(commands.Command):
         del self.require_var_positional
         del self.ignore_extra
         self._max_concurency = None
-        self.guild_id = kwargs.get('guild')
         self.type = kwargs.get('type_', 1)
+        if self.type != 1 and not isinstance(self.type, CommandsTypes):
+            raise discord.InvalidArgument('type_ has to be interactions.CommandsTypes')
+        self.type = int(self.type)
         self.default_permission = kwargs.get('default_permission', True)
         self.id = None
-        if not (1 <= len(self.help) <= 100):
+        if self.type == 1 and not (1 <= len(self.help) <= 100):
             raise discord.InvalidArgument('Description for a command should have 1-100 characters')
         if re.match(r'^[\w-]{1,32}$', self.name) is None:
             raise discord.InvalidArgument('Command names can contain only [A-Za-z0-9] and dashes or underscores'
                                           ' and have 1-32 characters')
 
     @property
-    def guild_name(self):
+    def qualified_name(self):
+        name = self.name
         if self.guild_id:
-            return self.name + ' ' + str(self.guild_id)
-        return self.name
+            name += ' ' + str(self.guild_id)
+        if self.type == 2:
+            name += ' user'
+        if self.type == 3:
+            name += ' message'
+        return name
 
     @property
     def callback(self):
@@ -82,6 +94,11 @@ class SlashCommand(commands.Command):
             param.optional = optional
             self.params[key] = param
 
+        if hasattr(function, '__permissions__') and not self.guild_id:
+            raise commands.CommandRegistrationError('Only guild commands can have permissions')
+
+        self.permissions = function.__permissions__ if hasattr(function, '__permissions__') else list()
+
     async def prepare(self, ctx):
         ctx.command = self
         if not await self.can_run(ctx):
@@ -95,7 +112,8 @@ class SlashCommand(commands.Command):
     async def invoke(self, ctx):
         await self.prepare(ctx)
         injected = commands.core.hooked_wrapped_callback(self, ctx, self.callback)
-        await injected(ctx, **ctx.kwargs)
+        args = [ctx.target] if ctx.target else []
+        await injected(ctx, *args, **ctx.kwargs)
 
     async def can_run(self, ctx):
         if not self.enabled:
@@ -126,121 +144,75 @@ class SlashCommand(commands.Command):
     def to_dict(self):
         d = {
             'name': self.name,
-            'description': self.help,
             'type': self.type,
             'default_permission': self.default_permission,
         }
         if self.type == 1:
             d['options'] = [option.to_dict() for option in self.params.values()]
+            d['description'] = self.help
         return d
 
+    def permissions_list(self):
+        return {'id': self.id, 'permissions': [dict(perms._asdict()) for perms in self.permissions]}
 
-def slash(name=None, **attrs):
-    """A decorator which converts coroutine passed into SlashCommand. This not registers command
+    @staticmethod
+    def get_guild_name(data):
+        name = data.get('name', '')
+        guild = data.get('guild_id')
+        if guild:
+            name += ' ' + guild
+            guild = int(guild)
+        type_ = data.get('type')
+        if type_ == 2:
+            name += ' user'
+        if type_ == 3:
+            name += ' message'
+        return guild, name
+
+
+def app_command(name=None, **attrs):
+    """A decorator which converts coroutine passed into ApplicationCommand. This not registers command
     """
     def decorator(func):
         if isinstance(func, commands.Command):
             raise TypeError('Callback is already a command.')
-        return SlashCommand(func, name=name, **attrs)
+        return ApplicationCommand(func, name=name, **attrs)
 
     return decorator
 
 
-def bot_slash(self, *args, **kwargs):
-    """A decorator which registers and adds slash command
-    """
+def command_role_permissions(role_id, allow=True):
     def decorator(func):
-        kwargs.setdefault('parent', self)
-        result = slash(*args, **kwargs)(func)
-        self.add_slash_command(result)
-        return result
+
+        if isinstance(func, ApplicationCommand):
+            if not func.guild_id:
+                raise commands.CommandRegistrationError('Only guild commands can have permissions')
+            func.permissions.append(Permissions(role_id, allow, 1))
+        else:
+            if not hasattr(func, '__permissions__'):
+                func.__permissions__ = list()
+            func.__permissions__.append(Permissions(role_id, allow, 1))
+        return func
+
     return decorator
 
 
-def add_slash_command(self, command):
-    if not isinstance(command, SlashCommand):
-        raise TypeError('The command passed must be a subclass of SlashCommand')
-
-    if isinstance(self, commands.Command):
-        command.parent = self
-
-    if not hasattr(self, 'slash_commands'):
-        self.slash_commands = {}
-
-    if command.guild_name in self.slash_commands:
-        raise commands.CommandRegistrationError(command.name)
-
-    self.slash_commands[command.guild_name] = command
-
-
-async def invoke_slash(self, ctx):
-    try:
-        if await self.can_run(ctx, call_once=True):
-            await ctx.command.invoke(ctx)
+def command_user_permissions(user_id, allow=True):
+    def decorator(func):
+        if isinstance(func, ApplicationCommand):
+            if not func.guild_id:
+                raise commands.CommandRegistrationError('Only guild commands can have permissions')
+            func.permissions.append(Permissions(user_id, allow, 2))
         else:
-            raise commands.CheckFailure('The global check once functions failed.')
-    except commands.CommandError as exc:
-        await ctx.command.dispatch_error(ctx, exc)
+            if not hasattr(func, '__permissions__'):
+                func.__permissions__ = list()
+            func.__permissions__.append(Permissions(user_id, allow, 2))
+        return func
+
+    return decorator
 
 
-async def overwrite_slash_commands(self):
-    if not hasattr(self, 'slash_commands'):
-        return
 
-    guilds = set()
-    for name in self.slash_commands:
-        if ' ' in name:
-            guilds.add(name.rpartition(' ')[-1])
-
-    http = self._connection.http
-    await self.wait_until_ready()
-    info = await self.application_info()
-    application_id = info.id
-
-    try:
-        tasks = []
-        slash_commands = {}
-        global_commands = await http.get_global_slash_commands(application_id)
-        for command in global_commands:
-            comm = self.slash_commands.pop(command['name'])
-            if not comm:
-                tasks.append(http.delete_global_slash_command(application_id, command['id']))
-                continue
-            if comm.help != command['description'] or \
-                    'options' in command and comm.to_dict()['options'] != command['options']:
-                command = await http.edit_global_slash_command(application_id, command['id'], comm.to_dict())
-            comm.id = int(command['id'])
-            slash_commands[comm.id] = comm
-
-        for guild_id in guilds:
-            guild_commands = await http.get_guild_slash_commands(application_id, guild_id)
-            for command in guild_commands:
-                comm = self.slash_commands.pop(command['name'] + ' ' + guild_id, None)
-                if not comm:
-                    tasks.append(http.delete_guild_slash_command(application_id, guild_id, command['id']))
-                    continue
-                if comm.help != command['description'] or \
-                        'options' in command and comm.to_dict()['options'] != command['options']:
-                    command = await http.edit_guild_slash_command(application_id, guild_id,
-                                                                  command['id'], comm.to_dict())
-                comm.id = int(command['id'])
-                slash_commands[comm.id] = comm
-
-        for comm in self.slash_commands.values():
-            if comm.guild_id is not None:
-                command = await http.create_guild_slash_command(application_id, comm.guild_id, comm.to_dict())
-            else:
-                command = await http.create_global_slash_command(application_id, comm.to_dict())
-            comm.id = int(command['id'])
-            slash_commands[comm.id] = comm
-
-        self.slash_commands = slash_commands
-        await asyncio.gather(*tasks)
-    except Exception as e:
-        logging.exception(e)
-        await info.owner.send('Command registation error')
-    else:
-        print('Commands registered')
 
 
 async def send_with_components(self, content=None, *, tts=False, embed=None, file=None,
@@ -382,34 +354,5 @@ async def edit(self, **fields):
         await self.delete(delay=delete_after)
 
 
-def add_component_callback(self, callback):
-    if not isinstance(callback, ComponentCallback):
-        raise TypeError('callback has to be ComponentCallback')
-
-    if not hasattr(self, 'component_callbacks'):
-        self.component_callbacks = {}
-
-    if callback.custom_id in self.component_callbacks:
-        raise commands.CommandRegistrationError(callback.custom_id)
-
-    self.component_callbacks[callback.custom_id] = callback
-
-
-def component_callback(self, custom_id):
-    """Decorator converting function passed into ComponentCallback and registering it into bot"""
-    def decorator(func):
-        callback = ComponentCallback(custom_id, func)
-        self.add_component_callback(callback)
-        return callback
-
-    return decorator
-
-
 discord.abc.Messageable.send_with_components = send_with_components
-commands.GroupMixin.slash = bot_slash
-commands.GroupMixin.add_slash_command = add_slash_command
-commands.GroupMixin.add_component_callback = add_component_callback
-commands.GroupMixin.component_callback = component_callback
-commands.Bot.invoke_slash = invoke_slash
-commands.Bot.overwrite_slash_commands = overwrite_slash_commands
 discord.Message.edit = edit

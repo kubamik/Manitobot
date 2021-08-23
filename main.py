@@ -8,7 +8,7 @@ from discord.ext import commands
 from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
-from manitobot.components import Select, SelectOption, Button, ButtonStyle
+from manitobot.interactions.components import Select, SelectOption
 from manitobot.errors import MyBaseException
 #from keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
@@ -117,13 +117,13 @@ async def on_message(message):
 async def on_command_interaction(interaction):
     try:
         try:
-            interaction.command = bot.slash_commands[interaction.command_id]
+            interaction.command = bot.app_commands[interaction.command_id]
         except (KeyError, AttributeError):
             raise commands.CommandNotFound(interaction.name)
     except Exception as error:
         bot.dispatch('interaction_error', interaction, error)
     else:
-        await bot.invoke_slash(interaction)
+        await bot.invoke_app_command(interaction)
 
 
 @bot.event
@@ -142,8 +142,11 @@ async def on_component_interaction(interaction):
 if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
+    from dotenv import load_dotenv
+    load_dotenv()
     token = os.environ.get('TOKEN')
     #keep_alive()
+
     try:
         bot.add_cog(dev_commands.DevCommands(bot))
         bot.add_cog(funny_commands.Funny(bot))
@@ -157,5 +160,5 @@ if __name__ == '__main__':
         bot.get_command('m').help = manitouhelp()
     except AttributeError:
         pass
-    bot.loop.create_task(bot.overwrite_slash_commands())
+    bot.loop.create_task(bot.overwrite_app_commands())
     bot.run(token)

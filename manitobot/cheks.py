@@ -124,6 +124,7 @@ def duel_check():
 
 # ===================== Place checks =====================
 
+
 def town_only():
     def predicate(ctx):
         if ctx.channel != get_town_channel():

@@ -7,7 +7,7 @@ from discord.ext import commands
 
 
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID
+    PING_BLUE_ID, GUILD_ID
 from .converters import MyMemberConverter
 from .utility import get_newcommer_role, get_ping_reminder_role, \
     get_ping_game_role, get_member, get_admin_role, \

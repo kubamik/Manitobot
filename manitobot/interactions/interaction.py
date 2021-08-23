@@ -2,8 +2,8 @@ from abc import ABC
 
 import discord
 
-from .components import ComponentMessage, ComponentTypes
-from .slash_types import SlashOptionType
+from manitobot.interactions.components import ComponentMessage, ComponentTypes
+from manitobot.interactions.commands_types import SlashOptionType
 
 
 class BaseInteraction(ABC):
@@ -20,8 +20,8 @@ class BaseInteraction(ABC):
 
         try:
             author = data.get('member', data)['user']
-            self._handle_author(author)
-            self._handle_member(data['member'])
+            self.author = self._handle_user(author)
+            self.author = self._handle_member(data['member'], self.author)
         except KeyError:
             pass
 
@@ -36,19 +36,34 @@ class BaseInteraction(ABC):
     def guild(self):
         return getattr(self.channel, 'guild', None)
 
-    def _handle_author(self, author):  # Copied from dpy
-        self.author = self._state.store_user(author)
+    def _handle_user(self, user):
+        user_obj = self._state.store_user(user)
         if isinstance(self.guild, discord.Guild):
-            found = self.guild.get_member(self.author.id)
+            found = self.guild.get_member(user_obj.id)
             if found is not None:
-                self.author = found
+                user_obj = found
+        return user_obj
 
-    def _handle_member(self, member):  # Copied from dpy
-        author = self.author
+    def _handle_member(self, member, user):
         try:
-            author._update_from_message(member)
+            user._update_from_message(member)
         except AttributeError:
-            self.author = discord.Member._from_message(message=self, data=member)
+            user = discord.Member._from_message(message=self, data=member)
+        return user
+
+    # def _handle_author(self, author):  # Copied from dpy
+    #     self.author = self._state.store_user(author)
+    #     if isinstance(self.guild, discord.Guild):
+    #         found = self.guild.get_member(self.author.id)
+    #         if found is not None:
+    #             self.author = found
+    #
+    # def _handle_member(self, member):  # Copied from dpy
+    #     author = self.author
+    #     try:
+    #         author._update_from_message(member)
+    #     except AttributeError:
+    #         self.author = discord.Member._from_message(message=self, data=member)
 
     def dispatch(self, *args, **kwargs):
         self._state.dispatch(*args, **kwargs)
@@ -153,13 +168,24 @@ class CommandInteraction(BaseInteraction):
                 k, v = self._parse_option(option)
                 self.kwargs[k] = v
 
-        self.target_id = int(data['data'].get('target_id', 0)) or None
-
-    @property
-    def guild_name(self):
-        if self.guild_id:
-            return self.name + '_' + str(self.guild_id)
-        return self.name
+        target = data['data'].get('target_id')
+        self.target_id = target and int(target)
+        res = data['data'].get('resolved', dict())
+        command_type = data['data'].get('type', 0)
+        if command_type == 2 and target in res.get('users', {}):
+            try:
+                self.target = self._handle_user(res['users'][target])
+                self.target = self._handle_member(res['members'][target], self.target)
+            except KeyError:
+                pass
+        elif command_type == 3 and target in res.get('messages', {}):
+            found = self._state._get_message(self.target_id)
+            if found:
+                self.target = found
+            else:
+                self.target = discord.Message(state=state, channel=channel, data=res['messages'][target])
+        else:
+            self.target = None
 
     def _parse_option(self, data):
         name = data.get('name')

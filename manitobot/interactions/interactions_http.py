@@ -8,7 +8,6 @@ def parse_interaction_create(self, data):
     if 'channel_id' not in data:
         return
     channel, _ = self._get_guild_channel(data)
-    print(data)
     if data.get('type') == 2:
         inter = CommandInteraction(state=self, channel=channel, data=data)
         self.dispatch('command_interaction', inter)
@@ -78,6 +77,12 @@ def delete_global_slash_command(self, application_id, command_id):
     return self.request(r)
 
 
+def bulk_overwrite_global_slash_commands(self, application_id, commands):
+    r = discord.http.Route('PUT', '/applications/{application_id}/commands', application_id=application_id)
+
+    return self.request(r, json=commands)
+
+
 def get_guild_slash_commands(self, application_id, guild_id):
     r = discord.http.Route('GET', '/applications/{application_id}/guilds/{guild_id}/commands',
                            application_id=application_id, guild_id=guild_id)
@@ -102,14 +107,32 @@ def delete_guild_slash_command(self, application_id, guild_id, command_id):
     return self.request(r)
 
 
+def bulk_overwrite_guild_slash_commands(self, application_id, guild_id, commands):
+    r = discord.http.Route('PUT', '/applications/{application_id}/guilds/{guild_id}/commands',
+                           application_id=application_id, guild_id=guild_id)
+
+    return self.request(r, json=commands)
+
+
+def batch_edit_slash_commands_permissions(self, application_id, guild_id, permissions):
+    r = discord.http.Route('PUT', '/applications/{application_id}/guilds/{guild_id}/commands/permissions',
+                           application_id=application_id, guild_id=guild_id)
+
+    return self.request(r, json=permissions)
+
+
 discord.http.HTTPClient.get_global_slash_commands = get_global_slash_commands
 discord.http.HTTPClient.create_global_slash_command = create_global_slash_command
 discord.http.HTTPClient.edit_global_slash_command = edit_global_slash_command
 discord.http.HTTPClient.delete_global_slash_command = delete_global_slash_command
+discord.http.HTTPClient.bulk_overwrite_global_slash_commands = bulk_overwrite_global_slash_commands
+
 discord.http.HTTPClient.get_guild_slash_commands = get_guild_slash_commands
 discord.http.HTTPClient.create_guild_slash_command = create_guild_slash_command
 discord.http.HTTPClient.edit_guild_slash_command = edit_guild_slash_command
 discord.http.HTTPClient.delete_guild_slash_command = delete_guild_slash_command
+discord.http.HTTPClient.bulk_overwrite_guild_slash_commands = bulk_overwrite_guild_slash_commands
+discord.http.HTTPClient.batch_edit_slash_commands_permissions = batch_edit_slash_commands_permissions
 
 
 def send_files_components(self, channel_id, *, files, content=None, tts=False, embed=None, nonce=None,

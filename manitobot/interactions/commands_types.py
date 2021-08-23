@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 import discord
 from discord.enums import Enum
 
@@ -25,6 +27,10 @@ class SlashOptionType(Enum):
         for tp, attr in objects.items():
             if issubclass(obj, tp):
                 return getattr(cls, attr)
-                print(val)
-                return cls._enum_value_map_[val]
         raise TypeError('Not supported type %s' % type(obj))
+
+
+class CommandsTypes(IntEnum):
+    SlashCommand = 1
+    UserCommand = 2
+    MessageCommand = 3

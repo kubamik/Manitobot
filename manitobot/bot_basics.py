@@ -3,8 +3,6 @@ import sys
 import discord
 from discord.ext import commands
 
-# noinspection PyUnresolvedReferences
-from . import slash_http, slash_core
 from .basic_models import ManiBot
 
 
