@@ -390,10 +390,6 @@ class Activity:
             reason = "Powieszony został {}, czyli {}".format(self.player.member.display_name, self.name)
             raise GameEnd(reason, self.name)
 
-    async def peace_make(self):
-        if not "copied" in self.my_activities:
-            await bot.game.days[-1].peace()
-
     def can_unplant(self):
         player = self.roles["Cicha_Stopa"].player
         if player.sleeped or player.member in get_dead_role().members or not bot.game.statue.planted or bot.game.statue.faction_holder != self.name:

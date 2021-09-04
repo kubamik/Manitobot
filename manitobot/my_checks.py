@@ -121,15 +121,6 @@ def voting_check(reverse=False):
 
     return commands.check(predicate)
 
-
-def duel_check():
-    def predicate(ctx):
-        if ctx.bot.game.days[-1].duel:
-            raise DuelInProgress('Can\'t use this command during duel')
-        return True
-
-    return commands.check(predicate)
-
 # ===================== Place checks =====================
 
 

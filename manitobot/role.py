@@ -100,28 +100,19 @@ class Role(Activity):
         await ctx.message.add_reaction('✅')
 
     async def die(self, reason=None):
-        gracz = self.player.member
-        # duel + search
-        try:
-            bot.game.days[-1].remove_member(gracz)
-            bot.game.days[-1].search_remove_member(gracz)
-            if self in bot.game.days[-1].duelers and bot.game.days[-1].duel:
-                await bot.game.days[-1].interrupt()
-                await get_town_channel().send("Pojedynek został anulowany z powodu śmierci jednego z pojedynkujących")
-        except (InvalidRequest, AttributeError):
-            pass
+        member = self.player.member
 
         # reset player
-        await gracz.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(),
-                                 get_duel_winner_role())
-        await gracz.add_roles(get_dead_role())
-        nickname = gracz.display_name
-        await get_town_channel().send("Ginie **{}**".format(nickname))
+        await member.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(),
+                                  get_duel_winner_role())
+        await member.add_roles(get_dead_role())
+        nickname = member.display_name
+        await get_town_channel().send('Ginie **{}**'.format(nickname))
 
         # actions in abilities
         self.die_reason = reason
         try:
-            actions = self.my_activities["die"]
+            actions = self.my_activities['die']
             for f in permissions.get_activity(actions, self):
                 if inspect.iscoroutinefunction(f):
                     await f()
@@ -130,50 +121,16 @@ class Role(Activity):
         except (KeyError, InvalidRequest):
             pass
 
-        # faction: leader + channel
-        # bot.game.stats[give_faction(self.name)] -= 1#doing by Game.on_die
-        '''try:
-          if bot.game.nights[-1].active_faction == self.faction:
-            if self.faction.leader == self.player:
-              for role in self.faction.roles.values():
-                if role.player.member not in get_dead_role() and not role.player.sleeped:
-                  self.faction.leader = role.player
-                  await self.faction.channel.send("Ginie {}\nNowym liderem zostaje {}".format(self.player.member.display_name, self.faction.leader.role))
-                  break
-              else:
-                pass#Uśpienie frakcji
-            await self.faction.channel.set_permissions(self.player.member,overwrite=None)
-        except (KeyError, AttributeError, discord.errors.Forbidden):
-          pass'''
-
         # reset player
         if not any([bot.game.night_now, self.revealed, not bot.game.reveal_dead]):
             await self.reveal(dead=True)
         elif not nickname.startswith('+'):
             try:
-                await gracz.edit(nick='+' + nickname)
+                await member.edit(nick='+' + nickname)
             except discord.Forbidden:
                 pass
 
-        # winning conditions
-        '''if self.die_reason == "herbs":
-          bot.game.statue.day_search(self.player.member)
-        self.indian_win()
-        if not bot.game.night:
-          self.inqui_win()
-          if self.die_reason != "herbs":
-            bot.game.statue.day_search(self.player.member)
-        else:
-          self.inqui_alone_win()'''
         await bot.game.on_die(reason, self.player)
-
-        # self.unfollow() - use with following
-
-        # new duel
-        try:
-            await bot.game.days[-1].if_next()
-        except AttributeError:
-            pass
 
     @property
     def alive(self) -> bool:

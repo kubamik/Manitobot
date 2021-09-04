@@ -68,13 +68,15 @@ class DayState(ABC):
                 challenges.remove(chl)
 
 
-class Challenging(ABC):
+class Challenging(DayState, ABC):
     """Abstract class for states, which implements challenges for duels
     """
-    day = NotImplemented
-    game = NotImplemented
 
     async def async_init(self):
+        await self._start_check()
+
+    async def on_die(self, member: discord.Member, reason=None):
+        await super(Challenging, self).on_die(member)
         await self._start_check()
 
     async def add_challenge(self, author: discord.Member, subject: discord.Member):
@@ -209,7 +211,6 @@ class Reporting(ABC):
 class DuelInterface(DayState, ABC):
     author = NotImplemented
     subject = NotImplemented
-    day = NotImplemented
 
     async def on_die(self, member: discord.Member, reason=None):
         if member in (self.author, self.subject) and reason != 'duel':

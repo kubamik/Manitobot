@@ -10,8 +10,7 @@ from .game import Game
 from .starting import start_game
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
     get_player_role
-from . import control_panel, duels_commands, roles_commands, \
-    search_hang_commands, sklady, voting_commands, daily_commands
+from . import control_panel, roles_commands, sklady, daily_commands
 
 
 class Starting(commands.Cog, name='Początkowe'):
@@ -21,11 +20,7 @@ class Starting(commands.Cog, name='Początkowe'):
 
     async def add_cogs(self):
         try:
-            # self.bot.add_cog(voting_commands.Glosowania(self.bot))
             self.bot.add_cog(roles_commands.PoleceniaPostaci(self.bot))
-            # self.bot.add_cog(duels_commands.Pojedynki(self.bot))
-            # self.bot.add_cog(search_hang_commands.Przeszukania(self.bot))
-            # self.bot.add_cog(search_hang_commands.Wieszanie(self.bot))
             self.bot.add_cog(daily_commands.DailyCommands(self.bot))
             self.bot.add_cog(control_panel.ControlPanel(self.bot))
         except discord.errors.ClientException:

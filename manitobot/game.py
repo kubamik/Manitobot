@@ -15,7 +15,6 @@ from .postacie import get_faction, give_faction
 from .role import Role
 from .statue import Statue
 from .utility import get_dead_role, get_player_role, get_town_channel
-from .vote import Vote
 
 
 class Game:
@@ -27,7 +26,6 @@ class Game:
         self.faction_map: Dict[str, Faction] = {}
         self.roles: List[str] = []
         self.day_num: int = 0
-        self.days: List[Optional[Day]] = [None]
         self.nights: List[Optional[Night]] = [None]
         self.day = None
         self.night = None
@@ -37,7 +35,6 @@ class Game:
         self.bandit_morning: bool = True
         self.rioters: Set[discord.Member] = set()
         self.reveal_dead: bool = True
-        self.voting: Optional[Vote] = None
         self.stats: Mapping[str, int] = defaultdict(int)
         self.panel: ControlPanel = bot.get_cog('Panel Sterowania')
 
@@ -49,7 +46,6 @@ class Game:
 
     async def new_day(self) -> None:
         day = Day(self, self.panel.state_msg)
-        self.days.append(day)
         self.day = day
         self.night = None
         self.day_num += 1
