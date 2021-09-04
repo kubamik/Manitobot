@@ -5,7 +5,8 @@ from discord.ext import commands
 
 from . import postacie
 from .basic_models import NotAGame
-from .my_checks import game_check, playing_cmd, on_voice_check
+from .errors import VotingNotAllowed
+from .my_checks import game_check, playing_cmd, on_voice_check, player_cmd, voting_check
 from .utility import get_player_role, get_dead_role, get_spectator_role, \
     get_town_channel, send_to_manitou, \
     get_voice_channel, get_manitou_role, playerhelp
@@ -103,9 +104,25 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             if role.alive or not role.revealed:
                 alive_roles.append(role.name)
         team = postacie.print_list(alive_roles)
-        await ctx.send("""Liczba żywych graczy: {}
-Liczba martwych o nieznanych rolach: {}
-Pozostali:{}""".format(len(get_player_role().members), len(alive_roles) - len(get_player_role().members), team))
+        await ctx.send(
+            'Liczba żywych graczy: {}\nLiczba martwych o nieznanych rolach: {}'
+            'Pozostali:{}'.format(len(get_player_role().members),
+                                  len(alive_roles) - len(get_player_role().members), team)
+        )
+
+    @commands.command(aliases=['vpriv'])
+    @player_cmd()
+    @game_check()
+    @voting_check(reverse=True)
+    async def priv_voting(self, ctx):
+        """Wysyła opcje do głosowania w wiadomości prywatnej
+        umożliwiając głosowanie inaczej niż przez menu z opcjami
+        """
+        voting = self.bot.game.day.state
+        if ctx.author in voting.participants:
+            await ctx.author.send(embed=voting.options_embed())
+        else:
+            raise VotingNotAllowed
 
     @commands.command(name='g', help=playerhelp(), hidden=True, brief='&help g')
     async def player_help(self, ctx):

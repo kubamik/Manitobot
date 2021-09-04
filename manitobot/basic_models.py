@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import typing
 from collections import defaultdict
 
 import discord.ext.commands
@@ -7,6 +8,10 @@ from discord.ext import commands
 
 from .errors import GameNotStarted
 from .interactions import ApplicationCommand, app_command, ComponentCallback
+
+if typing.TYPE_CHECKING:
+    from .game import Game
+    from .mafia import Mafia
 
 
 class NotAGame:
@@ -17,7 +22,7 @@ class NotAGame:
 class ManiBot(discord.ext.commands.Bot):
     def __init__(self, *args, **kwargs):
         super(ManiBot, self).__init__(*args, **kwargs)
-        self.game = NotAGame()
+        self.game: typing.Union[Game, Mafia, NotAGame] = NotAGame()
         self.app_commands_names = defaultdict(dict)
         self.app_commands = dict()
         self.component_callbacks = dict()

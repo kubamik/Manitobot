@@ -8,6 +8,8 @@ from .base_day_states import DayState, Challenging, Reporting, Undoable, States,
     RandomizeSearch, HangSummary, DuelInterface
 from .errors import VotingNotAllowed, WrongValidVotesNumber, DuplicateVote, WrongVote, DuelDoublePerson, \
     NotDuelParticipant
+from .interactions import Select, SelectOption
+from .interactions.components import ComponentMessage
 from .utility import get_player_role, get_town_channel, add_roles, get_duel_winner_role, get_duel_loser_role, \
     remove_roles
 
@@ -291,6 +293,7 @@ class Voting(DayState):
     """
 
     state_msg: discord.Message = None
+    vote_msg: ComponentMessage = None
     message = 'Zarejestrowałem twój(-oje) głos(y) na {}'
     V_INSTRUCTION = 'INSTRUKCJA\n' + \
         'Aby zagłosować wyślij tu dowolny wariant dowolnej opcji. ' + \
@@ -321,14 +324,14 @@ class Voting(DayState):
         self.voted = set()
         self.voters = {}
 
+    async def async_init(self):
+        self.vote_msg = await self.options_message()
+
     def set_message(self, msg: discord.Message) -> typing.Awaitable:
         """Edits state message to display voting and sends options to participants.
         """
         tasks = []
         self.state_msg = msg
-        embed = self.options_embed()
-        for member in self.participants:
-            tasks.append(member.send(embed=embed))
         tasks.append(msg.edit(content=None, embed=self.results_embed()))
         return asyncio.gather(*tasks)
 
@@ -349,6 +352,17 @@ class Voting(DayState):
         embed = discord.Embed(title=em_title, colour=discord.Colour(0x00aaff), description=description)
         embed.set_footer(text=self.V_INSTRUCTION)
         return embed
+
+    async def options_message(self) -> ComponentMessage:
+        title = self.title
+        em_title = "Głosowanie: {}".format(title[0])
+        description = title[1].format(self.required_votes)
+        embed = discord.Embed(title=em_title, colour=discord.Colour(0x00aaff), description=description)
+        options = [SelectOption(option, option) for option in self.votes]
+        vnum = min(self.required_votes, len(self.votes))
+        components = [[Select('voting', options, min_values=vnum, max_values=vnum)]]
+        msg = await get_town_channel().send(content=get_player_role().mention, embed=embed, components=components)
+        return ComponentMessage.from_message(msg, components=components)
 
     def results_embed(self, end: bool = False) -> discord.Embed:
         """Generates embed with current voting results, with ending note if needed
@@ -371,9 +385,7 @@ class Voting(DayState):
         embed.description = message
         return embed
 
-    async def register_vote(self, author: discord.Member, vote: str):
-        if author not in self.participants:
-            raise VotingNotAllowed('Author can\'t vote now.')
+    def parse_vote(self, vote: str) -> typing.List[str]:
         vote = [v.strip().lower() for v in vote.split(',')]
         votes = []
         for v in vote:
@@ -388,20 +400,25 @@ class Voting(DayState):
                 raise WrongVote(v)
         if len(votes) != self.required_votes:
             raise WrongValidVotesNumber(len(votes), self.required_votes)
+        return votes
+
+    async def register_vote(self, author: discord.Member, votes: typing.List[str]) -> str:
+        if author not in self.participants:
+            raise VotingNotAllowed('Author can\'t vote now.')
         if author in self.voted:
-            new = False
             for option in self.voters[author]:
                 self.votes[option].remove(author)
-        else:
-            new = True
         self.voted.add(author)
         self.voters[author] = votes
         for option in votes:
             self.votes[option].append(author)
-        await author.send(self.message.format(', '.join(votes)))
         await self.update_message()
+        return self.message.format(', '.join(votes))
 
     async def end(self):
+        components = self.vote_msg.components
+        components[0][0].disabled = True
+        await self.vote_msg.edit(components=components)
         embed = self.results_embed(end=True)
         await get_town_channel().send(embed=embed)
         if self.resolved:
@@ -420,6 +437,7 @@ class Voting(DayState):
         # an error which we're ignoring
 
     async def cancel(self):
+        await self.vote_msg.delete(delay=0)
         if self.following is not None:
             await self.day.push_state(self.previous, **self.metadata)
         else:
@@ -427,6 +445,7 @@ class Voting(DayState):
 
     async def on_die(self, member: discord.Member, reason=None):
         if self.previous is Duel and member in self.metadata.values():
+            await self.vote_msg.delete(delay=0)
             await get_town_channel().send('Pojedynek został anulowany z powodu śmierci jednego z uczestników.')
             await self.day.push_state(InitialState)
         await super().on_die(member)

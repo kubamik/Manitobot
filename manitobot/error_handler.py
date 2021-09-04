@@ -91,8 +91,6 @@ async def handle_error(send, error):
         await send(f'Błędny parametr\n||{error}||', delete_after=10)
     elif isinstance(error, commands.CommandOnCooldown):
         await send('Mam okres ochronny', delete_after=10)
-    elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
-        await send('Podano błędny argument', delete_after=10)
     elif isinstance(error, commands.DisabledCommand):
         await send('Prace nad tą komendą trwają. Nie należy jej używać.', delete_after=10)
     elif isinstance(error, commands.PrivateMessageOnly):

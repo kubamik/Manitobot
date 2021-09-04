@@ -20,11 +20,15 @@ class ComponentMessage:
                  for comp in action['components']])
 
     @classmethod
-    def from_message(cls, message, data):
+    def from_message(cls, message, data=None, components=None):
         self = object.__new__(cls)
         self.message = message
-        self.component_data = data.pop('components', list())
-        self._handle_components()
+        if data is not None:
+            self.component_data = data.pop('components', list())
+            self._handle_components()
+        elif components:
+            self.component_data = None
+            self.components = components
         return self
 
     def __getattr__(self, item):
@@ -152,12 +156,15 @@ class Select:
     def __init__(self, custom_id, options, placeholder=None, min_values=1, max_values=1, disabled=False, **_):
         if len(options) > 25:
             raise discord.InvalidArgument('options cannot have more than 25 elements')
+        if len(options) < max_values or min_values > max_values or min_values < 1:
+            raise discord.InvalidArgument('wrong value of min_values/max_values')
         if (placeholder and not isinstance(placeholder, str)) or not isinstance(min_values, int) \
                 or not isinstance(max_values, int) or not isinstance(disabled, bool):
             raise TypeError('Wrong types')
 
-        if not all([isinstance(option, SelectOption) for option in options]):
-            raise TypeError('All options have to be SelectOption')
+        if not all([isinstance(option, SelectOption) for option in options]) and \
+                len(set((option.value for option in options))) == len(options):
+            raise TypeError('All options have to be SelectOption and have unique value param')
 
         self.custom_id = str(custom_id)
         self.options = options

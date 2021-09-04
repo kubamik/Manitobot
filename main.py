@@ -10,8 +10,9 @@ from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
 from manitobot.interactions import Select, SelectOption
-from manitobot.errors import MyBaseException
+from manitobot.errors import MyBaseException, VotingNotAllowed
 # from manitobot.keep_alive import keep_alive
+from manitobot.interactions.interaction import ComponentInteraction
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
 from manitobot.starting import if_game
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
@@ -20,20 +21,6 @@ from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, m
 @bot.event
 async def on_ready():
     print("Hello world!")
-
-
-async def send_voting_select():
-    embed = discord.Embed(title='Głosowanie: Przeszukania', colour=discord.Colour(0x00aaff),
-                          description='Masz 2 głosy na osoby, które mają **zostać przeszukane**')
-    options = [SelectOption('Trybul', 'Trybul'), SelectOption('Tomek', 'Tomek'), SelectOption('Anioła', 'Anioła'),
-               SelectOption('Kuba', 'Kuba'), SelectOption('KF', 'KF')]
-    components = [[Select('voting', options, min_values=2, max_values=2)]]
-    await bot.get_channel(814479709463117835).send_with_components(embed=embed, components=components)
-
-
-@bot.component_callback('voting')
-async def selector(ctx):
-    await ctx.respond('Zarejestrowałem twój(-oje) głos(y) na: {}'.format(', '.join(ctx.values)), ephemeral=True)
 
 
 @bot.command(name='przeproś')
@@ -78,22 +65,33 @@ async def you_lost(ctx):
             pass
 
 
+@bot.component_callback('voting')
+async def get_vote(ctx: ComponentInteraction):
+    try:
+        if ctx.message.id != bot.game.day.state.vote_msg.id:
+            raise AttributeError
+        content = await bot.game.day.state.register_vote(ctx.author, ctx.values)
+    except AttributeError:
+        raise VotingNotAllowed from None
+    else:
+        await ctx.respond(content, ephemeral=True)
+
+
 @bot.listen('on_message')
 async def my_message(m):
     if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip().startswith('&'):
         return
-
     if m.channel.type != discord.ChannelType.private:
         return
-
-    if not if_game() or not bot.game.day or not hasattr(bot.game.day.state, 'register_vote'):
-        await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
-        return
-
     try:
-        await bot.game.day.state.register_vote(get_member(m.author.id), m.content)
+        votes = bot.game.day.state.parse_vote(m.content)
+        content = await bot.game.day.state.register_vote(get_member(m.author.id), votes)
     except MyBaseException as e:
         await m.channel.send(e.msg)
+    except AttributeError:
+        await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
+    else:
+        await m.author.send(content)
 
 
 @bot.event

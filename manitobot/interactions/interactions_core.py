@@ -212,10 +212,7 @@ def command_user_permissions(user_id, allow=True):
     return decorator
 
 
-
-
-
-async def send_with_components(self, content=None, *, tts=False, embed=None, file=None,
+async def send(self, content=None, *, tts=False, embed=None, file=None,
                                files=None, delete_after=None, nonce=None,
                                allowed_mentions=None, reference=None,
                                mention_author=None, components=None):
@@ -354,5 +351,5 @@ async def edit(self, **fields):
         await self.delete(delay=delete_after)
 
 
-discord.abc.Messageable.send_with_components = send_with_components
+discord.abc.Messageable.send = send
 discord.Message.edit = edit
