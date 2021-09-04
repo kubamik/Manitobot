@@ -133,14 +133,22 @@ class Management(commands.Cog, name='Dla Adminów'):
         """Wysyła podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
         """
         m = wiadomosc
-        members = defaultdict(list)
-        for reaction in m.reactions:
-            async for user in reaction.users():
-                members[user].append(str(reaction.emoji))
+        reactions = [await r.users().flatten() for r in m.reactions]
+        members = list(set(sum(reactions, start=list())))
+        parsed = defaultdict(list)
+        for r, users in zip(m.reactions, reactions):
+            emoji = str(r.emoji)
+            for member in members:
+                if member in users:
+                    parsed[member].append(emoji)
+                else:
+                    parsed[member].append('<:e:881860336712560660>')
+        members = [member for member in members if isinstance(member, discord.Member)]
+        maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
         msg = ""
-        for member, r in members.items():
-            if isinstance(member, discord.Member) and member.id != self.bot.user.id:
-                msg += f'**{member.display_name}:**\t' + '\t'.join(r) + '\n'
+        for member, r in parsed.items():
+            if isinstance(member, discord.Member):
+                msg += f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
         if msg:
             await ctx.send(msg)
         else:
