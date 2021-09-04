@@ -47,10 +47,10 @@ roles = {
               "zadawane, gdy wszyscy mają zamknięte oczy.",
 
     "hazardzista": "**Hazardzista (Miasto)** raz w trakcie gry, drugiej nocy bądź później, może rozpocząć grę w "
-                   "rosyjską ruletkę. Wskazuje palcem na osobę, z którą chce zagrać. Jeśli trafił na obywatela miasta "
-                   "- ginie. Jeśli nie - ginie wskazana przez niego osoba, zaś hazardzista wskazuje kolejną. Jeśli "
-                   "hazardzista zdobędzie posążek przekazuje go osobie, wskazując którą zginął. Jeśli ta osoba "
-                   "dotrzyma go do świtu, to miasto wygrywa.",
+                   "rosyjską ruletkę. Wskazuje palcem na osobę, z którą chce zagrać. Jeśli trafił na obywatela miasta"
+                   "bądź Szulera - ginie. Jeśli nie - ginie wskazana przez niego osoba, zaś hazardzista wskazuje "
+                   "kolejną. Jeśli hazardzista zdobędzie posążek przekazuje go osobie, wskazując którą zginął. "
+                   "Jeśli ta osoba dotrzyma go do świtu, to miasto wygrywa.",
 
     "agentubezpieczeniowy": "**Agent ubezpieczeniowy (Miasto)** w dowolnym momencie gry agent ubezpieczeniowy może "
                             "ujawnić, że jest agentem ubezpieczeniowym (czyt. pokazać swoją kartę).",

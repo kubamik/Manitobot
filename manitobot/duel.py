@@ -94,7 +94,7 @@ class Duel:
         return "**{}** przyjął pojedynek od **{}**".format(author.display_name, self.dared[author][0].display_name)
 
     async def if_start(self, author, member):
-        c = "**{}** wyzwał **{}** na pojedynek.\n".format(author.display_name, member.display_name)
+        c = "**{}** wyzwał(a) **{}** na pojedynek.\n".format(author.display_name, member.display_name)
         try:
             if bot.game.role_map["Szeryf"].alive:
                 c += "<@{}> czy przyjmujesz? Użyj `&przyjmuję` lub `&odrzucam`".format(member.id)
@@ -122,8 +122,8 @@ class Duel:
         del self.duels_queue[0]'''
 
     async def if_next(self, write=False):
-        if len(self.duels_queue) > 0 and self.duels_order[0] == self.duels_queue[
-            0] and self.duels_today < bot.game.duels:
+        if len(self.duels_queue) > 0 and self.duels_order[0] == self.duels_queue[0] \
+                and self.duels_today < bot.game.duels:
             member = self.duels_queue[0]
             gracz = self.dared[member][0]
             await self.start_duel(gracz, member)

@@ -73,48 +73,53 @@ def report_inter_error(inter, error):
 
 async def handle_error(send, error):
     if isinstance(error, (MyBaseException, InvalidRequest)):
-        await send(error.msg, delete_after=5)
+        await send(error.msg, delete_after=10)
     elif isinstance(error, commands.CommandNotFound):
-        await send('HONK?', delete_after=5)
+        await send('HONK?', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.Forbidden):
-        await send('Chcem coś zrobić, ale nie mogem.', delete_after=5)
+        await send('Chcem coś zrobić, ale nie mogem.', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and \
             isinstance(error.original, discord.HTTPException) and error.original.code == 10062:
         await send('Przekroczono dopuszczalny czas na odpowiedź. Spróbuj ponownie')
     elif isinstance(error, (commands.MissingRole, commands.NotOwner)):
-        await send('You have no power here!', delete_after=5)
+        await send('You have no power here!', delete_after=10)
     elif isinstance(error, commands.errors.MissingRequiredArgument):
-        await send('Brakuje parametru: ' + str(error.param), delete_after=5)
+        await send('Brakuje parametru: ' + str(error.param), delete_after=10)
     elif isinstance(error, commands.MemberNotFound):
-        await send('Nie ma takiej osoby wśród żywych graczy', delete_after=5)
+        await send('Nie ma takiej osoby wśród żywych graczy', delete_after=10)
     elif isinstance(error, commands.errors.BadArgument):
-        await send(f'Błędny parametr\n||{error}||', delete_after=5)
+        await send(f'Błędny parametr\n||{error}||', delete_after=10)
     elif isinstance(error, commands.CommandOnCooldown):
-        await send('Mam okres ochronny', delete_after=5)
+        await send('Mam okres ochronny', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, ValueError):
-        await send('Podano błędny argument', delete_after=5)
+        await send('Podano błędny argument', delete_after=10)
     elif isinstance(error, commands.DisabledCommand):
-        await send('Prace nad tą komendą trwają. Nie należy jej używać.', delete_after=5)
+        await send('Prace nad tą komendą trwają. Nie należy jej używać.', delete_after=10)
     elif isinstance(error, commands.PrivateMessageOnly):
-        await send("Tej komendy teraz można używać tylko w DM", delete_after=5)
+        await send("Tej komendy teraz można używać tylko w DM", delete_after=10)
     elif isinstance(error, commands.NoPrivateMessage):
-        await send("Tej komendy można używać tylko na serwerze", delete_after=5)
+        await send("Tej komendy można używać tylko na serwerze", delete_after=10)
     elif isinstance(error, GameEnd):
-        c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
-        await bot.game.winning(error.reason, error.winner)
-        await send_to_manitou(c)
-        for channel in get_guild().text_channels:
-            if channel.category_id in (FRAKCJE_CATEGORY_ID, NIEPUBLICZNE_CATEGORY_ID):
-                await channel.send(c)
+        await handle_game_end(error)
+    elif isinstance(error, commands.CheckFailure):
+        pass  # do not raise, error handled locally
     else:
         await send(':robot:Bot did an uppsie :\'( :robot:')
         return error
 
 
+async def handle_game_end(error):
+    c = ":scroll:{}:scroll:".format(error.reason) + '\n' + '**__Grę wygrywa frakcja {}__**'.format(error.winner)
+    for channel in get_guild().text_channels:
+        if channel.category_id in (FRAKCJE_CATEGORY_ID, NIEPUBLICZNE_CATEGORY_ID):
+            await channel.send(c)
+    await bot.game.winning(error.reason, error.winner)
+
+
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
-        await ctx.message.delete(delay=6)
+        await ctx.message.delete(delay=11)
     err = await handle_error(ctx.send, error)
     if err:
         report_error(ctx, error)
@@ -137,6 +142,9 @@ async def on_error(event, *args, **_):
     E, error, _ = sys.exc_info()
     if E is commands.CommandInvokeError:
         error = error.original
+    if isinstance(error, GameEnd):
+        await handle_game_end(error)
+        return
     if isinstance(error, discord.HTTPException) and error.code == 10062:
         return
     msg = SLIM_TEMPLATE.format(event, args, RULLER)

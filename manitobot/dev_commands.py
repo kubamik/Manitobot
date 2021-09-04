@@ -33,8 +33,8 @@ class DevCommands(commands.Cog, name='Development'):
                 logs = discord.File(fp, filename='Manitobot {}.log'.format(time.strftime("%Y-%m-%d_%H-%M-%S")))
                 await ctx.send(file=logs)
         except FileNotFoundError:
-            await ctx.send("Logs aren't available now.", delete_after=5)
-            await ctx.message.delete(delay=5)
+            await ctx.send("Logs aren't available now.", delete_after=10)
+            await ctx.message.delete(delay=10)
 
     @commands.command(name='started_at')
     async def start_time(self, ctx):
@@ -54,6 +54,10 @@ class DevCommands(commands.Cog, name='Development'):
             self, ctx, member: MyMemberConverter(player_only=False), *, txt):
         """🤔"""
         msg = ctx.message
+        _author = ctx.author
+        _content = msg.content
         msg.author = member
         msg.content = '&' + txt if not txt.startswith('&') else txt
         await self.bot.process_commands(msg)
+        msg.author = _author
+        msg.content = _content

@@ -51,20 +51,6 @@ class BaseInteraction(ABC):
             user = discord.Member._from_message(message=self, data=member)
         return user
 
-    # def _handle_author(self, author):  # Copied from dpy
-    #     self.author = self._state.store_user(author)
-    #     if isinstance(self.guild, discord.Guild):
-    #         found = self.guild.get_member(self.author.id)
-    #         if found is not None:
-    #             self.author = found
-    #
-    # def _handle_member(self, member):  # Copied from dpy
-    #     author = self.author
-    #     try:
-    #         author._update_from_message(member)
-    #     except AttributeError:
-    #         self.author = discord.Member._from_message(message=self, data=member)
-
     def dispatch(self, *args, **kwargs):
         self._state.dispatch(*args, **kwargs)
 

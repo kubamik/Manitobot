@@ -116,7 +116,7 @@ class Faction(Activity):
                 return
             if statue is None:
                 statue = self.f_has()
-            if (self.operation == "hold" or bot.game.day > 0) and statue == self.f_has():
+            if (self.operation == "hold" or bot.game.day_num > 0) and statue == self.f_has():
                 com = f_coms[self.operation]
                 await self.channel.send(com)
                 return f_coms_manit[self.operation].format(self.name)

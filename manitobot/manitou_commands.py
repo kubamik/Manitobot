@@ -3,38 +3,37 @@ from random import randint
 from typing import Union
 
 import discord
+import typing
 from discord.ext import commands
 
 from settings import FAC2CHANN_ID, CONFIG
-from . import postacie
+from . import postacie, daily_commands
 from . import utility
-from .basic_models import NotAGame
-from .cheks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only
+from .basic_models import NotAGame, ManiBot
+from .daynight import Day, PartialDay
+from .errors import MembersNotPlaying
+from .my_checks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only, voting_check
 from .converters import MyMemberConverter
 from .postacie import get_role_details
 from .starting import if_game
 from .utility import playerhelp, manitouhelp, get_faction_channel, \
     get_admin_role, get_town_channel, get_player_role, \
-    get_other_manitou_role, get_manitou_role, get_voice_channel, \
-    get_manitou_notebook, get_member, get_dead_role, \
+    get_manitou_role, get_voice_channel, get_member, get_dead_role, \
     get_spectator_role, get_guild, clear_nickname, send_to_manitou, \
     get_duel_winner_role, get_duel_loser_role, \
-    get_searched_role, get_hanged_role
+    get_searched_role, get_hanged_role, get_control_panel
 
 
 class DlaManitou(commands.Cog, name="Dla Manitou"):
 
-    def __init__(self, bot):
+    def __init__(self, bot: ManiBot):
         self.bot = bot
 
     async def remove_cogs(self):
         rm_cog = self.bot.remove_cog
-        rm_cog("Głosowania")
-        rm_cog("Polecenia postaci i frakcji")
-        rm_cog("Pojedynki")
-        rm_cog("Przeszukania")
-        rm_cog("Wieszanie")
-        rm_cog("Panel Sterowania")
+        rm_cog('Polecenia postaci i frakcji')
+        rm_cog('Panel Sterowania')
+        rm_cog(daily_commands.DailyCommands.__cog_name__)
         self.bot.get_command('g').help = playerhelp()
         self.bot.get_command('m').help = manitouhelp()
         p = discord.Permissions().all()
@@ -43,32 +42,59 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             ch = get_faction_channel(faction)
             tasks.append(ch.edit(sync_permissions=True))
         tasks.append(get_admin_role().edit(permissions=p, colour=0xffa9f9))
-        tasks.append(get_town_channel().set_permissions(get_player_role(), send_messages=True))
-        tasks.append(utility.remove_roles(get_manitou_role().members, get_other_manitou_role()))
+        tasks.append(get_town_channel().edit(sync_permissions=True))
         tasks.append(self.bot.change_presence(activity=None))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks)
+
+    @commands.command(aliases=['cvote'])
+    @manitou_cmd()
+    @voting_check()
+    async def custom_vote(
+            self, _, title,
+            votes_count: typing.Optional[int] = 1, *options):
+        """ⓂRozpoczyna customowe głosowanie:
+        Argumentami są:
+          -tytuł głosowania.
+          -wymagana liczba głosów.
+          -nazwy kandydatów"""
+        game = self.bot.game
+        if game.day is None:
+            msg = await get_control_panel().send('Rozpoczynanie głosowania...')
+            game.day = PartialDay(game, msg)
+        await game.day.custom_voting(title, list(options), votes_count)
+
+    @commands.command(name='votesee', aliases=['vs'])
+    @manitou_cmd()
+    @voting_check(reverse=True)
+    async def vote_see(self, _):
+        """Ⓜ/&vs/Pisze do wszystkich manitou obecne wyniki głosowania"""
+        results = self.bot.game.day.state.results_embed()
+        await send_to_manitou(embed=results)
 
     @commands.command(aliases=['MM'])
     @manitou_cmd()
     async def mass_mute(self, _):
-        """ⓂMutuje wszystkich niebędących Manitou
+        """ⓂMutuje graczy niebędących Manitou
         """
         tasks = []
+        players = get_player_role().members
         for member in get_voice_channel().members:
-            if member not in get_manitou_role().members:
+            if member in players and member not in get_manitou_role().members \
+                    and not member.voice.self_mute:
                 tasks.append(member.edit(mute=True))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks)
 
     @commands.command(aliases=['MU'])
     @manitou_cmd()
     async def mass_unmute(self, _):
-        """ⓂUnmutuje wszystkich niebędących Manitou
+        """ⓂUnmutuje graczy niebędących Manitou
         """
         tasks = []
+        players = get_player_role().members
         for member in get_voice_channel().members:
-            if member not in get_manitou_role().members:
+            if member in players and member.voice.mute:
                 tasks.append(member.edit(mute=False))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks)
 
     @commands.command(name='set_manitou_channel', aliases=['m_channel'])
     @manitou_cmd()
@@ -96,32 +122,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await asyncio.sleep(3)
         await herb.die("herbs")
 
-    @commands.command(name='next', aliases=['n'], enabled=False, hidden=True)
-    @manitou_cmd()
-    @game_check()
-    @day_only(rev=True)  # TODO: Do somthing with this command
-    async def next_night(self, ctx):
-        """Ⓜ/&n/Rozpoczyna rundę następnej postaci w trakcie nocy.
-        """
-        if ctx.channel.type != discord.ChannelType.private and ctx.channel != get_manitou_notebook():
-            await ctx.send("Tej komendy można użyć tylko w DM lub notatniku manitou", delete_after=5)
-            await ctx.message.delete(delay=5)
-            return
-        await self.bot.game.nights[-1].night_next(ctx.channel)
-
-    @commands.Cog.listener('on_reaction_add')
-    async def new_reaction(self, emoji, member):
-        if not get_member(member.id) in get_manitou_role().members:
-            return
-        if emoji.emoji != '➡️':
-            return
-        if not emoji.me:
-            return
-        await self.bot.game.nights[-1].night_next(emoji.active_msg.channel)
-
     @commands.command()
     @manitou_cmd()
-    @game_check(rev=True)
+    @game_check(reverse=True)
     async def nuke(self, ctx):
         """ⓂOdbiera rolę Gram i Trup wszystkim userom
         """
@@ -132,10 +135,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             utility.remove_roles(dead_role.members + player_role.members + spec_role.members,
                                  dead_role, player_role, spec_role)]
         for member in get_guild().members:
-            tasks.append(clear_nickname(member))
+            if member.id != self.bot.user.id:
+                tasks.append(clear_nickname(member))
         async with ctx.typing():
             await self.remove_cogs()
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(*tasks)
         await ctx.message.add_reaction('❤️')
 
     @commands.command()
@@ -150,9 +154,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd()
     @ktulu_check()
     async def refresh_panel(self, _):
-        """ⓂAktualizuje  osoby w Panelu Manitou
+        """ⓂAktualizuje osoby w Panelu Manitou
         """
-        await self.bot.game.controller.update_panel()
+        await self.bot.game.panel.update_panel()
 
     @commands.command()
     @manitou_cmd()
@@ -187,16 +191,36 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command(name='swap')
     @manitou_cmd()
     @game_check()
-    async def swap(self, ctx, player1: MyMemberConverter(), player2: MyMemberConverter()):
+    async def swap(self, ctx, player1: MyMemberConverter(player_only=False),
+                   player2: MyMemberConverter(player_only=False)):
         """ⓂZamienia role 2 wskazanych osób
         """
         first = player1
         second = player2
-        role1, role2 = self.bot.game.swap(first, second)
-        await first.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role1, role1)))
-        await second.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role2, role2)))
-        await ctx.send("**{}** to teraz **{}**\n**{}** to teraz **{}**".format(
-            first.display_name, role1, second.display_name, role2))
+        players = get_player_role().members
+        if first not in players and second not in players:
+            raise MembersNotPlaying
+        elif first not in players:
+            first, second = second, first
+        if second not in players:
+            roles = [get_player_role(), get_dead_role(), get_duel_winner_role(), get_duel_loser_role(),
+                     get_searched_role(), get_hanged_role()]
+            role = self.bot.game.replace_player(first, second)
+            await first.send('**Zostałeś(-aś) usunięty(-a) z gry**')
+            await second.send('Zostałeś(-aś) dodany(-a) do gry zamiast {}. Twoja rola to:\n{}'.format(
+                first.display_name, get_role_details(role, role)))
+            member_roles = [r for r in roles if r in first.roles]
+            await first.remove_roles(*member_roles)
+            await second.add_roles(*member_roles)
+            await ctx.send('**{0.display_name}** gra teraz zamiast **{1.display_name}**'.format(second, first))
+            await self.bot.game.panel.replace_player(first, second, role)
+        else:
+            role1, role2 = self.bot.game.swap(first, second)
+            await self.bot.game.panel.swapping(first, second, role1, role2)
+            await first.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role1, role1)))
+            await second.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role2, role2)))
+            await ctx.send("**{}** to teraz **{}**\n**{}** to teraz **{}**".format(
+                first.display_name, role1, second.display_name, role2))
 
     @commands.command(name='gra')
     @manitou_cmd()
@@ -211,33 +235,31 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     async def end_game(self, ctx):
         """ⓂKończy grę
         """
-        tasks = []
         async with ctx.typing():
-            tasks.append(self.bot.game.end())
-            tasks.append(self.remove_cogs())
-            await asyncio.gather(*tasks, return_exceptions=True)
+            await self.bot.game.end()
+            await self.remove_cogs()
             self.bot.game = NotAGame()
-            await get_town_channel().send("Gra została zakończona")
+            await get_town_channel().send('Gra została zakończona')
 
     @commands.command(name='end')
     @manitou_cmd()
     @game_check()
     async def end_reset(self, ctx):
         """ⓂResetuje graczy i kończy grę"""
-        m = await ctx.send("Czy na pewno chcesz zakończyć grę?")
+        m = await ctx.send('Czy na pewno chcesz zakończyć grę?')
         await m.add_reaction('✅')
         await m.add_reaction('⛔')
 
         def check_func(r: discord.Reaction, u: Union[discord.User, discord.Member]):
             return all([get_member(u.id) in get_manitou_role().members, r.emoji in ('✅', '⛔'),
-                       r.message.id == m.id])
+                        r.message.id == m.id])
 
-        try:  # TODO: Close this in some public function
+        try:  # TODO: Put this in some public function
             reaction, _ = await self.bot.wait_for('reaction_add', check=check_func, timeout=60)
             if reaction.emoji == '⛔':
                 raise asyncio.TimeoutError
         except asyncio.TimeoutError:
-            await ctx.message.delete(delay=0)  # TODO: Some cancellation error
+            await ctx.message.delete(delay=0)
         else:
             await self.end_game(ctx)
             await self.reset(ctx)
@@ -265,19 +287,20 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         loser_role = get_duel_loser_role()
         searched_role = get_searched_role()
         hanged_role = get_hanged_role()
+        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role]
         tasks = []
         async with ctx.typing():
-            tasks.append(
-                utility.remove_roles(dead_role.members + player_role.members,
-                                     dead_role, winner_role, loser_role, searched_role, hanged_role))
-            tasks.append(utility.add_roles(
-                list(set(get_voice_channel().members) & set(dead_role.members + player_role.members)), player_role))
-            tasks.append(self.remove_cogs())
-            await asyncio.gather(*tasks, return_exceptions=True)
+            for member in dead_role.members + player_role.members:
+                roles = [r for r in member.roles if r not in to_delete]
+                if member in get_voice_channel().members and player_role not in roles:
+                    roles.append(player_role)
+                tasks.append(member.edit(roles=roles))
+            await self.remove_cogs()
+            await asyncio.gather(*tasks)
 
-    @commands.command(name='revive', aliases=['resetuj', 'reset'])
+    @commands.command(name='revive', aliases=['reset'])
     @manitou_cmd()
-    @game_check(rev=True)
+    @game_check(reverse=True)
     async def reset_players(self, ctx):
         """Ⓜ/&reset/Przywraca wszystkim trupom rolę gram"""
         await self.reset(ctx)
@@ -300,7 +323,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command(name='rioters_count', aliases=['criot'])
     @manitou_cmd()
     @game_check()
-    async def countrioters(self, ctx):
+    async def count_rioters(self, ctx):
         """Ⓜ/criot/Zwraca liczbę zbuntowanych graczy
         """
         await ctx.send("Liczba buntowników wynosi {}".format(len(self.bot.game.rioters)))
@@ -309,7 +332,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd()
     @ktulu_check()
     async def number(self, _, name: str, n: int):
-        """Ⓜ/&n/Zmienia liczby gry (pojedynki, przeszukania, odpływanie)
+        """Ⓜ/&num/Zmienia liczby gry (pojedynki, przeszukania, odpływanie)
         Argumenty: <duels, searches, evening, morning lub pierwsze litery> <liczba>
         """
         name2attr = {
@@ -342,30 +365,21 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command(name='day')
     @manitou_cmd()
     @game_check()
-    @day_only(rev=True)
+    @day_only(reverse=True)
     async def night_end(self, _):
-        """ⓂRozpoczyna dzień"""
-        tasks = []
+        """ⓂRozpoczyna dzień
+        """
         await self.bot.game.new_day()
-        tasks.append(
-            utility.send_game_channels('=\nDzień {}'.format(self.bot.game.day)))
-        tasks.append(get_town_channel().edit(sync_permissions=True))
-        tasks.append(self.bot.get_cog("Panel Sterowania").morning_reset())
-        await asyncio.gather(*tasks, return_exceptions=True)
 
-    @commands.command(name="night")
+    @commands.command(name='night')
     @manitou_cmd()
     @game_check()
     @day_only()
     async def night_start(self, _):
         """ⓂRozpoczyna noc
         """
-        try:
-            await get_town_channel().set_permissions(get_player_role(), send_messages=False)
-        except discord.HTTPException:
-            pass
-        self.bot.game.new_night()
+        await self.bot.game.new_night()
 
-    @commands.command(name='m', help=manitouhelp(), hidden=True)
+    @commands.command(name='m', help=manitouhelp(), hidden=True, brief='&help m')
     async def manitou_help(self, ctx):
         await ctx.message.delete(delay=0)

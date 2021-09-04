@@ -17,7 +17,7 @@ class Activity:
             raise InvalidRequest("Nie możesz działać, bo jesteś zamknięty lub upity")
 
     def if_night(self):
-        if not bot.game.night:
+        if not bot.game.night_now:
             raise InvalidRequest()
 
     def if_worked(self):
@@ -44,7 +44,7 @@ class Activity:
             pass
 
     def angel_alive(self):
-        r = permissions.role_abilities["inqui_change_on_death"]
+        r = permissions.SPEC_ROLES["inqui_change_on_death"]
         try:
             if bot.game.role_map[r].player.member in get_dead_role().members:
                 raise InvalidRequest()
@@ -80,7 +80,7 @@ class Activity:
             raise InvalidRequest("Zabójstwo zostanie zrealizowane po ustaleniu posiadacza posążka")
 
     def nonzero(self):
-        if bot.game.day == 0:
+        if bot.game.day_num == 0:
             self.member = None
             raise InvalidRequest("Nie możesz działać zerowej nocy")
 
@@ -145,7 +145,7 @@ class Activity:
                     await f()
                 else:
                     f()
-            if night > bot.game.day:
+            if night > bot.game.day_num:
                 raise InvalidRequest()
             self.output += new_night_com[role]
             c += "Poczekaj aż użyje pożądanych zdolności"
@@ -159,7 +159,7 @@ class Activity:
         await send_to_manitou(c)
 
     async def angelize(self):
-        r = permissions.role_abilities["inqui_change_on_death"]
+        r = permissions.SPEC_ROLES["inqui_change_on_death"]
         angel = bot.game.role_map[r].player.member
         await angel.send("Skorzystałeś ze swojej umiejętności twoja nowa rola to:\n {}".format(
             get_role_details(self.name, self.name)))
@@ -174,12 +174,11 @@ class Activity:
             return "Ta osoba należy do frakcji posiadaczy posążka"
         return "Ta osoba nie należy do frakcji posiadaczy posążka"
 
-    async def if_hang_time(self):
-        try:
-            if bot.game.days[-1].hang_final:
-                await self.meantime_send()
-        except AttributeError:
-            pass
+    async def make_peace(self):
+        state = bot.game.day.state
+        if hasattr(state, 'peace'):
+            await state.peace()
+            await self.meantime_send()
 
     def indian_win(self):
         if bot.game.stats["Indianie"] == len(get_player_role().members):
@@ -216,7 +215,7 @@ class Activity:
             return ret
 
     def if_day(self):
-        if bot.game.night:
+        if bot.game.night_now:
             self.member = None
             raise InvalidRequest("Tej zdolności można użyć tylko w dzień")
 
@@ -235,13 +234,15 @@ class Activity:
     def signal(self):
         self.data += 1
 
-    async def reveal(self, dead=False):
+    async def reveal(self, dead=False, verbose=True):
         self.revealed = True
         member = self.player.member
         nickname: str = member.display_name
         if dead and not nickname.startswith('+'):
             nickname = '+' + nickname
-        await get_town_channel().send("**{}** to **{}**".format(nickname.replace('+', ''), self.name.replace('_', ' ')))
+        if verbose:
+            await get_town_channel().send("**{}** to **{}**".format(nickname.replace('+', ''),
+                                                                    self.name.replace('_', ' ')))
         try:
             await member.edit(nick=nickname + "({})".format(self.name.replace('_', ' ')))
         except discord.errors.Forbidden:
@@ -255,14 +256,15 @@ class Activity:
                 await member.send(f"Wepchnij jakoś swoją rolę ({' '.join(role)}) do nicka")
 
     def if_duel(self):
-        if not self.member is None:
-            if not bot.game.days[-1].duels_result:
+        if self.member is not None:
+            duel = bot.game.day.state
+            if not hasattr(duel, 'change_winner'):
                 self.member = None
                 raise InvalidRequest(
-                    "Nie możesz teraz zmienić wyniku pojedynku, aby tylko się ujawnić użyj samego `&wygr`")
-            if not self.member.member in bot.game.days[-1].participants:
+                    'Nie możesz teraz zmienić wyniku pojedynku, aby tylko się ujawnić użyj samego `&wygr`')
+            if self.member.member not in duel.winners + duel.losers:
                 self.member = None
-                raise InvalidRequest("Ta osoba nie brała udziału w pojedynku")
+                raise InvalidRequest('Ta osoba nie brała udziału w pojedynku')
 
     def if_active(self):
         if self != bot.game.nights[-1].active_role:
@@ -270,8 +272,8 @@ class Activity:
             raise InvalidRequest("Nie możesz teraz działać")
 
     async def change_duel(self):
-        if not self.member is None and not "copied" in self.my_activities:
-            await bot.game.days[-1].change_winner(self.member.member)
+        if self.member and "copied" not in self.my_activities:
+            await bot.game.day.state.change_winner(self.member.member)
             await self.meantime_send()
 
     async def meantime_send(self):
@@ -403,10 +405,10 @@ class Activity:
 
     def got_today(self):
         try:
-            if not (self.faction.f_has() or bot.game.statue.last_change == bot.game.day):
+            if not (self.faction.f_has() or bot.game.statue.last_change == bot.game.day_num):
                 raise InvalidRequest()
         except AttributeError:
-            if not (self.has() or bot.game.statue.last_change == bot.game.day):
+            if not (self.has() or bot.game.statue.last_change == bot.game.day_num):
                 raise InvalidRequest()
 
     def lone(self):

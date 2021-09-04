@@ -4,7 +4,7 @@ import typing
 from discord.ext import commands
 
 from . import votings
-from .cheks import manitou_cmd, voting_check, day_only
+from .my_checks import manitou_cmd, voting_check, day_only
 from .errors import TooLessVotingOptions, GameNotStarted
 from .starting import if_game
 from .utility import get_nickname, get_player_role, get_searched_role
@@ -17,12 +17,12 @@ class Glosowania(commands.Cog, name='Głosowania'):
 
     async def cog_check(self, ctx):
         if not if_game():
-            raise GameNotStarted('<--')
+            raise GameNotStarted
         return True
 
     @commands.command(name='vote_cancel', aliases=['vclc'])
     @manitou_cmd()
-    @voting_check(rev=True)
+    @voting_check(reverse=True)
     async def cancel_vote(self, _):
         """Ⓜ/&vclc/Anuluje trwające głosowanie"""
         self.bot.game.voting = None
@@ -194,7 +194,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
 
     @commands.command(name='votend', aliases=['vend'])
     @manitou_cmd()
-    @voting_check(rev=True)
+    @voting_check(reverse=True)
     async def vote_end(self, ctx):
         """Ⓜ/&vend/Kończy głosowanie, wypisuje podsumowanie głosów,
         uruchamia akcje powiązane (przeszukania, pojedynki, wieszanie)"""
@@ -202,7 +202,7 @@ class Glosowania(commands.Cog, name='Głosowania'):
 
     @commands.command(name='votesee', aliases=['vs'])
     @manitou_cmd()
-    @voting_check(rev=True)
+    @voting_check(reverse=True)
     async def vote_see(self, ctx):
         """Ⓜ/&vs/Pisze do wszystkich manitou obecne wyniki głosowania"""
         await votings.see_end_voting(ctx, False)

@@ -6,7 +6,7 @@ from . import utility
 from .utility import get_member, InvalidRequest
 
 
-# TODO: IDEA: change commands to message reactions
+# TODO: IDEA: change commands to message reactions or buttons
 
 
 def proper_channel():  # TODO: move to checks
@@ -48,8 +48,8 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         except InvalidRequest as err:
             await ctx.send(err.msg)
         except KeyError as err:
-            await ctx.message.delete(delay=5)
-            await ctx.send("Nie grasz w tej grze", delete_after=5)
+            await ctx.message.delete(delay=11)
+            await ctx.send("Nie grasz w tej grze", delete_after=10)
 
     @commands.command(name='śledź')
     @commands.dm_only()

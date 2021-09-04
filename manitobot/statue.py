@@ -29,7 +29,7 @@ class Statue:
     async def if_followed(self, member):
         for auth, mem in self.followed.items():
             if mem == member and member != self.holder:
-                self.last_change = bot.game.day
+                self.last_change = bot.game.day_num
                 self.planted = False
                 self.holder = auth
                 role = bot.game.player_map[auth].role
@@ -61,7 +61,7 @@ class Statue:
         prev = self.holder
         self.holder = member
         self.planted = True
-        await bot.game.controller.statue_change(prev, member, self.faction_holder, True)
+        await bot.game.panel.statue_change(prev, member, self.faction_holder, planted=True)
 
     async def give(self, member):
         """For manitou giving
@@ -72,7 +72,7 @@ class Statue:
         role = bot.game.player_map[member].role
         faction = give_faction(role)
         self.faction_holder = faction
-        await bot.game.controller.statue_change(prev, member, faction, False)
+        await bot.game.panel.statue_change(prev, member, faction)
 
     def day_search(self, member):
         if self.holder == member:
@@ -84,7 +84,7 @@ class Statue:
         if self.holder == member:
             f = await self.if_followed(author)
             if not f:
-                self.last_change = bot.game.day
+                self.last_change = bot.game.day_num
                 c = "{} przejmuje posążek".format(role)
                 await send_to_manitou(c)
                 await get_manitou_notebook().send(c)
@@ -109,7 +109,7 @@ class Statue:
         if self.holder == member:
             f = await self.if_followed(author)
             if not f:
-                self.last_change = bot.game.day
+                self.last_change = bot.game.day_num
                 c = "{} przejmuje posążek".format(role)
                 await send_to_manitou(c)
                 await get_manitou_notebook().send(c)
@@ -144,7 +144,7 @@ class Statue:
 
     async def faction_search(self, faction, member, info=True):
         if self.holder == member:
-            self.last_change = bot.game.day
+            self.last_change = bot.game.day_num
             c = "{} przejmuje(-ą) posążek".format(faction)
             await send_to_manitou(c)
             await get_manitou_notebook().send(c)

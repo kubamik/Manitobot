@@ -65,11 +65,6 @@ class Management(commands.Cog, name='Dla Adminów'):
             member = get_member(event.user_id)
             await member.remove_roles(get_ping_game_role())
 
-    async def cog_check(self, ctx):
-        if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
-            return True
-        raise commands.MissingRole(get_admin_role())
-
     @commands.Cog.listener('on_raw_reaction_remove')
     async def ping_reaction_remove(
             self, event: discord.RawReactionActionEvent):
@@ -80,6 +75,11 @@ class Management(commands.Cog, name='Dla Adminów'):
             await member.add_roles(get_ping_reminder_role())
         if event.emoji.id == PING_BLUE_ID:
             await member.add_roles(get_ping_game_role())
+
+    async def cog_check(self, ctx):
+        if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
+            return True
+        raise commands.MissingRole(get_admin_role())
 
     @commands.command(name='adminuj')
     async def adminate(self, ctx, *, osoba: MyMemberConverter(player_only=False)):
@@ -118,7 +118,7 @@ class Management(commands.Cog, name='Dla Adminów'):
             await ctx.send("Maksymalny czas to 24 godziny")
             return
 
-        if not len(members):
+        if not members:
             members = list(get_guild().members)
 
         await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),

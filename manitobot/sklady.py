@@ -22,7 +22,10 @@ SETS: Dict[str, List[str]] = {
            "Zły_Rew", "Szaman", "Szamanka", "Samotny_Kojot", "Cicha_Stopa", "Janosik"],
     "17UFO": ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Burmistrz", "Hazardzista", "Mściciel",
               "Szuler", "Zły_Rew", "Szaman", "Szamanka", "Samotny_Kojot", "Wojownik", "Pożeracz_Umysłów", "Detektor",
-              "Zielona_Macka"]
+              "Zielona_Macka"],
+    "18UFOJ": ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Burmistrz", "Hazardzista", "Mściciel",
+               "Szuler", "Zły_Rew", "Szaman", "Szamanka", "Samotny_Kojot", "Wojownik", "Pożeracz_Umysłów", "Detektor",
+               "Zielona_Macka", "Janosik"]
 }
 
 
@@ -43,5 +46,5 @@ def set_exists(set_name: str) -> bool:
 
 def print_set(set_name: str) -> str:
     if not set_exists(set_name):
-        raise NoSuchSet('<--')
+        raise NoSuchSet
     return postacie.print_list(SETS[set_name])

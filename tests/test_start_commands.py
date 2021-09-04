@@ -5,10 +5,10 @@ from unittest.mock import AsyncMock, patch
 import manitobot.basic_models
 from manitobot import start_commands, utility
 from manitobot.errors import GameStartedException
-from .bases import BaseCommandTestCase
+from bases import BaseTestCase
 
 
-class StartCommands(BaseCommandTestCase):
+class StartCommands(BaseTestCase):
     utility: AsyncMock
 
     def setUp(self) -> None:
@@ -18,7 +18,7 @@ class StartCommands(BaseCommandTestCase):
         self.patch_modules_functions(start_commands, utility)
 
 
-@patch('manitobot.cheks.if_game', autospec=True)
+@patch('manitobot.my_checks.if_game', autospec=True)
 class GramTest(StartCommands):
     async def test_gram_before_game(self, if_game):
         if_game.return_value = False

@@ -1,4 +1,4 @@
-from .cheks import manitou_cmd, player_cmd
+from .my_checks import manitou_cmd, player_cmd
 from .converters import MyMemberConverter
 from .errors import DayOnly, DuelInProgress
 from .utility import *
@@ -12,7 +12,7 @@ class Przeszukania(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, ctx):
-        if bot.game.night:
+        if bot.game.night_now:
             raise DayOnly('Can\'t use this command during night')
         if bot.game.days[-1].duel:
             raise DuelInProgress('Can\'t use this command during duel')
@@ -75,7 +75,7 @@ class Wieszanie(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, _):
-        if bot.game.night:
+        if bot.game.night_now:
             raise DayOnly('Can\'t use this command during night')
         return True
 

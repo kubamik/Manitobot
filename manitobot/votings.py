@@ -58,4 +58,4 @@ async def see_end_voting(ctx: commands.Context, end: bool):
             tasks.append(getattr(bot.game.days[-1], type2func[vtype])(ctx, summary))
     else:
         tasks.append(send_to_manitou(embed=embed))
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await asyncio.gather(*tasks, return_exceptions=False)

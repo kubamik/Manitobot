@@ -103,11 +103,11 @@ def on_voice(ctx: commands.Context) -> bool:
     return ctx.author in get_voice_channel().members
 
 
-def czy_manitou(ctx: commands.Context) -> bool:
+def if_manitou(ctx: commands.Context) -> bool:
     return ctx.author in get_manitou_role().members
 
 
-def czy_gram(ctx: commands.Context) -> bool:
+def if_player(ctx: commands.Context) -> bool:
     return ctx.author in get_player_role().members
 
 
@@ -129,7 +129,7 @@ def help_format(command: str) -> str:
 
 
 def playerhelp() -> str:
-    comm = ['postać', 'żywi', 'riot', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
+    comm = ['postać', 'żywi', 'bunt', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
     msg = ""
     for c in comm:
         msg += help_format(c)
@@ -137,8 +137,8 @@ def playerhelp() -> str:
 
 
 def manitouhelp() -> str:
-    comm = ['plant', 'give', 'kill', 'day', 'pend', 'br', 'vdl', 'vend', 'dnd', 'abend', 'rpt', 'repblok', 'vsch',
-            'revote', 'snd', 'vhif', 'vhg', 'hrnd', 'hnd', 'night', 'num']
+    comm = ['plant', 'give', 'kill', 'day', 'pend', 'duel', 'cancel', 'vote', 'undo', 'next', 'pens', 'repblok', 'rand',
+            'night', 'num']
     msg = ""
     for c in comm:
         msg += help_format(c)
@@ -148,15 +148,15 @@ def manitouhelp() -> str:
 async def add_roles(members: List[discord.Member], *roles: discord.Role) -> None:
     tasks = []
     for member in members:
-        tasks.append(member.add_roles(*roles))
-    await asyncio.gather(*tasks, return_exceptions=True)
+        tasks.append(member.add_roles(*roles, atomic=False))
+    await asyncio.gather(*tasks)
 
 
 async def remove_roles(members: List[discord.Member], *roles: discord.Role) -> None:
     tasks = []
     for member in members:
-        tasks.append(member.remove_roles(*roles))
-    await asyncio.gather(*tasks, return_exceptions=True)
+        tasks.append(member.remove_roles(*roles, atomic=False))
+    await asyncio.gather(*tasks)
 
 
 async def send_to_manitou(content: Optional[str] = None,
@@ -174,18 +174,23 @@ async def send_game_channels(content: str) -> None:
     for channel in get_guild().text_channels:
         if channel.category_id == FRAKCJE_CATEGORY_ID or channel.category_id == NIEPUBLICZNE_CATEGORY_ID:
             tasks.append(channel.send(content))
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await asyncio.gather(*tasks)
 
 
-async def clear_nickname(member: discord.Member) -> None:
-    old_nickname = member.display_name
-    nick = old_nickname
+def cleared_nickname(nick: str) -> str:
+    """Perform nickname clearing on given nickname"""
     if nick.startswith(('+', '!')):
         nick = nick[1:]
     if nick.endswith('#'):
         nick = nick[:-1]
     if all(nick.rpartition('(')):
         nick = nick.rpartition('(')[0]
+    return nick
+
+
+async def clear_nickname(member: discord.Member) -> None:
+    old_nickname = member.display_name
+    nick = cleared_nickname(old_nickname)
     if nick != old_nickname:
         try:
             await member.edit(nick=nick)
@@ -207,7 +212,3 @@ def playing(gracz=-1, *, author=-1):
         raise InvalidRequest("Jesteś martwy")
     if author != -1 and author not in get_player_role().members:
         raise InvalidRequest("Nie grasz")
-
-
-def plused(before: discord.Member, after: discord.Member) -> bool:
-    return before.display_name[0] != after.display_name[0] and after.display_name.startswith('+')

@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord.http import Route
 
@@ -5,15 +7,18 @@ from .interaction import CommandInteraction, ComponentInteraction
 
 
 def parse_interaction_create(self, data):
-    if 'channel_id' not in data:
-        return
-    channel, _ = self._get_guild_channel(data)
-    if data.get('type') == 2:
-        inter = CommandInteraction(state=self, channel=channel, data=data)
-        self.dispatch('command_interaction', inter)
-    elif data.get('type') == 3:
-        inter = ComponentInteraction(state=self, channel=channel, data=data)
-        self.dispatch('component_interaction', inter)
+    try:  # error here stops main bot loop
+        if 'channel_id' not in data:
+            return
+        channel, _ = self._get_guild_channel(data)
+        if data.get('type') == 2:
+            inter = CommandInteraction(state=self, channel=channel, data=data)
+            self.dispatch('command_interaction', inter)
+        elif data.get('type') == 3:
+            inter = ComponentInteraction(state=self, channel=channel, data=data)
+            self.dispatch('component_interaction', inter)
+    except Exception:
+        logging.exception('Serious exception - interaction parsing')
 
 
 def ack_interaction(self, token, interaction_id):

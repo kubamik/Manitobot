@@ -1,8 +1,12 @@
+import inspect
+import typing
+from collections import deque, defaultdict
+
 from . import utility
+from .base_day_states import DayState, States
 from .basic_models import NotAGame
-from .duel import Duel
+from .day_states import InitialState, Voting, ORDER, Duel
 from .errors import NoEffect
-from .hang_search import Search
 from .utility import *
 
 night_order = ["Lucky_Luke", "Dziwka", "Szeryf", "Pastor", "Opój", "Pijany_Sędzia", "Hazardzista", "Lusterko",
@@ -128,13 +132,65 @@ class Night:
         # self.active_faction.operation = operation
 
 
-class Day(Duel, Search):
-    def __init__(self):
-        Search.__init__(self)
-        Duel.__init__(self)
+class Day:
+    def __init__(self, game: 'game.Game', msg: discord.Message):
+        self.challenges = deque()
+        self.duels = 0
+        self.reports = defaultdict(list)
+        self.game = game
+        self.msg = msg
+        self.state = InitialState(game, self)
+        self._prev = None
 
-    def not_night_duel(self):
-        if bot.game.night:
-            raise InvalidRequest("Nie można robić tego w nocy")
-        if self.duel:
-            raise InvalidRequest("W czasie pojedynku nie można tego zrobić")
+    async def push_state(self, state: typing.Union[str, States, typing.Type[DayState]], *args, **kwargs):
+        curr = self.state.__class__
+        curr_order = ORDER.get(curr)  # None only if state is DayState subclass
+        if inspect.isclass(state):
+            await self._change_state(state, *args, **kwargs)
+        elif state == 'vote':
+            flw = curr_order[States.voted]
+            await self._change_state(Voting, *args, previous=curr, following=flw, **kwargs)
+        elif state == 'duel':
+            await self._change_state(Duel, *args, **kwargs)
+        elif isinstance(state, States):
+            state = curr_order[state]
+            await self._change_state(state, *args, **kwargs)
+
+    async def _change_state(self, state, *args, **kwargs):
+        prev = self.state
+        self.state = state(self.game, self, *args, **kwargs)
+        await prev.cleanup()
+        await self.state.async_init()
+        await self.state.set_message(self.msg)
+        await self.game.panel.add_state_emojis()
+
+    async def custom_voting(self, *args):
+        self._prev = self.state
+        if self.state:
+            await self._change_state(Voting, *args)
+        else:
+            self.state = Voting(self.game, self, *args)
+            await self.state.async_init()
+            await self.state.set_message(self.msg)
+
+    async def end_custom_voting(self):
+        if self._prev:
+            self.state = self._prev
+            await self.state.set_message(self.msg)
+            await self.game.panel.add_state_emojis()
+        else:
+            self.game.day = None
+            await self.msg.delete()
+
+
+# noinspection PyMissingConstructor
+class PartialDay(Day):
+    """Like day, but to use in emergency cases during night (custom voting)"""
+    def __init__(self, game, msg):
+        self.challenges = deque()
+        self.duels = 0
+        self.reports = defaultdict(list)
+        self.game = game
+        self.msg = msg
+        self.state = None
+        self._prev = None

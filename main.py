@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import logging
 import os
 import discord
@@ -8,9 +9,9 @@ from discord.ext import commands
 from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
-from manitobot.interactions.components import Select, SelectOption
+from manitobot.interactions import Select, SelectOption
 from manitobot.errors import MyBaseException
-#from keep_alive import keep_alive
+# from manitobot.keep_alive import keep_alive
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
 from manitobot.starting import if_game
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
@@ -79,28 +80,20 @@ async def you_lost(ctx):
 
 @bot.listen('on_message')
 async def my_message(m):
-    try:
-        if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
-            return
-    except IndexError:
-        pass
+    if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip().startswith('&'):
+        return
 
     if m.channel.type != discord.ChannelType.private:
         return
 
-    if not if_game() or not bot.game.voting_in_progress:
+    if not if_game() or not bot.game.day or not hasattr(bot.game.day.state, 'register_vote'):
         await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
         return
 
-    votes = [vote.strip() for vote in m.content.split(',')]
     try:
-        res, control = bot.game.voting.register_vote(get_member(m.author.id), votes)
+        await bot.game.day.state.register_vote(get_member(m.author.id), m.content)
     except MyBaseException as e:
         await m.channel.send(e.msg)
-    else:
-        await m.channel.send('Zarejestrowałem twój głos(-y) na {}'.format(', '.join(res)))
-        if control:
-            await send_to_manitou('Wszyscy grający oddali głosy')
 
 
 @bot.event
@@ -155,7 +148,7 @@ if __name__ == '__main__':
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(management_commands.Management(bot))
         bot.load_extension('manitobot.error_handler')
-        bot.load_extension('manitobot.day_slash_commands')
+        bot.load_extension('manitobot.day_app_commands')
         bot.get_command('g').help = playerhelp()
         bot.get_command('m').help = manitouhelp()
     except AttributeError:

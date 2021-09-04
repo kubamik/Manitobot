@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from . import postacie
 from .basic_models import NotAGame
-from .cheks import game_check, playing_cmd, on_voice_check
+from .my_checks import game_check, playing_cmd, on_voice_check
 from .utility import get_player_role, get_dead_role, get_spectator_role, \
     get_town_channel, send_to_manitou, \
     get_voice_channel, get_manitou_role, playerhelp
@@ -22,7 +22,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
         await ctx.send(postacie.get_role_details(rola))
 
     @commands.command(name='obserwuję', aliases=['obs'])
-    @playing_cmd(rev=True)
+    @playing_cmd(reverse=True)
     async def spectate(self, ctx):
         """/&obs/Zmienia rolę usera na spectator.
         """
@@ -91,8 +91,8 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             tasks.append(manit.reset(ctx))
             self.bot.game = NotAGame()
         if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
-        await ctx.message.add_reaction("👊")
+            await asyncio.gather(*tasks)
+        await ctx.message.add_reaction('👊')
 
     @commands.command(name="żywi", aliases=['zywi'])
     @game_check()
@@ -107,6 +107,6 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
 Liczba martwych o nieznanych rolach: {}
 Pozostali:{}""".format(len(get_player_role().members), len(alive_roles) - len(get_player_role().members), team))
 
-    @commands.command(name='g', help=playerhelp(), hidden=True)
+    @commands.command(name='g', help=playerhelp(), hidden=True, brief='&help g')
     async def player_help(self, ctx):
         await ctx.message.delete(delay=0)

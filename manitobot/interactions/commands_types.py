@@ -21,6 +21,7 @@ class SlashOptionType(Enum):
             int: 'integer',
             bool: 'boolean',
             discord.abc.User: 'user',
+            discord.Member: 'user',
             discord.abc.GuildChannel: 'channel',
             discord.Role: 'role',
         }

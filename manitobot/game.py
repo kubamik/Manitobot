@@ -5,7 +5,8 @@ from typing import Optional, Dict, List, Set, Tuple, Mapping
 import discord
 
 from . import postacie
-from .controller import Controller
+from .bot_basics import bot
+from .control_panel import ControlPanel
 from .daynight import Day, Night
 from .errors import GameEnd
 from .faction import Faction
@@ -13,7 +14,7 @@ from .player import Player
 from .postacie import get_faction, give_faction
 from .role import Role
 from .statue import Statue
-from .utility import get_dead_role, get_player_role
+from .utility import get_dead_role, get_player_role, get_town_channel
 from .vote import Vote
 
 
@@ -25,20 +26,20 @@ class Game:
         self.role_map: Dict[str, Role] = {}
         self.faction_map: Dict[str, Faction] = {}
         self.roles: List[str] = []
-        self.night: bool = True
-        self.day: int = 0
+        self.day_num: int = 0
         self.days: List[Optional[Day]] = [None]
         self.nights: List[Optional[Night]] = [None]
+        self.day = None
+        self.night = None
         self.duels: int = 2
         self.searches: int = 2
         self.bandit_night: int = 3
         self.bandit_morning: bool = True
         self.rioters: Set[discord.Member] = set()
-        self.new_night()
         self.reveal_dead: bool = True
         self.voting: Optional[Vote] = None
         self.stats: Mapping[str, int] = defaultdict(int)
-        self.controller: Controller = Controller()
+        self.panel: ControlPanel = bot.get_cog('Panel Sterowania')
 
     def calculate_stats(self) -> None:
         self.stats = defaultdict(int)
@@ -47,24 +48,42 @@ class Game:
                 self.stats[postacie.give_faction(role.name)] += 1
 
     async def new_day(self) -> None:
-        self.days.append(Day())
-        self.day += 1
-        self.night = False
+        day = Day(self, self.panel.state_msg)
+        self.days.append(day)
+        self.day = day
+        self.night = None
+        self.day_num += 1
         tasks = []
-        self.town_win()
         for player in self.player_map.values():
             tasks.append(player.new_day())
-        for member in get_dead_role().members:
-            if not self.player_map[member].role_class.revealed:
-                tasks.append(self.player_map[member].role_class.reveal())
-        await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            self.town_win()
+        except GameEnd:
+            for member in get_dead_role().members:
+                if not self.player_map[member].role_class.revealed:
+                    tasks.append(self.player_map[member].role_class.reveal(verbose=False))
+            raise
+        else:
+            for member in get_dead_role().members:
+                if not self.player_map[member].role_class.revealed:
+                    tasks.append(self.player_map[member].role_class.reveal())
+        finally:
+            tasks.append(self.panel.morning_reset())
+            await asyncio.gather(*tasks)
+            await get_town_channel().send(f'=\nDzień {self.day_num}')
+            await get_town_channel().edit(sync_permissions=True)
         self.calculate_stats()
         self.inqui_win()
         self.morning_bandits_win()
 
-    def new_night(self) -> None:
-        self.nights.append(Night())
-        self.night = True
+    async def new_night(self) -> None:
+        self.night = Night()
+        if self.day:
+            await self.day.state.cleanup()
+        self.day = None
+        self.nights.append(self.night)
+        await self.panel.evening()
+        await get_town_channel().set_permissions(get_player_role(), send_messages=False)
         self.evening_bandits_win()
 
     def make_factions(self, roles, _) -> None:
@@ -77,6 +96,7 @@ class Game:
                     pass
 
     def add_pair(self, member: discord.Member, role: str) -> None:
+        role = role.capitalize()
         self.player_map[member] = Player(member, role)
         self.role_map[role] = Role(role, self.player_map[member])
         self.player_map[member].role_class = self.role_map[role]
@@ -87,9 +107,9 @@ class Game:
             if not player.role_class.revealed:
                 tasks.append(player.role_class.reveal())
         tasks.append(self.message.unpin())
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await asyncio.gather(*tasks)
 
-    async def winning(self, reason: str, faction: str):  # TODO: Chamge winning mechanizm
+    async def winning(self, reason: str, faction: str):  # TODO: Change winning mechanism
         c = ':scroll:{}:scroll:\n**WYGRALIŚCIE!**'.format(reason)
         for member, player in self.player_map.items():
             if give_faction(player.role) == faction:
@@ -105,6 +125,13 @@ class Game:
         self.player_map[second].role_class = self.role_map[frole]
         self.player_map[first].role_class = self.role_map[srole]
         return srole, frole
+
+    def replace_player(self, first, second):
+        player = self.player_map[first]
+        self.player_map[second] = player
+        self.player_map.pop(first)
+        player.member = second
+        return player.role
 
     def inqui_win(self) -> None:
         g = self.stats.get
@@ -126,26 +153,32 @@ class Game:
             raise GameEnd('{} posiada posążek o poranku'.format(role.replace('_', ' ')), 'Miasto')
 
     def evening_bandits_win(self) -> None:
-        if self.day == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == 'Bandyci' \
+        if self.day_num == self.bandit_night and not self.bandit_morning and self.statue.faction_holder == 'Bandyci' \
                 and self.statue.holder:
             raise GameEnd('Bandyci odpływają z posążkiem', 'Bandyci')
 
     def morning_bandits_win(self) -> None:
         if self.statue.faction_holder == 'Bandyci' and self.statue.holder and (
-                self.day > self.bandit_night or (self.bandit_morning and self.day == self.bandit_night)):
+                self.day_num > self.bandit_night or (self.bandit_morning and self.day_num == self.bandit_night)):
             raise GameEnd('Bandyci odpływają z posążkiem', 'Bandyci')
 
     @property
     def voting_in_progress(self) -> bool:
-        return self.voting is not None
+        return self.day is not None and hasattr(self.day.state, 'register_vote')
+
+    @property
+    def night_now(self) -> bool:
+        return self.night is not None
 
     async def on_die(self, reason, player) -> None:
-        await self.controller.die(player.member)
+        await self.panel.die(player.member)
         self.calculate_stats()
-        if reason == 'herbs':
+        if self.day:
+            await self.day.state.on_die(player.member, reason)
+        if reason == 'herbs':  # TODO: Discuss if only herbs
             self.statue.day_search(player.member)
         self.indian_win()
-        if not self.night:
+        if not self.night_now:
             self.inqui_win()
             if reason != 'herbs':
                 self.statue.day_search(player.member)

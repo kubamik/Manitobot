@@ -1,8 +1,8 @@
 from discord.ext import commands
 
-from .cheks import manitou_cmd, player_cmd
+from .my_checks import manitou_cmd, player_cmd
 from .converters import MyMemberConverter
-from .errors import DayOnly, DuelInProgress, SelfDareError
+from .errors import DayOnly, DuelInProgress, SelfChallengeError
 from .utility import *
 
 
@@ -11,10 +11,10 @@ class Pojedynki(commands.Cog):
         self.bot = bot
 
     async def cog_check(self, ctx):
-        if bot.game.night:
-            raise DayOnly('Can\'t use this command during night')
-        if bot.game.days[-1].duel and not czy_manitou(ctx):
-            raise DuelInProgress('Can\'t use this command during duel')
+        if bot.game.night_now:
+            raise DayOnly
+        if bot.game.days[-1].duel and not if_manitou(ctx):
+            raise DuelInProgress
         return True
 
     @commands.command(name='wyzywam')
@@ -24,7 +24,7 @@ class Pojedynki(commands.Cog):
         """Wyzywa podaną osobę na pojedynek"""
         member = gracz
         if member == ctx.author:
-            raise SelfDareError('Player tried to dare itself')
+            raise SelfChallengeError
         bot.game.days[-1].add_dare(ctx.author, member)
         await bot.game.days[-1].if_start(ctx.author, member)  # TODO: Implement this line in duels
 

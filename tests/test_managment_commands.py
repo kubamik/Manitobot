@@ -6,10 +6,10 @@ from discord.ext.commands.view import StringView
 
 import manitobot.basic_models
 import manitobot.management_commands
-from .bases import BaseCommandTestCase
+from bases import BaseTestCase
 
 
-class ManagmentCommands(BaseCommandTestCase):
+class ManagmentCommands(BaseTestCase):
     def setUp(self) -> None:
         self.ctx = Context(prefix="", message=AsyncMock(), bot=AsyncMock(), view=StringView('command osoba'))
         self.convert = self.create_patch('manitobot.management_commands.MyMemberConverter.convert', autospec=True)

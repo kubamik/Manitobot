@@ -40,7 +40,7 @@ class Funny(commands.Cog, name='HONK'):
         await ctx.send("NOOT NOOT")
     
     @commands.command(name='ważnawiadomość', hidden=True)
-    async def honk9(self, ctx, osoba: MyMemberConverter(player_only=False) = None):
+    async def honk9(self, ctx, *, osoba: MyMemberConverter(player_only=False) = None):
         member = osoba
         if member:
             await ctx.send(member.mention)

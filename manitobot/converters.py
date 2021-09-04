@@ -31,13 +31,22 @@ class MyMemberConverter(commands.MemberConverter):
             nick = nick.rpartition('(')[0]
         return nick.lower()
 
-    @classmethod
-    def nickname_fit(cls, nick: str) -> Optional[discord.Member]:
-        nick = cls.transform_nickname(nick)
-        for player in set(get_player_role().members + get_dead_role().members):
-            if cls.transform_nickname(player.display_name) == nick:
+    def nickname_fit(self, nick: str) -> Optional[discord.Member]:
+        nick = self.transform_nickname(nick)
+        members = get_guild().members if not self.player_only else get_player_role().members
+        member = None
+        for player in members:
+            player_nick = self.transform_nickname(player.display_name)
+            if player_nick == nick:
                 return player
-        return None
+            elif nick in player_nick:
+                if len(nick) * 3 < len(player_nick) * 2 or member:
+                    member = ...
+                else:
+                    member = player
+        if member is Ellipsis or member is None:
+            return None
+        return member
 
     async def convert(self, ctx: commands.Context, name: str) -> discord.Member:
         member = self.nickname_fit(name)
@@ -46,11 +55,10 @@ class MyMemberConverter(commands.MemberConverter):
                 member = await super().convert(ctx, name)
             except commands.BadArgument:
                 raise commands.MemberNotFound(name)
-            else:
-                if member not in get_guild().members:
-                    member = get_member(member.id)
-                if member is None:
-                    raise commands.MemberNotFound(name)
+            if member not in get_guild().members:
+                member = get_member(member.id)
+            if member is None:
+                raise commands.MemberNotFound(name)
         if self.player_only and member not in get_player_role().members:
             raise MemberNotPlaying('This person is not playing.')
         return member

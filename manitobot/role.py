@@ -1,10 +1,13 @@
 import inspect
 
+import typing
+
 from . import permissions
 from .activities import Activity
 from .bot_basics import bot
 from .converters import converter
 from .night_comunicates import operation_send, new_night_com
+from .player import Player
 from .utility import *
 
 
@@ -12,12 +15,12 @@ class Role(Activity):
     def __init__(self, name, player):
         self.roled_members = [None]
         self.name = name
-        self.player = player
+        self.player: Player = player
         self.revealed = False
         self.die_reason = None
         self.faction = None
         self.worked = True
-        self.member = None
+        self.member: typing.Optional[Player] = None
         try:
             self.ability_start = permissions.role_activities[name][0]
             self.count = permissions.role_activities[name][1]
@@ -26,6 +29,9 @@ class Role(Activity):
             self.ability_start = None
             self.count = None
             self.my_activities = {}
+
+    def can_use(self, ability: str):
+        return ability in self.my_activities and self.my_activities[ability] != 0
 
     async def new_night_start(self):
         output = ""
@@ -40,9 +46,9 @@ class Role(Activity):
             raise InvalidRequest("{} nie żyje i nie jest ujawniony".format(self.name))
         if self.player.member in get_dead_role().members:
             raise InvalidRequest()
-        if bot.game.day < self.ability_start:
+        if bot.game.day_num < self.ability_start:
             raise InvalidRequest()
-        if bot.game.day != 0 and self.ability_start == -1:
+        if bot.game.day_num != 0 and self.ability_start == -1:
             raise InvalidRequest()
         if self.player.sleeped:
             self.roled_members.append(None)
@@ -141,8 +147,8 @@ class Role(Activity):
           pass'''
 
         # reset player
-        if not any([bot.game.night, self.revealed, not bot.game.reveal_dead]):
-            await self.reveal(True)
+        if not any([bot.game.night_now, self.revealed, not bot.game.reveal_dead]):
+            await self.reveal(dead=True)
         elif not nickname.startswith('+'):
             try:
                 await gracz.edit(nick='+' + nickname)
@@ -170,13 +176,17 @@ class Role(Activity):
             pass
 
     @property
-    def alive(self):
+    def alive(self) -> bool:
         return self.player.member not in get_dead_role().members
 
+    @property
+    def qualified_name(self) -> str:
+        return self.name.replace('_', ' ')
+
     def work(self):
-        if bot.game.day < self.ability_start:
+        if bot.game.day_num < self.ability_start:
             return False
-        if bot.game.day != 0 and self.ability_start == -1:
+        if bot.game.day_num != 0 and self.ability_start == -1:
             return False
         if self.player.member in get_dead_role().members and self.revealed:
             return False

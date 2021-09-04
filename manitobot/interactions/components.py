@@ -59,8 +59,13 @@ class SelectOption:
     def __init__(self, label, value, description=None, emoji=None, default=False):
         if not isinstance(label, str) or description and not isinstance(description, str):
             raise TypeError('label and description have to be str')
-        if emoji and not isinstance(emoji, discord.PartialEmoji):
+        if emoji and not isinstance(emoji, (discord.PartialEmoji, str, discord.Emoji)):
             raise TypeError('emoji has to be the type of PartialEmoji')
+        elif emoji:
+            if isinstance(emoji, str):
+                emoji = discord.PartialEmoji(name=emoji)
+            elif isinstance(emoji, discord.Emoji):
+                emoji = discord.PartialEmoji(name=emoji.name, animated=emoji.animated, id=emoji.id)
         if not isinstance(default, bool):
             raise TypeError('default has to be boolean')
 

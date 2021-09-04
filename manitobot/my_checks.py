@@ -5,23 +5,22 @@ from discord.ext import commands
 from . import game
 from . import mafia
 from .basic_models import NotAGame
-from .bot_basics import bot
 from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
     GameStartedException, DayOnly, VotingInProgress, \
     VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, \
     NotTownChannel, DuelInProgress
 from .starting import if_game
-from .utility import czy_manitou, get_manitou_role, get_player_role, on_voice, \
-    get_town_channel
+from .utility import if_manitou, get_manitou_role, get_player_role, on_voice, \
+    get_town_channel, if_player
 
 
 # ===================== Game checks =====================
 
-def game_check(rev=False) -> Callable:
+def game_check(reverse=False) -> Callable:
     async def predicate(_):
-        if not if_game() and not rev:
+        if not if_game() and not reverse:
             raise GameNotStarted('This command can be used only during game')
-        elif if_game() and rev:
+        elif if_game() and reverse:
             raise GameStartedException('Command can\'t be used during game.')
         return True
 
@@ -29,10 +28,10 @@ def game_check(rev=False) -> Callable:
 
 
 def ktulu_check() -> Callable:
-    async def predicate(_):
-        if isinstance(bot.game, NotAGame):
+    async def predicate(ctx):
+        if isinstance(ctx.bot.game, NotAGame):
             raise GameNotStarted('Game hasn\'t been started.')
-        if not isinstance(bot.game, game.Game):
+        if not isinstance(ctx.bot.game, game.Game):
             raise WrongGameType('This game type does not support this command.')
         return True
 
@@ -40,10 +39,10 @@ def ktulu_check() -> Callable:
 
 
 def mafia_check() -> Callable:
-    async def predicate(_):
-        if isinstance(bot.game, NotAGame):
+    async def predicate(ctx):
+        if isinstance(ctx.bot.game, NotAGame):
             raise GameNotStarted('Game hasn\'t been started.')
-        if not isinstance(bot.game, mafia.Mafia):
+        if not isinstance(ctx.bot.game, mafia.Mafia):
             raise WrongGameType('This game type does not support this command.')
         return True
 
@@ -54,7 +53,7 @@ def mafia_check() -> Callable:
 
 def manitou_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
-        if not czy_manitou(ctx):
+        if not if_manitou(ctx):
             raise commands.MissingRole(get_manitou_role())
         return True
 
@@ -63,19 +62,28 @@ def manitou_cmd() -> Callable:
 
 def player_cmd() -> Callable:
     def predicate(ctx: commands.Context) -> bool:
-        if ctx.author not in get_player_role().members:
-            raise AuthorNotPlaying('Author have to be playing to run this command.')
+        if not if_player(ctx):
+            raise AuthorNotPlaying
         return True
 
     return commands.check(predicate)
 
 
-def playing_cmd(rev=False) -> Callable:
+def player_or_manitou_cmd() -> Callable:
     def predicate(ctx: commands.Context) -> bool:
-        if not rev and ctx.author not in bot.game.player_map:
-            raise AuthorNotPlaying('<--')
-        elif rev and if_game() and ctx.author in bot.game.player_map:
-            raise AuthorPlaying('<--')
+        if not (if_player(ctx) or if_manitou(ctx)):
+            raise AuthorNotPlaying
+        return True
+
+    return commands.check(predicate)
+
+
+def playing_cmd(reverse=False) -> Callable:
+    def predicate(ctx: commands.Context) -> bool:
+        if not reverse and ctx.author not in ctx.bot.game.player_map:
+            raise AuthorNotPlaying
+        elif reverse and if_game() and ctx.author in ctx.bot.game.player_map:
+            raise AuthorPlaying
         return True
 
     return commands.check(predicate)
@@ -84,7 +92,7 @@ def playing_cmd(rev=False) -> Callable:
 def on_voice_check() -> Callable:
     def predicate(ctx: commands.Context) -> bool:
         if not on_voice(ctx):
-            raise AuthorNotOnVoice('<--')
+            raise AuthorNotOnVoice
         return True
 
     return commands.check(predicate)
@@ -92,31 +100,31 @@ def on_voice_check() -> Callable:
 
 # ===================== Time and events checks =====================
 
-def day_only(rev=False):
-    def predicate(_):
-        if not rev and bot.game.night:
-            raise DayOnly('<--')
-        elif rev and not bot.game.night:
-            raise NightOnly('<--')
+def day_only(reverse=False):
+    def predicate(ctx):
+        if not reverse and ctx.bot.game.night_now:
+            raise DayOnly
+        elif reverse and not ctx.bot.game.night_now:
+            raise NightOnly
         return True
 
     return commands.check(predicate)
 
 
-def voting_check(rev=False):
-    def predicate(_):
-        if bot.game.voting_in_progress and not rev:
-            raise VotingInProgress('<--')
-        elif not bot.game.voting_in_progress and rev:
-            raise VotingNotInProgress('<--')
+def voting_check(reverse=False):
+    def predicate(ctx):
+        if ctx.bot.game.voting_in_progress and not reverse:
+            raise VotingInProgress
+        elif not ctx.bot.game.voting_in_progress and reverse:
+            raise VotingNotInProgress
         return True
 
     return commands.check(predicate)
 
 
 def duel_check():
-    def predicate(_):
-        if bot.game.days[-1].duel:
+    def predicate(ctx):
+        if ctx.bot.game.days[-1].duel:
             raise DuelInProgress('Can\'t use this command during duel')
         return True
 

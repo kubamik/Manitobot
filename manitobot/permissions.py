@@ -6,8 +6,8 @@ role_activities = {
     "Opój": (1, 2, {"drink": 2, "refuse": -1}),
     "Pastor": (0, -1, {"pasteur": -1}),
     "Dziwka": (-1, -1, {"dziw": 1}),
-    "Dobry_Rew": (-1, 0, {"revoling": 0}),
-    "Zły_Rew": (-1, 0, {"revoling": 0}),
+    "Dobry_Rew": (-1, 0, {"revoling": -1}),
+    "Zły_Rew": (-1, 0, {"revoling": -1}),
     "Janosik": (1, 1, {"wave": 1, "die": "hang_win"}),
     "Burmistrz": (-1, 1, {"peace": 1}),
     "Hazardzista": (2, 1, {"refuse": -1, "play": -1, "die": "shooted", "refused": "Nikt nie ginie"}),
@@ -19,7 +19,7 @@ role_activities = {
     "Cicha_Stopa": (1, -1, {"refuse": -1, "plant": -1, "start": "has"}),
     "Złodziej": (1, 1, {"start": "unwork", "refuse": -1, "search": 1, "refused": "Złodziej nie przejmuje posążka"}),
     "Purpurowa_Przyssawka": (
-    1, 1, {"start": "unwork", "refuse": -1, "search": 1, "refused": "Purpurowa_Przyssawka nie przejmuje posążka"}),
+        1, 1, {"start": "unwork", "refuse": -1, "search": 1, "refused": "Purpurowa_Przyssawka nie przejmuje posążka"}),
     "Szuler": (1, 1, {"refuse": -1, "cheat": 1, "refused": "Szuler nie przejmuje posążka"}),
     "Szamanka": (1, 1, {"refuse": -1, "herb": 1}),
     "Lornecie_Oko": (1, 1, {"refuse": -1, "who": 1}),
@@ -33,11 +33,11 @@ role_activities = {
     "Spowiednik": (1, 1, {"eat": 1, "finoff": 1, "refuse": -1, "die": "angelize"}),
     "Biskup": (1, 1, {"burn": 1}),
     "Lusterko": (1, -1, {"start": "uncopy", "mirror": -1, "copy": 1}),
-    "Lucky_Luke": (1, -1, {"start": "look", "revoling": 0, "search": -1, "kill": 1, "follow": 1, "who": -1,
+    "Lucky_Luke": (1, -1, {"start": "look", "revoling": -1, "search": -1, "kill": 1, "follow": 1, "who": -1,
                            "refused": "Lucky_Luke nie przejmuje posążka"})
 }
 
-role_abilities = {
+SPEC_ROLES = {
     "inqui_change_on_death": "Anioł",
     "decline_duels": "Szeryf"
 }
@@ -49,7 +49,7 @@ def get_activity(name, obj):
                    obj.mark_arrest, obj.deactivate],
         "wins": [obj.if_day, obj.if_duel, obj.reveal, obj.change_duel],
         "hang_win": [obj.hang_win],
-        "peace": [obj.if_day, obj.reveal, obj.peace_make, obj.if_hang_time],
+        "peace": [obj.if_day, obj.reveal, obj.make_peace],
         "dziw": [obj.if_active, obj.if_not_self, obj.check_role, obj.deactivate],
         "pasteur": [obj.if_active, obj.set_use, obj.check_faction, obj.deactivate],
         "drink": [obj.if_active, obj.if_protected, obj.deactivate, obj.sleep, obj.set_use],

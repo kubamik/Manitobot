@@ -1,5 +1,8 @@
 from .utility import *
 
+
+# TODO: Duel, Voting, Summary as states, night coms combined from phrases
+
 # [(text, activity to format number)], len can be greater than 1
 new_night_com = {
     "Szeryf": [("Wybierz osobę, którą chcesz zamknąć. Użyj komendy `&zamk NICK`", "arrest")],
