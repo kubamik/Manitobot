@@ -92,7 +92,7 @@ class Game:
                     pass
 
     def add_pair(self, member: discord.Member, role: str) -> None:
-        role = role.capitalize()
+        role = '_'.join((r.capitalize() for r in role.split('_')))
         self.player_map[member] = Player(member, role)
         self.role_map[role] = Role(role, self.player_map[member])
         self.player_map[member].role_class = self.role_map[role]

@@ -360,7 +360,7 @@ class Voting(DayState):
         embed = discord.Embed(title=em_title, colour=discord.Colour(0x00aaff), description=description)
         options = [SelectOption(option, option) for option in self.votes]
         vnum = min(self.required_votes, len(self.votes))
-        components = [[Select('voting', options, min_values=vnum, max_values=vnum)]]
+        components = [[Select('add_vote', options, min_values=vnum, max_values=vnum)]]
         msg = await get_town_channel().send(content=get_player_role().mention, embed=embed, components=components)
         return ComponentMessage.from_message(msg, components=components)
 

@@ -7,6 +7,8 @@ import discord
 class ComponentMessage:
     """Like discord.Message but with support for message components
     """
+    components = None
+
     def __init__(self, *, state, channel, data):
         self.component_data = data.pop('components', list())
         self.message = discord.Message(state=state, channel=channel, data=data)
@@ -33,6 +35,16 @@ class ComponentMessage:
 
     def __getattr__(self, item):
         return getattr(self.message, item)
+
+    async def edit(self, **fields):
+        await self.message.edit(**fields)
+        if 'components' in fields:
+            self.components = fields['components']
+
+    def _update(self, data):
+        self.component_data = data.pop('components', list())
+        self.message._update(data)
+        self._handle_components()
 
 
 class ComponentTypes(IntEnum):
@@ -103,10 +115,15 @@ class Button:
     def __init__(self, style, label=None, emoji=None, url=None, disabled=False, custom_id=None, **_):
         if not isinstance(style, ButtonStyle):
             raise TypeError('style has to be one of ButtonStyle')
-        if len(label) > 80:
+        if label and len(label) > 80:
             raise discord.InvalidArgument('label cannot be longer than 80 characters')
-        if emoji and not isinstance(emoji, discord.PartialEmoji):
+        if emoji and not isinstance(emoji, (discord.PartialEmoji, str, discord.Emoji)):
             raise TypeError('emoji has to be the type of PartialEmoji')
+        elif emoji:
+            if isinstance(emoji, str):
+                emoji = discord.PartialEmoji(name=emoji)
+            elif isinstance(emoji, discord.Emoji):
+                emoji = discord.PartialEmoji(name=emoji.name, animated=emoji.animated, id=emoji.id)
         if not isinstance(disabled, bool):
             raise TypeError('disabled must be boolean')
 

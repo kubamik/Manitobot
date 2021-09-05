@@ -129,7 +129,7 @@ def help_format(command: str) -> str:
 
 
 def playerhelp() -> str:
-    comm = ['postać', 'żywi', 'bunt', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam']
+    comm = ['postać', 'żywi', 'bunt', 'pax', 'wyzywam', 'odrzucam', 'przyjmuję', 'zgłaszam', 'cofam', 'vpriv']
     msg = ""
     for c in comm:
         msg += help_format(c)
@@ -161,12 +161,13 @@ async def remove_roles(members: List[discord.Member], *roles: discord.Role) -> N
 
 async def send_to_manitou(content: Optional[str] = None,
                           embed: Optional[discord.Embed] = None,
-                          file: Optional[discord.File] = None) -> None:
+                          file: Optional[discord.File] = None,
+                          components: Optional[List[list]] = None) -> None:
     if CONFIG['DM_Manitou']:
         for member in get_manitou_role().members:
-            await member.send(content, embed=embed, file=file)
+            await member.send(content, embed=embed, file=file, components=components)
     else:
-        await get_manitou_notebook().send(content, embed=embed, file=file)
+        await get_manitou_notebook().send(content, embed=embed, file=file, components=components)
 
 
 async def send_game_channels(content: str) -> None:

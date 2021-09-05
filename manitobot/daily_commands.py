@@ -109,6 +109,7 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
     async def lock(self, ctx):
         """Ⓜ/&repblok/Blokuje lub odblokowuje dodawanie nowych zgłoszeń"""
         await self.invoke_state(ctx)
+        await self.bot.game.panel.change_removable(ctx.command.callback.__name__)
 
     @commands.command(name='zgłaszam')
     @player_or_manitou_cmd()

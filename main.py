@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import asyncio
 import logging
 import os
 import discord
@@ -9,13 +8,11 @@ from discord.ext import commands
 from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
-from manitobot.interactions import Select, SelectOption
 from manitobot.errors import MyBaseException, VotingNotAllowed
 # from manitobot.keep_alive import keep_alive
 from manitobot.interactions.interaction import ComponentInteraction
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
-from manitobot.starting import if_game
-from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou
+from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
 
 
 @bot.event
@@ -65,11 +62,11 @@ async def you_lost(ctx):
             pass
 
 
-@bot.component_callback('voting')
+@bot.component_callback('add_vote')
 async def get_vote(ctx: ComponentInteraction):
     try:
         if ctx.message.id != bot.game.day.state.vote_msg.id:
-            raise AttributeError
+            raise VotingNotAllowed
         content = await bot.game.day.state.register_vote(ctx.author, ctx.values)
     except AttributeError:
         raise VotingNotAllowed from None
@@ -133,8 +130,6 @@ async def on_component_interaction(interaction):
 if __name__ == '__main__':
     logging.basicConfig(filename=LOG_FILE, format=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s',
                         level=logging.WARNING)
-    from dotenv import load_dotenv
-    load_dotenv()
     token = os.environ.get('TOKEN')
     #keep_alive()
 

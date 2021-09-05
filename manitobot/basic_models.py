@@ -67,6 +67,10 @@ class ManiBot(discord.ext.commands.Bot):
 
         self.component_callbacks[callback.custom_id] = callback
 
+    def remove_component_callback(self, custom_id):
+        if custom_id in self.component_callbacks:
+            self.component_callbacks.pop(custom_id)
+
     def component_callback(self, custom_id):
         """Decorator converting function passed into ComponentCallback and registering it into bot"""
 

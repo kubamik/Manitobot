@@ -1,4 +1,5 @@
 from abc import ABC
+from typing import Optional
 
 import discord
 
@@ -191,6 +192,8 @@ class CommandInteraction(BaseInteraction):
 class ComponentInteraction(BaseInteraction):
     """Interaction get from discord when user interacted with message component.
     """
+    message: Optional[ComponentMessage]
+
     def __init__(self, state, channel, data):
         super(ComponentInteraction, self).__init__(state, channel, data)
 
@@ -215,6 +218,9 @@ class ComponentInteraction(BaseInteraction):
         await self._state.http.ack_interaction_update(self.token, self.id)
 
     async def edit_message(self, **fields):
+        if self.acked:
+            raise discord.ClientException('Response already created')
+
         try:
             content = fields['content']
         except KeyError:
@@ -262,10 +268,10 @@ class ComponentInteraction(BaseInteraction):
         else:
             fields['components'] = components
 
-        print(fields)
         if fields:
-            data = await self._state.http.interaction_edit_message(self.token, self.id, **fields)
-            self.message._update(data)
+            self.acked = True
+            await self._state.http.interaction_edit_message(self.token, self.id, **fields)
+            self.message._update(fields)
 
         if delete_after is not None:
             await self.message.delete(delay=delete_after)

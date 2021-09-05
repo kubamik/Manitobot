@@ -86,16 +86,16 @@ else:
     PING_MESSAGE_ID = None
 
 
-EMOJI2COMMAND: typing.Dict[str, str] = {  # for DayState methods
-    '⏪': 'undo',
-    '❌': 'cancel',
-    '🗳️': 'voting',
-    '🎲': 'random',
-    '🔒': 'lock',
-    '⏩': 'end',
+EMOJI2COMMAND: typing.Dict[str, typing.Tuple[str, str]] = {  # for DayState methods - emoji: (label, method_name)
+    '⏪': ('Cofnij', 'undo'),
+    '❌': ('Anuluj', 'cancel'),
+    '🗳️': ('Głosowanie', 'voting'),
+    '🎲': ('Wylosuj', 'random'),
+    '🔒': ('Blokuj', 'lock'),
+    '⏩': ('Dalej', 'end')
 }
 
-REMOVABLE: typing.List[str] = ['🔒']  # state emojis to accept in `reaction_remove` event
+REMOVABLE: typing.List[str] = [EMOJI2COMMAND['🔒'][1]]  # state commands to accept in `reaction_remove` event
 
 RULLER = '=' * 48
 

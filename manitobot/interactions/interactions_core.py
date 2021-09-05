@@ -10,7 +10,7 @@ from discord import InvalidArgument
 from discord.ext import commands
 
 from . import slash_args
-from .components import ComponentTypes, ComponentCallback
+from .components import ComponentTypes
 from .commands_types import CommandsTypes
 
 Permissions = namedtuple('Permissions', ['id', 'permission', 'type'])

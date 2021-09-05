@@ -174,7 +174,7 @@ class MembersNotPlaying(commands.MemberNotFound, MyBaseException):
 
 
 class VotingNotAllowed(commands.CommandError, MyBaseException):
-    msg = 'Nie trwa teraz żadne głosowanie'
+    msg = 'Nie trwa teraz żadne głosowanie lub nie możesz głosować'
 
 
 class WrongGameType(commands.CommandError, MyBaseException):
