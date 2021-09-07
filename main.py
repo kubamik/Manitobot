@@ -1,24 +1,18 @@
+#!/usr/bin/env python3
+
 import logging
 import os
-
-
 import discord
 from discord.ext import commands
 
-import day_slash_commands
-import dev_commands
-import funny_commands
-import management_commands
-import manitou_commands
-import player_commands
-import start_commands
-from bot_basics import bot
-from errors import MyBaseException
-#from keep_alive import keep_alive
+from manitobot import start_commands, manitou_commands, funny_commands, \
+    management_commands, dev_commands, player_commands
+from manitobot.bot_basics import bot
+from manitobot.errors import MyBaseException, VotingNotAllowed
+# from manitobot.keep_alive import keep_alive
+from manitobot.interactions.interaction import ComponentInteraction
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER
-from starting import if_game
-from utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp, send_to_manitou, get_town_channel
-
+from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
 
 
 @bot.event
@@ -68,30 +62,33 @@ async def you_lost(ctx):
             pass
 
 
+@bot.component_callback('add_vote')
+async def get_vote(ctx: ComponentInteraction):
+    try:
+        if ctx.message.id != bot.game.day.state.vote_msg.id:
+            raise VotingNotAllowed
+        content = await bot.game.day.state.register_vote(ctx.author, ctx.values)
+    except AttributeError:
+        raise VotingNotAllowed from None
+    else:
+        await ctx.respond(content, ephemeral=True)
+
+
 @bot.listen('on_message')
 async def my_message(m):
-    try:
-        if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip()[0] == '&':
-            return
-    except IndexError:
-        pass
-
+    if m.type != discord.MessageType.default or m.author == bot.user or m.content.strip().startswith('&'):
+        return
     if m.channel.type != discord.ChannelType.private:
         return
-
-    if not if_game() or not bot.game.voting_in_progress:
-        await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
-        return
-
-    votes = [vote.strip() for vote in m.content.split(',')]
     try:
-        res, control = bot.game.voting.register_vote(get_member(m.author.id), votes)
+        votes = bot.game.day.state.parse_vote(m.content)
+        content = await bot.game.day.state.register_vote(get_member(m.author.id), votes)
     except MyBaseException as e:
         await m.channel.send(e.msg)
+    except AttributeError:
+        await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
     else:
-        await m.channel.send('Zarejestrowałem twój głos(-y) na {}'.format(', '.join(res)))
-        if control:
-            await send_to_manitou('Wszyscy grający oddali głosy')
+        await m.author.send(content)
 
 
 @bot.event
@@ -105,16 +102,29 @@ async def on_message(message):
 
 
 @bot.event
-async def on_interaction(interaction):
+async def on_command_interaction(interaction):
     try:
         try:
-            interaction.command = bot.slash_commands[interaction.command_id]
+            interaction.command = bot.app_commands[interaction.command_id]
         except (KeyError, AttributeError):
             raise commands.CommandNotFound(interaction.name)
     except Exception as error:
         bot.dispatch('interaction_error', interaction, error)
     else:
-        await bot.invoke_slash(interaction)
+        await bot.invoke_app_command(interaction)
+
+
+@bot.event
+async def on_component_interaction(interaction):
+    if not hasattr(bot, 'component_callbacks'):
+        bot.component_callbacks = dict()
+    callback = bot.component_callbacks.get(interaction.custom_id)
+    try:
+        if not callback:
+            raise commands.CommandNotFound(interaction.custom_id)
+        await callback.callback(interaction)
+    except Exception as exc:
+        interaction.dispatch('interaction_error', interaction, exc)
 
 
 if __name__ == '__main__':
@@ -122,6 +132,7 @@ if __name__ == '__main__':
                         level=logging.WARNING)
     token = os.environ.get('TOKEN')
     #keep_alive()
+
     try:
         bot.add_cog(dev_commands.DevCommands(bot))
         bot.add_cog(funny_commands.Funny(bot))
@@ -129,10 +140,11 @@ if __name__ == '__main__':
         bot.add_cog(start_commands.Starting(bot))
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(management_commands.Management(bot))
-        bot.load_extension('error_handler')
+        bot.load_extension('manitobot.error_handler')
+        bot.load_extension('manitobot.day_app_commands')
         bot.get_command('g').help = playerhelp()
         bot.get_command('m').help = manitouhelp()
     except AttributeError:
         pass
-    bot.loop.create_task(bot.overwrite_slash_commands())
+    bot.loop.create_task(bot.overwrite_app_commands())
     bot.run(token)

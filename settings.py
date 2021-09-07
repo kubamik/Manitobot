@@ -1,4 +1,6 @@
-PROD = True  # if ktulu_serwer
+import typing
+
+PROD = False  # if ktulu_serwer
 
 if PROD:
     GUILD_ID = 710039683798794270
@@ -22,14 +24,13 @@ if PROD:
     HANGED_ID = 710051077718016013
     NEWCOMMER_ID = 720235063144349720
     GUN_ID = 717099650087387158
-    OTHER_MANITOU_ROLE_ID = 779432457002156133
-    FAC2CHANN_ID = {
+    FAC2CHANN_ID: typing.Dict[str, int] = {
         "Bandyci": 710048209115807753,
         "Indianie": 710048231924564008,
         "Ufoki": 710048271980167259,
         "Inkwizycja": 710048333762396191
     }
-    FAC2EMOJI = {
+    FAC2EMOJI: typing.Dict[str, int] = {
         "Bandyci": 770345428977582090,
         "Indianie": 770345346983002209,
         "Ufoki": 770345372865265724,
@@ -64,7 +65,6 @@ else:
     HANGED_ID = 701462743504519308
     NEWCOMMER_ID = 720307369245933649
     GUN_ID = 717105928067088384
-    OTHER_MANITOU_ROLE_ID = 779433955299819581
     FAC2CHANN_ID = {
         "Bandyci": 694112800221560872,
         "Indianie": 706155488202457229,
@@ -85,10 +85,22 @@ else:
     PING_GREEN_ID = None
     PING_MESSAGE_ID = None
 
-RULLER = "=" * 48
+
+EMOJI2COMMAND: typing.Dict[str, typing.Tuple[str, str]] = {  # for DayState methods - emoji: (label, method_name)
+    '⏪': ('Cofnij', 'undo'),
+    '❌': ('Anuluj', 'cancel'),
+    '🗳️': ('Głosowanie', 'voting'),
+    '🎲': ('Wylosuj', 'random'),
+    '🔒': ('Blokuj', 'lock'),
+    '⏩': ('Dalej', 'end')
+}
+
+REMOVABLE: typing.List[str] = [EMOJI2COMMAND['🔒'][1]]  # state commands to accept in `reaction_remove` event
+
+RULLER = '=' * 48
 
 CONFIG = {
-    "DM_Manitou": True
+    'DM_Manitou': True
 }
 
 LOG_FILE = 'error.log'

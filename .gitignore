@@ -129,9 +129,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
-error.log
-
+# File created during run
 Postacie.txt
 
+# PyCharm project files
 .idea/
