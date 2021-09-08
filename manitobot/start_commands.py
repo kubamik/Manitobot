@@ -1,16 +1,18 @@
+import asyncio
 from collections import Counter
 
 import discord
 from discord.ext import commands
 
+from settings import RULLER
 from .basic_models import ManiBot
-from .my_checks import manitou_cmd, game_check
+from .my_checks import manitou_cmd, game_check, ktulu_check
 from .errors import NoSuchSet, WrongRolesNumber
 from .game import Game
-from .starting import start_game
+from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
-    get_player_role
-from . import control_panel, roles_commands, sklady, daily_commands
+    get_player_role, get_town_channel
+from . import control_panel, roles_commands, sklady, daily_commands, postacie as post
 
 
 class Starting(commands.Cog, name='Początkowe'):
@@ -130,11 +132,45 @@ class Starting(commands.Cog, name='Początkowe'):
     @commands.command()
     @manitou_cmd()
     @game_check(reverse=True)
+    async def startsetup(self, ctx, nazwa_skladu, *dodatkowe):
+        """ⓂRozpoczyna grę jak komenda startset, ale nie wysyła postaci do graczy"""
+        set_name = nazwa_skladu
+        if not sklady.set_exists(set_name):
+            raise NoSuchSet
+        roles = sklady.get_set(set_name) + list(dodatkowe)
+        self.check_quantity(roles)
+        async with ctx.typing():
+            await self.add_cogs()
+            await start_game(ctx, *roles, retard=True)
+
+    @commands.command()
+    @manitou_cmd()
+    @game_check(reverse=True)
     async def resume(self, _):
         """ⓂUdaje rozpoczęcie gry, używać gdy bot się wykrzaczy a potrzeba zrobić głosowanie
         """
         await self.add_cogs()
         self.bot.game = Game()
+
+    @commands.command(aliases=['ready'])
+    @manitou_cmd()
+    @ktulu_check()
+    async def deal(self, ctx):
+        """ⓂWysyła do wszystkich graczy ich role
+        """
+        tasks = []
+        game = self.bot.game
+        for member, player in game.player_map.items():
+            role = player.role
+            tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, post.get_role_details(role, role))))
+        await asyncio.gather(*tasks)
+        await send_role_list(game)
+        if not game.message:
+            team = game.print_list(list(game.roles))
+            game.message = msg = await get_town_channel().send(
+                'Rozdałem karty. Liczba graczy: {}\nGramy w składzie:{}'.format(
+                    len(game.roles), team))
+            await msg.pin()
 
     @commands.command(name='gram')
     @game_check(reverse=True)

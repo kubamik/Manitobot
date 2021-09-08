@@ -4,6 +4,7 @@ from . import postacie
 from .errors import NoSuchSet
 
 SETS: Dict[str, List[str]] = {
+    "0": [],
     "1": ["Sędzia"],
     "4": ["Sędzia", "Burmistrz", "Szeryf", "Janosik"],
     "5": ["Sędzia", "Burmistrz", "Szeryf", "Szaman", "Janosik"],

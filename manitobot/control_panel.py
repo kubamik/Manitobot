@@ -27,6 +27,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     def cog_unload(self):
         self.bot.remove_component_callback('sleep')
+        self.bot.remove_component_callback('unsleep')
         self.bot.remove_component_callback('statue')
         self.bot.remove_component_callback('kill')
         self.bot.remove_component_callback('day')
@@ -133,7 +134,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             id_ = button.custom_id.partition('-')[0]
             button.style = style
             button.custom_id = id_ + '-' + action
-        return components
+        return components[0] and components
 
     async def change_removable(self, command):
         components = self.state_msg.components
