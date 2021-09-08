@@ -202,13 +202,17 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             raise MembersNotPlaying
         elif first not in players:
             first, second = second, first
+        send = self.bot.game.message is not None
         if second not in players:
             roles = [get_player_role(), get_dead_role(), get_duel_winner_role(), get_duel_loser_role(),
                      get_searched_role(), get_hanged_role()]
             role = self.bot.game.replace_player(first, second)
             await first.send('**Zostałeś(-aś) usunięty(-a) z gry**')
-            await second.send('Zostałeś(-aś) dodany(-a) do gry zamiast {}. Twoja rola to:\n{}'.format(
-                first.display_name, get_role_details(role, role)))
+            if send:
+                await second.send('Zostałeś(-aś) dodany(-a) do gry zamiast {}. Twoja rola to:\n{}'.format(
+                    first.display_name, get_role_details(role, role)))
+            else:
+                await second.send('Zostałeś(-aś) dodany(-a) do gry zamiast {}.'.format(first.display_name))
             member_roles = [r for r in roles if r in first.roles]
             await first.remove_roles(*member_roles)
             await second.add_roles(*member_roles)
@@ -217,8 +221,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         else:
             role1, role2 = self.bot.game.swap(first, second)
             await self.bot.game.panel.swapping(first, second, role1, role2)
-            await first.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role1, role1)))
-            await second.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role2, role2)))
+            if send:
+                await first.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role1, role1)))
+                await second.send("Zmieniono ci rolę. Twoja nowa rola to:\n{}".format(get_role_details(role2, role2)))
             await ctx.send("**{}** to teraz **{}**\n**{}** to teraz **{}**".format(
                 first.display_name, role1, second.display_name, role2))
 

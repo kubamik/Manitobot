@@ -102,7 +102,8 @@ class Game:
         for player in self.player_map.values():
             if not player.role_class.revealed:
                 tasks.append(player.role_class.reveal())
-        tasks.append(self.message.unpin())
+        if self.message:
+            tasks.append(self.message.unpin())
         await asyncio.gather(*tasks)
 
     async def winning(self, reason: str, faction: str):  # TODO: Change winning mechanism
@@ -200,5 +201,5 @@ class Game:
         self.bandit_morning = False
 
     @staticmethod
-    def print_list(roles, _):
+    def print_list(roles, _=None):
         return postacie.print_list(roles)
