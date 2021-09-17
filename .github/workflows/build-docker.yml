@@ -25,4 +25,11 @@ jobs:
           push: true
           tags: kubamik/manitobot:latest
           
+      - name: Invoke deployment hook
+        uses: distributhor/workflow-webhook@v2
+        env:
+          webhook_url: ${{ secrets.WEBHOOK_URL }}
+          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
+
+          
       
