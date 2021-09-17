@@ -138,7 +138,7 @@ class Game:
 
     def inqui_alone_win(self) -> None:
         if self.stats['Inkwizycja'] and self.stats['Inkwizycja'] == len(get_player_role().members):
-            raise GameEnd('Zostali sami Inkwizytorzy', 'Inkiwzycja')
+            raise GameEnd('Zostali sami Inkwizytorzy', 'Inkwizycja')
 
     def indian_win(self) -> None:
         if self.stats['Indianie'] == len(get_player_role().members):

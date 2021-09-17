@@ -55,11 +55,11 @@ class BaseInteraction(ABC):
     def dispatch(self, *args, **kwargs):
         self._state.dispatch(*args, **kwargs)
 
-    async def ack(self):
+    async def ack(self, ephemeral=False):
         if self.acked:
             raise discord.ClientException('Response already created')
         self.acked = True
-        await self._state.http.ack_interaction(self.token, self.id)
+        await self._state.http.ack_interaction(self.token, self.id, (1 << 6) * ephemeral)
 
     async def respond(self, content=None, *, embed=None, embeds=None,
                       tts=False, allowed_mentions=None, ephemeral=False):
@@ -98,7 +98,7 @@ class BaseInteraction(ABC):
     async def send(self, content=None, *, tts=False, file=None, files=None,
                    embed=None, embeds=None, allowed_mentions=None, ephemeral=False):
         if not self.acked:
-            await self.ack()
+            await self.ack(ephemeral)
 
         payload = {}
         if files is not None and file is not None:

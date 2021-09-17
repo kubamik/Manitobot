@@ -126,8 +126,8 @@ class TestChallenging(BaseStateTest):
         self.assertIn((member1, member2), self.day.challenges)
         self.assertIsInstance(self.day.challenges[0], Challenge)
         channel = self.utility.get_town_channel()
-        channel.send.assert_awaited_once_with('**M1** wyzwał(a) **M2** na pojedynek.\n<@123456> czy checesz przyjąć'
-                                              ' pojedynek? Użyj `&przyjmuję` lub `&odrzucam`')
+        channel.send.assert_awaited_once_with('**M1** wyzwał(a) **M2** na pojedynek.\n<@123456> '
+                                              'czy chcesz przyjąć pojedynek? Użyj `&przyjmuję` lub `&odrzucam`')
         self.assertNotIsInstance(self.state, Duel)
 
     async def test_adding_challenge_3(self):
@@ -872,7 +872,8 @@ class TestHangIfSummary(BaseStateTest):
     async def change_state(self, summary=None):
         members = self.mock_members()
         if summary:
-            await self.day.push_state(HangIfSummary, summary=dict(zip(['Tak', 'Nie'], summary)), searched=members)
+            await self.day.push_state(HangIfSummary, summary=dict(zip(['Tak', 'Nie'], (range(i) for i in summary))),
+                                      searched=members)
         else:
             await self.day.push_state(HangIfSummary, searched=members)
         return members
