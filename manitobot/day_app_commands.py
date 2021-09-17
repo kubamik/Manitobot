@@ -28,7 +28,7 @@ def state_check():
 
 
 def checks(func):
-    return command_role_permissions(PLAYER_ROLE_ID)(game_check()(town_only()((func))))
+    return command_role_permissions(PLAYER_ROLE_ID)(game_check()(town_only()(state_check()(func))))
 
 
 async def invoke_state(ctx, *args):
@@ -53,7 +53,7 @@ async def add_challenge(ctx, member):
 @checks
 async def accept(ctx):
     """Przyjmuje pierwszy w kolejności pojedynek"""
-    await invoke_state(ctx)
+    await invoke_state(ctx, ctx.author)
     await ctx.respond('✅', ephemeral=True)
 
 
@@ -61,7 +61,7 @@ async def accept(ctx):
 @checks
 async def decline(ctx):
     """Odrzuca pierwszy w kolejności pojedynek"""
-    await invoke_state(ctx)
+    await invoke_state(ctx, ctx.author)
     await ctx.respond('✅', ephemeral=True)
 
 

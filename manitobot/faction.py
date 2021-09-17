@@ -34,6 +34,7 @@ class Faction(Activity):
                 overwrites[role.player.member] = discord.PermissionOverwrite(
                     read_messages=True, send_messages=True, add_reactions=True)
         await self.channel.edit(overwrites=overwrites)
+        await self.channel.send('=\nNoc {}'.format(bot.game.day_num))
 
     async def put_to_sleep(self):
         await self.channel.edit(sync_permissions=True)

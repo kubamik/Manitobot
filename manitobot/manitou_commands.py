@@ -46,7 +46,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         tasks.append(self.bot.change_presence(activity=None))
         await asyncio.gather(*tasks)
 
-    @commands.command(aliases=['cvote'])
+    @commands.command(aliases=['cvote', 'cv'])
     @manitou_cmd()
     @voting_check()
     async def custom_vote(
@@ -197,7 +197,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """
         first = player1
         second = player2
-        players = get_player_role().members
+        players = get_player_role().members + get_dead_role().members
         if first not in players and second not in players:
             raise MembersNotPlaying
         elif first not in players:

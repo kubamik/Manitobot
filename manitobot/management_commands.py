@@ -123,10 +123,6 @@ class Management(commands.Cog, name='Dla Adminów'):
 
         await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),
                                 before=ctx.message.created_at, check=lambda mess: mess.author in members)
-        try:
-            await ctx.message.add_reaction('✅')
-        except discord.errors.NotFound:
-            pass
 
     @commands.command(name='reakcje')
     async def reactions(self, ctx, wiadomosc: discord.Message):
@@ -145,10 +141,14 @@ class Management(commands.Cog, name='Dla Adminów'):
                     parsed[member].append('<:e:881860336712560660>')
         members = [member for member in members if isinstance(member, discord.Member)]
         maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
-        msg = ""
+        msg = ''
         for member, r in parsed.items():
             if isinstance(member, discord.Member):
-                msg += f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
+                txt = f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
+                if len(msg) + len(txt) >= 2000:  # maximum discord message len
+                    await ctx.send(msg)
+                    msg = ''
+                msg += txt
         if msg:
             await ctx.send(msg)
         else:

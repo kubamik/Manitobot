@@ -220,7 +220,7 @@ class HangIfSummary(DayState, Undoable):
         super().__init__(game, day)
         self.searched = searched
         if summary:
-            self.hang = summary['Tak'] > summary['Nie']
+            self.hang = len(summary['Tak']) > len(summary['Nie'])
         else:  # previous state was HangingSummary or Voting(who to hang) and undo was used
             self.hang = None
         self.metadata = {'searched': self.searched}

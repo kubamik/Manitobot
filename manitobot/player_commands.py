@@ -105,7 +105,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
                 alive_roles.append(role.name)
         team = postacie.print_list(alive_roles)
         await ctx.send(
-            'Liczba żywych graczy: {}\nLiczba martwych o nieznanych rolach: {}'
+            'Liczba żywych graczy: {}\nLiczba martwych o nieznanych rolach: {}\n'
             'Pozostali:{}'.format(len(get_player_role().members),
                                   len(alive_roles) - len(get_player_role().members), team)
         )

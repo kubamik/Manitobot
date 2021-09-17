@@ -65,13 +65,14 @@ async def you_lost(ctx):
 @bot.component_callback('add_vote')
 async def get_vote(ctx: ComponentInteraction):
     try:
+        await ctx.ack(ephemeral=True)
         if ctx.message.id != bot.game.day.state.vote_msg.id:
             raise VotingNotAllowed
         content = await bot.game.day.state.register_vote(ctx.author, ctx.values)
     except AttributeError:
         raise VotingNotAllowed from None
     else:
-        await ctx.respond(content, ephemeral=True)
+        await ctx.send(content, ephemeral=True)
 
 
 @bot.listen('on_message')

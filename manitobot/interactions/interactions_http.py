@@ -21,10 +21,10 @@ def parse_interaction_create(self, data):
         logging.exception('Serious exception - interaction parsing')
 
 
-def ack_interaction(self, token, interaction_id):
+def ack_interaction(self, token, interaction_id, flags=0):
     r = discord.http.Route('POST', '/interactions/{interaction_id}/{token}/callback',
                            interaction_id=interaction_id, token=token)
-    payload = {'type': 5}
+    payload = {'type': 5, 'data': {'flags': flags}}
 
     return self.request(r, json=payload)
 

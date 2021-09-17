@@ -101,8 +101,15 @@ async def handle_error(send, error):
         await handle_game_end(error)
     elif isinstance(error, commands.CheckFailure):
         pass  # do not raise, error handled locally
+    elif isinstance(error, discord.HTTPException) and (error.code == 10062 or error.code == 10015):
+        pass  # ignoring NotFound - Unknown Interaction or Webhook -
+        # they appear when respond to interaction is created too late
     else:
-        await send(':robot:Bot did an uppsie :\'( :robot:')
+        try:
+            await send(':robot:Bot did an uppsie :\'( :robot:')
+        except discord.HTTPException:
+            if error.code != 10062 and error.code != 10015:
+                raise  # as above
         return error
 
 
@@ -126,10 +133,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_interaction_error(inter, error):
     async def send(content=None, *, reference=None, delete_after=None, **kwargs):
-        try:
-            await inter.respond(content, ephemeral=True, **kwargs)
-        except discord.ClientException:
-            await inter.send(content, ephemeral=True, **kwargs)
+        await inter.send(content, ephemeral=True, **kwargs)
     err = await handle_error(send, error)
     if err:
         report_inter_error(inter, error)
@@ -143,10 +147,11 @@ async def on_error(event, *args, **_):
     if isinstance(error, GameEnd):
         await handle_game_end(error)
         return
-    if isinstance(error, discord.HTTPException) and error.code == 10062:
-        return
+    if isinstance(error, discord.HTTPException) and (error.code == 10062 or error.code == 10015):
+        return  # ignoring NotFound - Unknown Interaction and Webhook -
+        # they appear when respond to interaction is created too late
     msg = SLIM_TEMPLATE.format(event, args, RULLER)
     logging.exception(msg)
     info = await bot.application_info()
-    await info.owner.send('An event error occured')
+    await info.owner.send('An event error occurred')
     traceback.print_exc()
