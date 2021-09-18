@@ -98,7 +98,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
     @commands.command(name="żywi", aliases=['zywi'])
     @game_check()
     async def living(self, ctx):
-        """/&zywi/Wypisuje listę żywych graczy"""
+        """Wypisuje listę żywych graczy"""
         alive_roles = []
         for role in self.bot.game.role_map.values():
             if role.alive or not role.revealed:
