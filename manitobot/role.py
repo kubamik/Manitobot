@@ -149,7 +149,7 @@ class Role(Activity):
             return False
         return True
 
-    def can_use(self, *abilities):
+    def can_use_second(self, *abilities):
         for a in abilities:
             if a in self.my_activities:
                 return a

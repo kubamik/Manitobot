@@ -321,9 +321,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             if role.alive:
                 alive_roles.append(role.name)
         team = postacie.print_list(alive_roles)
-        await ctx.send(
-            '''Liczba żywych graczy: {}
-      Pozostali:{}'''.format(len(alive_roles), team))
+        await ctx.send('Liczba żywych graczy: {}\nPozostali:{}'.format(len(alive_roles), team))
 
     @commands.command(name='rioters_count', aliases=['criot'])
     @manitou_cmd()
