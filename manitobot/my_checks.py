@@ -8,10 +8,10 @@ from .basic_models import NotAGame
 from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
     GameStartedException, DayOnly, VotingInProgress, \
     VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, \
-    NotTownChannel, DuelInProgress
+    NotTownChannel, DuelInProgress, NotSetsChannel
 from .starting import if_game
 from .utility import if_manitou, get_manitou_role, get_player_role, on_voice, \
-    get_town_channel, if_player
+    get_town_channel, if_player, if_qualified_manitou, get_qualified_manitou_role, get_sets_channel
 
 
 # ===================== Game checks =====================
@@ -98,6 +98,16 @@ def on_voice_check() -> Callable:
     return commands.check(predicate)
 
 
+def qualified_manitou_cmd() -> Callable:
+    async def predicate(ctx: commands.Context) -> bool:
+        owner = await ctx.bot.is_owner(ctx.author)
+        if not if_qualified_manitou(ctx) and not owner:
+            raise commands.MissingRole(get_qualified_manitou_role())
+        return True
+
+    return commands.check(predicate)
+
+
 # ===================== Time and events checks =====================
 
 def day_only(reverse=False):
@@ -128,6 +138,15 @@ def town_only():
     def predicate(ctx):
         if ctx.channel != get_town_channel():
             raise NotTownChannel
+        return True
+
+    return commands.check(predicate)
+
+
+def sets_channel_only():
+    def predicate(ctx):
+        if ctx.channel != get_sets_channel():
+            raise NotSetsChannel
         return True
 
     return commands.check(predicate)

@@ -3,6 +3,9 @@ from discord.ext import commands
 
 from . import bot_basics
 from . import utility
+from .errors import AuthorNotPlaying
+from .interactions import ComponentCallback
+from .interactions.interaction import ComponentInteraction
 from .utility import get_member, InvalidRequest
 
 
@@ -27,6 +30,20 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
     def __init__(self, bot):
         self.bot = bot
         self.lock = False
+        add = bot.add_component_callback
+        add(ComponentCallback('reveal', self.reveal_role))
+        add(ComponentCallback('role_action_cancel', self.role_action_cancel))
+        add(ComponentCallback('role_wins_first', self.role_wins_first))
+        add(ComponentCallback('role_wins_second', self.role_wins_second))
+        add(ComponentCallback('role_veto', self.role_veto))
+        
+    def cog_unload(self):
+        rm = self.bot.remove_component_callback
+        rm('reveal')
+        rm('role_action_cancel')
+        rm('role_wins_first')
+        rm('role_wins_second')
+        rm('role_veto')
 
     async def cog_check(self, ctx):
         return not self.lock
@@ -36,6 +53,53 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
 
     async def cog_after_invoke(self, ctx):
         self.lock = False
+
+    def _get_role(self, member):
+        try:
+            return self.bot.game.player_map[member].role_class
+        except KeyError:
+            raise AuthorNotPlaying from None
+
+    async def reveal_role(self, ctx: ComponentInteraction):
+        """For usage of reveal button"""
+        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+        role = self._get_role(member)
+        ability = role.usable_ability('wins', 'reveal')
+        await role.new_activity(ctx, ability)
+        await ctx.edit_message(components=[])
+
+    async def role_action_cancel(self, ctx: ComponentInteraction):
+        """"For usage of canceling day changing (duel, hang) actions button"""
+        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+        role = self._get_role(member)
+        await role.new_activity(ctx, 'day_refuse')
+
+    async def role_wins_first(self, ctx: ComponentInteraction):
+        """For usage of Judge's button for change duel result"""
+        member = get_member(ctx.author.id)
+        role = self._get_role(member)
+        try:
+            target = self.bot.game.day.state.author
+        except AttributeError:
+            pass
+        else:
+            await role.new_activity(ctx, 'wins', target)
+
+    async def role_wins_second(self, ctx: ComponentInteraction):
+        """For usage of Judge's button for change duel result"""
+        member = get_member(ctx.author.id)
+        role = self._get_role(member)
+        try:
+            target = self.bot.game.day.state.subject
+        except AttributeError:
+            pass
+        else:
+            await role.new_activity(ctx, 'wins', target)
+            
+    async def role_veto(self, ctx: ComponentInteraction):
+        member = get_member(ctx.author.id)
+        role = self._get_role(member)
+        await role.new_activity(ctx, "peace")
 
     async def command_template(self, ctx, member, operation):
         author = get_member(ctx.author.id)

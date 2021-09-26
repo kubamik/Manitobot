@@ -57,6 +57,10 @@ def get_newcommer_role() -> discord.Role:
     return get_guild().get_role(NEWCOMMER_ID)
 
 
+def get_qualified_manitou_role() -> discord.Role:
+    return get_guild().get_role(QUALIFIED_MANITOU_ROLE_ID)
+
+
 def get_ping_reminder_role() -> discord.Role:
     return get_guild().get_role(PING_REMINDER_ID)
 
@@ -89,6 +93,10 @@ def get_faction_channel(faction: str) -> discord.TextChannel:
     return get_guild().get_channel(FAC2CHANN_ID[faction])
 
 
+def get_sets_channel() -> discord.TextChannel:
+    return get_guild().get_channel(SET_CHANNEL_ID)
+
+
 def get_member(member_id: int) -> discord.Member:
     return get_guild().get_member(member_id)
 
@@ -109,6 +117,10 @@ def if_manitou(ctx: commands.Context) -> bool:
 
 def if_player(ctx: commands.Context) -> bool:
     return ctx.author in get_player_role().members
+
+
+def if_qualified_manitou(ctx: commands.Context) -> bool:
+    return ctx.author in get_qualified_manitou_role().members
 
 
 def czy_trup(ctx: commands.Context) -> bool:

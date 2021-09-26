@@ -36,7 +36,7 @@ roles = {
                   "musi też każdej nocy ochraniać inną osobę. Gdy ochroniarz zginie w nocy, ochrona przestaje "
                   "działać.",
 
-    "poborcapodatkow": "**Poborca podatków (Miasto)** raz w trakcie gry może na podstawie zeznań majątkowych "
+    "poborcapodatków": "**Poborca podatków (Miasto)** raz w trakcie gry może na podstawie zeznań majątkowych "
                        "dowiedzieć się, kto w danej chwili posiada posążek (informacji udziela mu Manitou). "
                        "Oczywiście położenie posążka może się w trakcie nocy zmienić. Poborca podatków nie dowiaduje "
                        "się kto ma posążek, gdy ma go Lucky Luke.",
@@ -126,6 +126,10 @@ roles = {
                   "Ta osoba jest traktowana jak właściciel posążka (tj. np., jeśli zostanie przeszukana, "
                   "to miasto wygra), jednakże nie wie o tym, że posążek posiada. Jeżeli ta osoba nie utraci posążka "
                   "do kolejnego ruchu Indian, cicha stopa może odebrać posążek.",
+
+    "małymanitou": "**Mały Manitou (Indianie)** Raz w trakcie gry, podczas dnia, może odwrócić swoją kartę i zarządzić "
+                   "noc. Jeśli tak zrobi, natychmiast zapada zwyczajna noc. Tego dnia przepada możliwość przeszukania "
+                   "i wieszania przez miasto.",
 
     "indianin": "**Indianin nie ma specjalnych zdolności.",
 
@@ -232,7 +236,7 @@ factions = {
 
     "ochroniarz": "Miasto",
 
-    "poborcapodatkow": "Miasto",
+    "poborcapodatków": "Miasto",
 
     "lekarz": "Miasto",
 
@@ -281,6 +285,8 @@ factions = {
     "cichastopa": "Indianie",
 
     "indianin": "Indianie",
+
+    "małymanitou": "Indianie",
 
     "wielkiufol": "Ufoki",
 

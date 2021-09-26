@@ -28,6 +28,7 @@ class Game:
         self.day_num: int = 0
         self.nights: List[Optional[Night]] = [None]
         self.day = None
+        self._day_backup = None
         self.night = None
         self.duels: int = 2
         self.searches: int = 2
@@ -45,7 +46,11 @@ class Game:
                 self.stats[postacie.give_faction(role.name)] += 1
 
     async def new_day(self) -> None:
-        day = Day(self, self.panel.state_msg)
+        if self._day_backup is None:
+            day = Day(self, self.panel.day_message)
+        else:
+            day = self._day_backup
+            self._day_backup = None
         self.day = day
         self.night = None
         self.day_num += 1
@@ -72,6 +77,11 @@ class Game:
         self.inqui_win()
         self.morning_bandits_win()
 
+    async def emergency_night(self) -> None:
+        self._day_backup = self.day
+        await self.new_night()
+        self.day_num -= 1
+
     async def new_night(self) -> None:
         self.night = Night()
         if self.day:
@@ -91,11 +101,13 @@ class Game:
                 except KeyError:
                     pass
 
-    def add_pair(self, member: discord.Member, role: str) -> None:
+    def add_pair(self, member: discord.Member, role: str) -> Role:
         role = '_'.join((r.capitalize() for r in role.split('_')))
         self.player_map[member] = Player(member, role)
-        self.role_map[role] = Role(role, self.player_map[member])
-        self.player_map[member].role_class = self.role_map[role]
+        self.role_map[role] = role_cls = Role(role, self.player_map[member])
+        self.player_map[member].role_class = role_cls
+        return role_cls
+
 
     async def end(self) -> None:
         tasks = []

@@ -162,7 +162,7 @@ class Day:
         await prev.cleanup()
         await self.state.async_init()
         await self.state.set_message(self.msg)
-        await self.game.panel.add_state_emojis()
+        await self.game.panel.add_state_buttons()
 
     async def custom_voting(self, *args):
         self._prev = self.state
@@ -172,15 +172,17 @@ class Day:
             self.state = Voting(self.game, self, *args)
             await self.state.async_init()
             await self.state.set_message(self.msg)
+            await self.game.panel.add_state_buttons()
 
     async def end_custom_voting(self):
         if self._prev:
             self.state = self._prev
+            await self.state.async_init()
             await self.state.set_message(self.msg)
-            await self.game.panel.add_state_emojis()
+            await self.game.panel.add_state_buttons()
         else:
+            await self.msg.edit(content='*Trwa noc*', embed=None, components=[])
             self.game.day = None
-            await self.msg.delete()
 
 
 # noinspection PyMissingConstructor

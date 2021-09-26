@@ -1,14 +1,22 @@
 import asyncio
+import itertools
+import re
 from collections import Counter
+from typing import Dict, List, Union
 
 import discord
 from discord.ext import commands
 
 from settings import RULLER
 from .basic_models import ManiBot
-from .my_checks import manitou_cmd, game_check, ktulu_check
-from .errors import NoSuchSet, WrongRolesNumber
+from .f_database import factions_roles
+from .interactions import ComponentCallback, Select, SelectOption, Button
+from .interactions.components import ButtonStyle
+from .interactions.interaction import ComponentInteraction
+from .my_checks import manitou_cmd, game_check, ktulu_check, qualified_manitou_cmd, sets_channel_only
+from .errors import NoSuchSet, WrongRolesNumber, WrongSetNameError, SetExists, NotAuthor, TooLongText
 from .game import Game
+from .postacie import print_list
 from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
     get_player_role, get_town_channel
@@ -16,9 +24,22 @@ from . import control_panel, roles_commands, sklady, daily_commands, postacie as
 
 
 class Starting(commands.Cog, name='Początkowe'):
+    set_create_ops: Dict[
+        int, List[Union[str, List[str], discord.Message]]]
+    # Dict[user_id, List[set_name, set_description, Town_players, Bandits_Indians_players, Inqui_Ufo_players,
+    # Other_players, set_creation_message]
 
-    def __init__(self, bot: ManiBot):
-        self.bot = bot
+    def __init__(self, bot_: ManiBot):
+        self.bot = bot_
+        self.sets_names = sklady.setup_sets_db()
+        self.set_create_ops = {}
+        self.sets_under_creation = []
+        self.bot.add_component_callback(ComponentCallback('modify_set_town', self.modify_set))
+        self.bot.add_component_callback(ComponentCallback('modify_set_bandians', self.modify_set))
+        self.bot.add_component_callback(ComponentCallback('modify_set_inqufo', self.modify_set))
+        self.bot.add_component_callback(ComponentCallback('modify_set_other', self.modify_set))
+        self.bot.add_component_callback(ComponentCallback('set_create_confirm', self.confirm_set_creation))
+        self.bot.add_component_callback(ComponentCallback('set_create_cancel', self.cancel_set_creation))
 
     async def add_cogs(self):
         try:
@@ -50,6 +71,231 @@ class Starting(commands.Cog, name='Początkowe'):
         except (NameError, discord.errors.Forbidden):
             pass
 
+    def _insert_set(self, set_name: str, set_len: int) -> None:
+        # Sorting by roles count first, then alphabetically
+        if set_len < 10:
+            last_set_q = '0'
+            for i, name in enumerate(self.sets_names):
+                if name > set_name or last_set_q > name[0]:  # find first bigger occurrence or first double-sign number
+                    self.sets_names.insert(i, set_name)
+                    break
+                last_set_q = name[0]
+            else:
+                # this shouldn't happen
+                self.sets_names.append(set_name)
+        else:
+            last_set_q = '9'
+            n = len(self.sets_names)  # cannot use negative indexing, possible last element inserting
+            for i, name in enumerate(self.sets_names[::-1]):
+                if name < set_name or last_set_q < name[0]:  # find last lower occurrence or first single-sign number
+                    self.sets_names.insert(n-i, set_name)
+                    break
+                last_set_q = name[0]
+            else:
+                # this shouldn't happen
+                self.sets_names.insert(0, set_name)
+
+    @staticmethod
+    def _set_creating_components(ops):
+        town = factions_roles['Miasto']
+        bandians = factions_roles['Bandyci'] + factions_roles['Indianie']
+        inqufo = factions_roles['Ufoki'] + factions_roles['Inkwizycja']
+        other = factions_roles['Murzyni'] + factions_roles['Bogowie'] + factions_roles['Inni']
+        return [
+            [Select('modify_set_town', [SelectOption(r, r, default=r in ops[2]) for r in town], 'Miasto', 0, len(town))],
+            [Select('modify_set_bandians', [SelectOption(r, r, default=r in ops[3]) for r in bandians], 'Bandyci/Indianie', 0, len(bandians))
+             ],
+            [Select('modify_set_inqufo', [SelectOption(r, r, default=r in ops[4]) for r in inqufo], 'Inkwizycja/Ufoki', 0, len(inqufo))],
+            [Select('modify_set_other', [SelectOption(r, r, default=r in ops[5]) for r in other], 'Inni', 0, len(other))],
+            [Button(ButtonStyle.Success, label='Zatwierdź', emoji='✅', custom_id='set_create_confirm'),
+             Button(ButtonStyle.Destructive, label='Anuluj', emoji='❌', custom_id='set_create_cancel')]
+        ]
+
+    async def modify_set(self, ctx: ComponentInteraction):
+        user_id = ctx.author.id
+        author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
+        if user_id != author_id:
+            raise NotAuthor
+        op_data = self.set_create_ops[user_id]
+        c_id = ctx.custom_id
+        idx = 2
+        for i, fac in enumerate(['town', 'bandians', 'inqufo', 'other']):
+            if c_id.endswith(fac):
+                idx += i
+                break
+        else:
+            raise KeyError('Wrong id')
+        op_data[idx] = ctx.values
+        new_content = ctx.message.content.partition('\n\n')[0]
+        roles = []
+        for i in range(2, 6):
+            roles += op_data[i]
+        new_content += '\n\n' + print_list(roles)
+        await ctx.edit_message(content=new_content, components=self._set_creating_components(op_data))
+
+    async def confirm_set_creation(self, ctx: ComponentInteraction):
+        user_id = ctx.author.id
+        author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
+        if user_id != author_id:
+            raise NotAuthor
+        name, description, town, bandians, inqufo, other, _ = self.set_create_ops.get(user_id)
+        set_roles = town + bandians + inqufo + other
+        set_len = str(len(set_roles))
+        if set_len == '0':
+            await ctx.respond('Skład nie może być pusty', ephemeral=True)
+            return
+        self.set_create_ops.pop(user_id)
+        old_name = name
+        if not name.startswith(set_len):
+            name = (set_len + name) if not name[0].isdigit() else (set_len + '_' + name)
+            if name in self.sets_names:
+                for i in itertools.count():
+                    if name + f'.{i}' not in self.sets_names:
+                        name += f'.{i}'
+                        break
+        sklady.add_set(user_id, name, description, set_roles)
+        self._insert_set(name, len(set_roles))
+        self.sets_under_creation.remove(old_name)
+        new_content = f'{RULLER}\nNazwa: **{name}**\nOpis: `{description}`\nAutor: <@!{user_id}>\n' \
+                      + print_list(set_roles) + '\n' + RULLER
+        await ctx.edit_message(content=new_content, components=[])
+
+    async def cancel_set_creation(self, ctx: ComponentInteraction):
+        user_id = ctx.author.id
+        author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
+        if user_id != author_id:
+            raise NotAuthor
+        await self.clean_set_creating(user_id)
+
+    async def clean_set_creating(self, member_id):
+        try:
+            lst = self.set_create_ops.pop(member_id)
+        except KeyError:
+            pass
+        else:
+            await lst[-1].delete()
+            self.sets_under_creation.remove(lst[0])
+
+    @commands.command()
+    @sets_channel_only()
+    @qualified_manitou_cmd()
+    @game_check(reverse=True)
+    async def add_set(self, ctx, name, *, description):
+        """Rozpoczyna proces tworzenia setu.
+        Nazwa musi składać się ze znaków alfanumerycznych, '-' i '_' i być długości co najmniej 3 znaków,
+        jeżeli nazwa nie zaczyna się liczbą postaci to zostanie ona dodana na początku.
+        W jednej chwili możliwe jest tworzenie tylko jedego setu na osobę"""
+        if not re.match(sklady.SET_NAME, name):
+            raise WrongSetNameError
+        if name in self.sets_names or name in self.sets_under_creation:
+            raise SetExists
+        user_id = ctx.author.id
+        if user_id in self.set_create_ops:
+            raise commands.MaxConcurrencyReached(1, commands.BucketType.user)
+        if len(description) > 1000 or len(name) > 100:
+            raise TooLongText
+        await ctx.message.delete(delay=0)
+        self.sets_under_creation.append(name)
+        loop = self.bot.loop
+        loop.call_later(60 * 15, loop.create_task, self.clean_set_creating(user_id))
+        ops = [name, description, [], [], [], []]
+        msg = await ctx.send(f'**Dodawanie składu**\nNazwa: **{name}**\nOpis: `{description}`\nAutor: <@!{user_id}>',
+                             components=self._set_creating_components(ops))
+        self.set_create_ops[user_id] = ops + [msg]
+
+    async def _update_set(self, ctx, set_name, **kwargs):
+        if set_name not in self.sets_names:
+            raise NoSuchSet
+        author_id, r_count = sklady.get_set_author_and_count(set_name)
+        name = kwargs.get('name', set_name)
+        if not name.startswith(str(r_count)):
+            raise WrongSetNameError
+        owner = await self.bot.is_owner(ctx.author)
+        if not owner and author_id != ctx.author.id:
+            raise NotAuthor
+        sklady.update_set(set_name, **kwargs)
+        if name != set_name:
+            self._insert_set(name, r_count)
+
+    @commands.command()
+    @sets_channel_only()
+    @qualified_manitou_cmd()
+    @game_check(reverse=True)
+    async def rename_set(self, ctx, name, new_name):
+        """Zmienia nazwę podanego setu, można używać tylko na swoich setach
+        """
+        if new_name in self.sets_names or new_name in self.sets_under_creation:
+            raise SetExists
+        if not re.match(sklady.SET_NAME, new_name):
+            raise WrongSetNameError
+        await self._update_set(ctx, name, name=new_name)
+        self.sets_names.remove(name)
+
+    @commands.command(aliases=['set_description'])
+    @sets_channel_only()
+    @qualified_manitou_cmd()
+    @game_check(reverse=True)
+    async def redescript_set(self, ctx, name, *, new_description):
+        """Zmienia opis podanego setu, można używać tylko na swoich setach
+        """
+        await self._update_set(ctx, name, description=new_description)
+
+    @commands.command(aliases=['remove_set'])
+    @sets_channel_only()
+    @qualified_manitou_cmd()
+    @game_check(reverse=True)
+    async def delete_set(self, ctx, name):
+        """Usuwa podany set, można używać tylko na swoich setach"""
+        if name not in self.sets_names:
+            raise NoSuchSet
+        author_id, _ = sklady.get_set_author_and_count(name)
+        owner = await self.bot.is_owner(ctx.author)
+        if not owner and author_id != ctx.author.id:
+            raise NotAuthor
+        sklady.delete_set(name)
+        self.sets_names.remove(name)
+
+    @commands.command(aliases=['składy', 'sets'])
+    @game_check(reverse=True)
+    async def setlist(self, ctx, count: int = None):
+        """/&składy/Wypisuje listę predefiniowanych składów, jeśli podana zostanie liczba graczy to wypisuje składy
+        dla danej liczby graczy wraz z autorami i opisami
+        """
+        if count is None:
+            await ctx.send(sklady.list_sets([name for name in self.sets_names if name not in self.sets_under_creation]))
+            return
+        sets = sklady.get_sets(count)
+        msg = ''
+        for s in sets:
+            name, author_id, desc = s
+            if author_id:
+                content = f'**{name}**\nOpis: `{desc}`\nAutor: <@!{author_id}>\n'
+            else:
+                content = f'**{name}**\n*wbudowany*\n'
+            if len(msg) + len(content) >= 1950:
+                await ctx.send(msg + RULLER, allowed_mentions=discord.AllowedMentions(users=False))
+                msg = content
+            else:
+                msg += '\n' + content + RULLER
+        if msg:
+            await ctx.send(msg, allowed_mentions=discord.AllowedMentions(users=False))
+        else:
+            await ctx.send('Nie ma składów na podaną liczbę graczy')
+
+    @commands.command(name='set', aliases=['skład'])
+    @game_check(reverse=True)
+    async def set_(self, ctx, nazwa_skladu):
+        """/&skład/Wypisuje listę postaci w składzie podanym jako argument.
+        """
+        set_name = nazwa_skladu
+        author_id, desc, roles = sklady.get_set(nazwa_skladu)
+        if author_id:
+            msg = f'**{set_name}**\nOpis: `{desc}`\nAutor: <@!{author_id}>\n'
+            msg += print_list(roles)
+        else:
+            msg = f'**{set_name}**\n{print_list(roles)}'
+        await ctx.send(msg, allowed_mentions=discord.AllowedMentions(users=False))
+
     @staticmethod
     def check_quantity(roles, mafia=False):
         players = get_player_role().members
@@ -80,28 +326,13 @@ class Starting(commands.Cog, name='Początkowe'):
                 role = roles[i]
             count = 1
             if role.endswith(')'):
-                count = int(role[:-1].rpartition('(')[2])
-                role = role[:-3]
+                role, _, count = role[:-1].rpartition('(')
+                count = int(count)
             roles_list[role] = count
         self.check_quantity(list(roles_list.elements()), True)
         await self.add_cogs_lite()
         await start_game(ctx, *roles_list.elements(), mafia=True,
                          faction_data=(list(roles_list)[: stop], list(roles_list)[stop:]))
-
-    @commands.command(aliases=['składy'])
-    @game_check(reverse=True)
-    async def setlist(self, ctx):
-        """/&składy/Wypisuje listę predefiniowanych składów.
-        """
-        await ctx.send(sklady.list_sets())
-
-    @commands.command(name='set', aliases=['skład'])
-    @game_check(reverse=True)
-    async def set_(self, ctx, nazwa_skladu):
-        """/&skład/Wypisuje listę postaci w składzie podanym jako argument.
-        """
-        set_name = nazwa_skladu
-        await ctx.send(sklady.print_set(set_name).replace('_', ' '))
 
     @commands.command(name='start')
     @manitou_cmd()
@@ -125,9 +356,9 @@ class Starting(commands.Cog, name='Początkowe'):
             -opcjonalnie dodatkowe postacie oddzielone białymi znakami
         """
         set_name = nazwa_skladu
-        if not sklady.set_exists(set_name):
+        if set_name not in self.sets_names:
             raise NoSuchSet
-        await self.start_game(ctx, *(sklady.get_set(set_name) + list(dodatkowe)))
+        await self.start_game(ctx, *(sklady.get_set(set_name)[-1] + list(dodatkowe)))
 
     @commands.command()
     @manitou_cmd()
@@ -135,9 +366,9 @@ class Starting(commands.Cog, name='Początkowe'):
     async def startsetup(self, ctx, nazwa_skladu, *dodatkowe):
         """ⓂRozpoczyna grę jak komenda startset, ale nie wysyła postaci do graczy"""
         set_name = nazwa_skladu
-        if not sklady.set_exists(set_name):
+        if set_name not in self.sets_names:
             raise NoSuchSet
-        roles = sklady.get_set(set_name) + list(dodatkowe)
+        roles = sklady.get_set(set_name)[-1] + list(dodatkowe)
         self.check_quantity(roles)
         async with ctx.typing():
             await self.add_cogs()
@@ -162,7 +393,9 @@ class Starting(commands.Cog, name='Początkowe'):
         game = self.bot.game
         for member, player in game.player_map.items():
             role = player.role
-            tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, post.get_role_details(role, role))))
+            button = player.role_class.button()
+            tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, post.get_role_details(role, role)),
+                                     components=button))
         await asyncio.gather(*tasks)
         await send_role_list(game)
         if not game.message:

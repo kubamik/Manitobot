@@ -10,6 +10,8 @@ import discord
 from . import errors
 from .errors import MoreSearchedThanSearches, IllegalSearch, TooMuchHang, IllegalHang, DuplicateChallenge, \
     ChallengeNotFound, DuelAlreadyAccepted, ReportingLocked, AuthorIsSubjectChallengeError
+from .interactions import Button
+from .interactions.components import ButtonStyle
 from .permissions import SPEC_ROLES
 from .utility import get_town_channel, GUN_ID, get_searched_role, remove_roles, get_player_role, add_roles, \
     get_hanged_role
@@ -85,7 +87,7 @@ class Challenging(DayState, ABC):
             raise DuplicateChallenge
         if author == subject:
             raise errors.SelfChallengeError
-        msg = '**{0.display_name}** wyzwał(a) **{1.display_name}** na pojedynek.\n'.format(author, subject)
+        msg = '**{0.display_name}** wyzywa **{1.display_name}** na pojedynek.\n'.format(author, subject)
         decl_role = SPEC_ROLES['decline_duels']
         if decl_role in self.game.role_map and self.game.role_map[decl_role].alive:
             msg += '<@{0.id}> czy chcesz przyjąć pojedynek? Użyj `&przyjmuję` lub `&odrzucam`'.format(subject)
@@ -109,7 +111,7 @@ class Challenging(DayState, ABC):
         challenge = self._find(subject)
         self.day.challenges.remove(challenge)
         await get_town_channel().send(
-            '**{0[1].display_name}** odrzucił(a) pojedynek od **{0[0].display_name}**'.format(challenge)
+            '**{0[1].display_name}** odrzuca pojedynek od **{0[0].display_name}**'.format(challenge)
         )
         await self._start_check()
 
@@ -119,7 +121,7 @@ class Challenging(DayState, ABC):
         idx = challenges.index(challenge)
         challenges[idx] = AcceptedChallenge._make(challenge)
         await get_town_channel().send(
-            '**{0[1].display_name}** przyjął(-ęła) pojedynek od **{0[0].display_name}**'.format(challenge)
+            '**{0[1].display_name}** przyjmuje pojedynek od **{0[0].display_name}**'.format(challenge)
         )
         await self._start_check(verbose=True)
 
@@ -333,6 +335,7 @@ class RandomizeSearch(SearchSummary, ABC):
 
 class HangSummary(DayState, Undoable, ABC):
     title = '**Wieszanie**'
+    special_message = None
 
     def __init__(self, game, day, /, *, searched: list, summary: dict = None, other: list = None):
         super().__init__(game, day)
@@ -369,18 +372,35 @@ class HangSummary(DayState, Undoable, ABC):
         if self.hanged:
             msg = 'Powieszony(-a) ma zostać **{}**'.format(self.hanged.display_name)
             await self.hanged.add_roles(get_hanged_role())
+            await get_town_channel().send(msg)
+            for role in SPEC_ROLES['hang_change']:
+                try:
+                    use = self.game.role_map[role].can_use
+                    can = use('reveal') and use('peace')
+                except KeyError:
+                    pass
+                else:
+                    if not can:
+                        continue
+                    self.special_message = await get_town_channel().send(
+                        'Czy Burmistrz chce ułaskawić wieszaną osobę?', components=[[
+                            Button(ButtonStyle.Primary, label='Ułaskaw', custom_id='role_veto'),
+                            Button(ButtonStyle.Destructive, label='Nie', custom_id='role_action_cancel')
+                        ]])
+                    break
         elif self.other:
             msg = "Potrzebne jest głosowanie uzupełniające dla:\n"
             for member in self.other:
                 msg += "**{}**\n".format(member.display_name)
-        else:
-            msg = None
-        if msg:
             await get_town_channel().send(msg)
 
     async def cleanup(self):
         hanged_role = get_hanged_role()
         await remove_roles(hanged_role.members, hanged_role)
+        try:
+            await self.special_message.delete(delay=0)
+        except AttributeError:
+            pass
 
     async def peace(self):
         await self.cleanup()

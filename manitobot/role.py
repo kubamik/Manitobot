@@ -2,10 +2,14 @@ import inspect
 
 import typing
 
+import discord
+
 from . import permissions
 from .activities import Activity
 from .bot_basics import bot
 from .converters import converter
+from .interactions import Button
+from .interactions.components import ButtonStyle
 from .night_comunicates import operation_send, new_night_com
 from .player import Player
 from .utility import *
@@ -71,12 +75,14 @@ class Role(Activity):
             raise InvalidRequest("Nie możesz użyć tego polecenia", 1)
         if self.my_activities[operation] == 0:
             raise InvalidRequest("Nie możesz więcej użyć tej zdolności", 0)
-        if not member is None:
+        if isinstance(member, str):
             member = await converter(ctx, member)
             if member not in get_guild().members:
                 raise InvalidRequest("Nie ma takiej osoby")
             if member not in get_player_role().members or member in get_dead_role().members:
                 raise InvalidRequest("Ta osoba nie gra lub nie żyje")
+            self.member = bot.game.player_map[member]
+        elif isinstance(member, discord.Member):
             self.member = bot.game.player_map[member]
         self.operation = operation
         output = ""
@@ -97,7 +103,6 @@ class Role(Activity):
             await ctx.send(output)
         await operation_send(operation, self.player.member, self.name, member)
         self.roled_members.append(self.member)
-        await ctx.message.add_reaction('✅')
 
     async def die(self, reason=None):
         member = self.player.member
@@ -149,8 +154,14 @@ class Role(Activity):
             return False
         return True
 
-    def can_use_second(self, *abilities):
+    def usable_ability(self, *abilities):
         for a in abilities:
             if a in self.my_activities:
                 return a
         return abilities[0]
+
+    def button(self):
+        act = self.my_activities
+        if 'wins' in act or 'reveal' in act:
+            return [[Button(ButtonStyle.Primary, label='Ujawnij', custom_id='reveal')]]
+        return []

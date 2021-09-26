@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 
 import discord
 from discord.ext import commands
@@ -18,7 +18,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     def __init__(self, bot):  # '🌇' - day, '🌃' - night
         self.bot: ManiBot = bot
-        self.state_msg: Optional[ComponentMessage] = None
+        self.faction_message: Optional[ComponentMessage] = None
+        self.day_message: Optional[ComponentMessage] = None
         self.statue_msg: Optional[discord.Message] = None
         self.msg2mbr: Optional[Dict[int, discord.Member]] = None
         self.mbr2msg: Optional[Dict[discord.Member, ComponentMessage]] = None
@@ -26,17 +27,20 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         self.emoji2fac: Dict[int, str] = dict()
 
     def cog_unload(self):
-        self.bot.remove_component_callback('sleep')
-        self.bot.remove_component_callback('unsleep')
-        self.bot.remove_component_callback('statue')
-        self.bot.remove_component_callback('kill')
-        self.bot.remove_component_callback('day')
-        self.bot.remove_component_callback('night')
+        rm = self.bot.remove_component_callback
+        rm('sleep')
+        rm('unsleep')
+        rm('statue')
+        rm('kill')
+        rm('confirm_kill')
+        rm('cancel_kill')
+        rm('day')
+        rm('night')
         for _, name in EMOJI2COMMAND.values():
-            self.bot.remove_component_callback(name)
+            rm(name)
         for id_ in self.emoji2fac:
-            self.bot.remove_component_callback(f'{id_}-wake')
-            self.bot.remove_component_callback(f'{id_}-sleep')
+            rm(f'{id_}-wake')
+            rm(f'{id_}-sleep')
 
     async def prepare_panel(self):
         channel = get_control_panel()
@@ -61,8 +65,11 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         self.daynight_msg = ComponentMessage.from_message(daynight_msg, components=comp)
 
         comp = self._faction_buttons()
-        state_msg = await base('Aktywna frakcja', components=comp)
-        self.state_msg = ComponentMessage.from_message(state_msg, components=comp)
+        faction_msg = await base('Aktywna frakcja', components=comp)
+        self.faction_message = ComponentMessage.from_message(faction_msg, components=comp)
+
+        day_message = await base('*Trwa noc*')
+        self.day_message = ComponentMessage.from_message(day_message, components=[])
 
         self.statue_msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
         members = sorted(self.bot.game.player_map.keys(), key=lambda mbr: mbr.display_name.lower())
@@ -82,7 +89,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         return [[Button(ButtonStyle.Primary, name, emoji, custom_id=custom_id)]]
 
     @staticmethod
-    def _player_buttons(components=None, sleep=None, statue=None, dead=None) -> List[List[Button]]:
+    def _player_buttons(components=None, sleep=None, statue=None, dead=None, planted=None) -> List[List[Button]]:
         if components is None:
             components = [[
                 Button(ButtonStyle.Success, label='Uśpij', emoji='😴', custom_id='sleep'),
@@ -90,19 +97,37 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 Button(ButtonStyle.Destructive, label='Zabij', emoji='☠️', custom_id='kill')
             ]]
         if not components or not components[0]:
-            return components
+            return []
+        if planted is not None:
+            if planted and len(components[0]) == 3:
+                components[0].append(
+                    Button(ButtonStyle.Secondary, label='Podłożony', emoji='🗿', custom_id='not_usable', disabled=True)
+                )
+            elif not planted and len(components[0]) % 3 == 1:  # len 1 or 4
+                components[0].pop(-1)
         if dead and len(components[0]) > 1:
             has_statue = statue if statue is not None else components[0][1].disabled
-            return [[components[0][1]]] if has_statue else []
+            has_planted = not statue and planted is not False and len(components[0]) == 4  # cannot be both has_*
+            return [[components[0][c]] for c, has in zip([1, -1], [has_statue, has_planted]) if has]
         if sleep is not None:
             style, custom_id, name = (ButtonStyle.Success, 'sleep', 'Uśpij') if not sleep else \
                 (ButtonStyle.Destructive, 'unsleep', 'Obudź')
             components[0][0] = Button(style, label=name, emoji='😴', custom_id=custom_id)
         if statue is not None and len(components[0]) > 1:
             components[0][1].disabled = statue
+            if len(components[0]) == 4 and not planted:
+                components[0].pop(-1)
         elif statue is not None:
             return []
         return components
+
+    @staticmethod
+    def _confirm_kill_button(player: discord.Member):
+        return [
+            Button(ButtonStyle.Destructive, label=f'Potwierdź zabicie {player.display_name}',
+                   emoji='☠️', custom_id='confirm_kill'),
+            Button(ButtonStyle.Success, label='Anuluj', emoji='❌', custom_id='cancel_kill')
+        ]
 
     def _state_buttons(self, components=None, command=None) -> List[List[Button]]:
         if command is not None:
@@ -137,9 +162,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         return components[0] and components
 
     async def change_removable(self, command):
-        components = self.state_msg.components
+        components = self.day_message.components
         new_components = self._state_buttons(components, command)
-        await self.state_msg.edit(components=new_components)
+        await self.day_message.edit(components=new_components)
 
     def register_callbacks(self):
         async def put_sleep(ctx: ComponentInteraction):
@@ -167,11 +192,28 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
         self.bot.add_component_callback(ComponentCallback('unsleep', unsleep))
 
-        async def kill(ctx: ComponentInteraction):
+        async def confirm_kill(ctx: ComponentInteraction):
             m_id = ctx.message.id
             player = self.msg2mbr[m_id]
             await ctx.ack_for_update()
             await self.bot.game.player_map[player].role_class.die()
+        self.bot.add_component_callback(ComponentCallback('confirm_kill', confirm_kill))
+
+        async def cancel_kill(ctx: ComponentInteraction):
+            comp = ctx.message.components
+            if len(comp) == 2:
+                comp.pop(-1)
+                await ctx.edit_message(components=comp)
+
+        self.bot.add_component_callback(ComponentCallback('cancel_kill', cancel_kill))
+
+        async def kill(ctx: ComponentInteraction):
+            comp = ctx.message.components
+            m_id = ctx.message.id
+            player = self.msg2mbr[m_id]
+            if len(comp) == 1:
+                comp.append(self._confirm_kill_button(player))
+                await ctx.edit_message(components=comp)
         self.bot.add_component_callback(ComponentCallback('kill', kill))
 
         async def statue_give(ctx: ComponentInteraction):
@@ -208,9 +250,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 await self.bot.game.faction_map[fac].wake_up()
             elif fac:
                 await self.bot.game.faction_map[fac].put_to_sleep()
-            comp = self.state_msg.components
+            comp = self.faction_message.components
             await ctx.edit_message(components=self._faction_buttons(components=comp, change=fac))
-            self.state_msg = ctx.message
+            self.faction_message = ctx.message
 
         for id_ in self.emoji2fac:
             self.bot.add_component_callback(ComponentCallback(f'{id_}-wake', faction_action))
@@ -224,18 +266,19 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             comp = m.components
             if comp and comp[0] and comp[0][0].style is ButtonStyle.Destructive:
                 tasks.append(m.edit(components=self._player_buttons(comp, sleep=False)))
-        tasks.append(self.bot.game.day.state.set_message(self.state_msg))
-        tasks.append(self.add_state_emojis())
+        tasks.append(self.bot.game.day.state.set_message(self.day_message))
+        tasks.append(self.bot.game.day.state.async_init())
+        tasks.append(self.add_state_buttons())
         await asyncio.gather(*tasks)
 
     async def evening(self):
         tasks = list()
         tasks.append(self.daynight_msg.edit(content='**Noc**', components=self._day_night_button(day=False)))
-        tasks.append(self.state_msg.edit(content='Aktywna frakcja', embed=None, components=self._faction_buttons()))
+        tasks.append(self.day_message.edit(content='*Trwa noc*', components=[]))
         await asyncio.gather(*tasks)
 
-    async def add_state_emojis(self):
-        await self.state_msg.edit(components=self._state_buttons())
+    async def add_state_buttons(self):
+        await self.day_message.edit(components=self._state_buttons())
 
     async def swapping(self, first: discord.Member, second: discord.Member, first_role: str, second_role: str):
         m_1 = self.mbr2msg[first]
@@ -247,7 +290,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def replace_player(self, first: discord.Member, second: discord.Member, role: str):
         msg = self.mbr2msg[first]
         self.mbr2msg[second] = msg
-        self.msg2mbr[msg] = second
+        self.msg2mbr[msg.id] = second
         self.mbr2msg.pop(first)
         await msg.edit(
             content=f'{second.display_name} ({role.replace("_", " ")})' + '\t' + msg.content.partition('\t')[2])
@@ -255,14 +298,13 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def statue_change(self, prev_holder: discord.Member, holder: discord.Member,
                             faction: str, planted: bool = False) -> None:
         tasks = []
-        if prev_holder != holder:
-            if prev_holder:
-                m = self.mbr2msg[prev_holder]
-                comp = m.components
-                tasks.append(m.edit(components=self._player_buttons(comp, statue=False)))
-            m = self.mbr2msg[holder]
+        if prev_holder != holder and prev_holder:
+            m = self.mbr2msg[prev_holder]
             comp = m.components
-            tasks.append(m.edit(components=self._player_buttons(comp, statue=True)))
+            tasks.append(m.edit(components=self._player_buttons(comp, statue=False)))
+        m = self.mbr2msg[holder]
+        comp = self._player_buttons(m.components, statue=not planted, planted=planted)
+        tasks.append(m.edit(components=comp))
         tasks.append(self.statue_msg.edit(content='Posążek ma frakcja: **{}**{}'.format(
             faction, ' *(podłożony)*' if planted else '')))
         await asyncio.gather(*tasks)
@@ -281,6 +323,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             if '~~' in m.content:
                 player = self.bot.game.player_map[member]
                 comp = m.components
+                plt = comp and comp[0][0].style is ButtonStyle.Secondary
                 tasks.append(m.edit(content=m.content.replace('~~', ''),
-                                    components=self._player_buttons(sleep=player.sleeped, statue=bool(comp))))
+                                    components=self._player_buttons(sleep=player.sleeped, statue=bool(comp) and not plt,
+                                                                    planted=plt)))
         await asyncio.gather(*tasks)

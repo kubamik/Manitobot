@@ -132,5 +132,8 @@ dmypy.json
 # File created during run
 Postacie.txt
 
+# Data directory
+data/
+
 # PyCharm project files
 .idea/
