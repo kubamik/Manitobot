@@ -181,7 +181,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         if not channel_id:
             await ctx.send(content)
         else:
-            await ctx._state.http.send_message(channel_id, content)
+            try:
+                await ctx._state.http.send_message(channel_id, content)
+            except discord.HTTPException:
+                raise commands.BadArgument('Wrong channel id')
 
     @commands.command(name='dodaj_reakcje', aliases=['emojis'])
     async def add_reactions(self, _, wiadomosc: discord.Message, *emoji: Union[discord.Emoji, str]):

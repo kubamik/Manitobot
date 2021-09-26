@@ -104,7 +104,8 @@ async def on_message(message):
 
 @bot.event
 async def on_command(ctx):
-    log_command.info('{0.author} (<@!{0.author.id}>) used {0.command.name} by {0.message.content}'.format(ctx))
+    if ctx.command.name != 'full_log':
+        log_command.info('{0.author} (<@!{0.author.id}>) used {0.command.name} by {0.message.content}'.format(ctx))
 
 
 @bot.event
@@ -151,7 +152,7 @@ if __name__ == '__main__':
     log_interaction = logging.getLogger('interaction')
 
     token = os.environ.get('TOKEN')
-    #keep_alive()
+    # keep_alive()
 
     try:
         bot.add_cog(dev_commands.DevCommands(bot))

@@ -33,14 +33,12 @@ class DevCommands(commands.Cog, name='Development'):
         else:
             file = LOG_FILE
             name = 'Manitobot {}.log'
+        time = dt.datetime.now()
+        logs = discord.File(file, filename=name.format(time.strftime("%Y-%m-%d_%H-%M-%S")))            
         try:
-            with open(file) as fp:
-                time = dt.datetime.now()
-                logs = discord.File(fp, filename=name.format(time.strftime("%Y-%m-%d_%H-%M-%S")))
-                await ctx.send(file=logs)
-        except FileNotFoundError:
-            await ctx.send("Logs aren't available now.", delete_after=10)
-            await ctx.message.delete(delay=10)
+            await ctx.send(file=logs)
+        except discord.HTTPException:
+            await ctx.send('Wystąpił błąd')
 
     @commands.command(name='log')
     async def log(self, ctx):
@@ -53,11 +51,9 @@ class DevCommands(commands.Cog, name='Development'):
         await self.send_logs(ctx, full=True)
 
     @commands.command()
-    async def clear_full_logs(self, _):
+    async def clear_full_log(self, _):
         """ⒹCzyści pełne logi"""
-        try:
-            os.remove(FULL_LOG_FILE)
-        except FileNotFoundError:
+        with open(FULL_LOG_FILE, 'w'):
             pass
 
     @commands.command(name='started_at')
@@ -68,9 +64,7 @@ class DevCommands(commands.Cog, name='Development'):
     @commands.command(name='clear_logs', aliases=['logcls'])
     async def log_clear(self, _):
         """ⒹCzyści logi błędów"""
-        try:
-            os.remove(LOG_FILE)
-        except FileNotFoundError:
+        with open(LOG_FILE, 'w'):
             pass
 
     @commands.command(name='invoke', hidden=True)
