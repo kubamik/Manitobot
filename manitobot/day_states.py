@@ -9,7 +9,8 @@ from .base_day_states import DayState, Challenging, Reporting, Undoable, States,
 from .errors import VotingNotAllowed, WrongValidVotesNumber, DuplicateVote, WrongVote, DuelDoublePerson, \
     NotDuelParticipant
 from .interactions import Select, SelectOption
-from .interactions.components import ComponentMessage
+from .interactions.components import ComponentMessage, Button, ButtonStyle
+from .permissions import SPEC_ROLES
 from .utility import get_player_role, get_town_channel, add_roles, get_duel_winner_role, get_duel_loser_role, \
     remove_roles
 
@@ -66,6 +67,7 @@ class Duel(DuelInterface, DayState):
 
 class DuelSummary(DuelInterface, DayState, Undoable):
     title = '**Pojedynek - podsumowanie**'
+    special_message = None
 
     def __init__(self, game, day, *, author, subject, summary):
         super().__init__(game, day)
@@ -100,12 +102,33 @@ class DuelSummary(DuelInterface, DayState, Undoable):
         else:
             msg = 'W wyniku pojedynku mają zginąć obaj pojedynkujący się'
         await get_town_channel().send(msg)
+        for role in SPEC_ROLES['duel_change']:
+            try:
+                can = self.game.role_map[role].can_use('wins')
+            except KeyError:
+                pass
+            else:
+                if not can:
+                    continue
+                self.special_message = await get_town_channel().send(
+                    f'Czy {role.replace("_", " ")} chce zmienić wynik pojedynku?', components=[[
+                        Button(ButtonStyle.Primary, label=f'Wygrywa {self.author.display_name}',
+                               custom_id='role_wins_first'),
+                        Button(ButtonStyle.Primary, label=f'Wygrywa {self.subject.display_name}',
+                               custom_id='role_wins_second'),
+                        Button(ButtonStyle.Destructive, label='Nie', custom_id='role_action_cancel')
+                    ]])
+                break
 
     async def cleanup(self):
         winner_role = get_duel_winner_role()
         loser_role = get_duel_loser_role()
         members = winner_role.members + loser_role.members
         await remove_roles(members, winner_role, loser_role)
+        try:
+            await self.special_message.delete(delay=0)
+        except AttributeError:
+            pass
 
     def set_message(self, msg: discord.Message) -> typing.Awaitable:
         text = self.title + '\n**{}** vs. **{}**'.format(self.author.display_name, self.subject.display_name)
@@ -429,12 +452,6 @@ class Voting(DayState):
             await self.day.push_state(self.following, summary=summary, **self.metadata)
         else:
             await self.day.end_custom_voting()
-        tasks = []
-        for member in self.participants:
-            async for m in member.history(limit=1):
-                tasks.append(m.edit(embed=embed))
-        await asyncio.gather(*tasks, return_exceptions=True)  # if last message's author is not from bot here will be
-        # an error which we're ignoring
 
     async def cancel(self):
         await self.vote_msg.delete(delay=0)

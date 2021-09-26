@@ -91,12 +91,16 @@ async def handle_error(send, error):
         await send(f'Błędny parametr\n||{error}||', delete_after=10)
     elif isinstance(error, commands.CommandOnCooldown):
         await send('Mam okres ochronny', delete_after=10)
+    elif isinstance(error, commands.MaxConcurrencyReached):
+        await send('Na razie nie można użyć kolejny raz tej komendy. Najpierw zakończ aktualną akcję.', delete_after=10)
     elif isinstance(error, commands.DisabledCommand):
         await send('Prace nad tą komendą trwają. Nie należy jej używać.', delete_after=10)
     elif isinstance(error, commands.PrivateMessageOnly):
         await send("Tej komendy teraz można używać tylko w DM", delete_after=10)
     elif isinstance(error, commands.NoPrivateMessage):
         await send("Tej komendy można używać tylko na serwerze", delete_after=10)
+    elif isinstance(error, commands.MissingPermissions):
+        await send('Nie masz uprawnień do wykonania tej czynności', delete_after=10)
     elif isinstance(error, GameEnd):
         await handle_game_end(error)
     elif isinstance(error, commands.CheckFailure):
@@ -107,8 +111,8 @@ async def handle_error(send, error):
     else:
         try:
             await send(':robot:Bot did an uppsie :\'( :robot:')
-        except discord.HTTPException:
-            if error.code != 10062 and error.code != 10015:
+        except discord.HTTPException as err:
+            if err.code != 10062 and err.code != 10015:
                 raise  # as above
         return error
 

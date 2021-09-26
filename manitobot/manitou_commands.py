@@ -59,7 +59,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
           -nazwy kandydatów"""
         game = self.bot.game
         if game.day is None:
-            msg = await get_control_panel().send('Rozpoczynanie głosowania...')
+            msg = game.panel.day_message
             game.day = PartialDay(game, msg)
         await game.day.custom_voting(title, list(options), votes_count)
 
@@ -382,6 +382,14 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂRozpoczyna noc
         """
         await self.bot.game.new_night()
+
+    @commands.command(aliases=['spnight'])
+    @manitou_cmd()
+    @game_check()
+    @day_only()
+    async def special_night(self, _):
+        """Rozpoczyna specjalną noc, gdy Manitou coś zepsuje"""
+        await self.bot.game.emergency_night()
 
     @commands.command(name='m', help=manitouhelp(), hidden=True, brief='&help m')
     async def manitou_help(self, ctx):

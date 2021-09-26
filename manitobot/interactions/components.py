@@ -173,7 +173,7 @@ class Select:
     def __init__(self, custom_id, options, placeholder=None, min_values=1, max_values=1, disabled=False, **_):
         if len(options) > 25:
             raise discord.InvalidArgument('options cannot have more than 25 elements')
-        if len(options) < max_values or min_values > max_values or min_values < 1:
+        if len(options) < max_values or min_values > max_values or min_values < 0:
             raise discord.InvalidArgument('wrong value of min_values/max_values')
         if (placeholder and not isinstance(placeholder, str)) or not isinstance(min_values, int) \
                 or not isinstance(max_values, int) or not isinstance(disabled, bool):

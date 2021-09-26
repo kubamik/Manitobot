@@ -4,14 +4,14 @@ import os
 import discord
 from discord.ext import commands
 
-from settings import LOG_FILE
+from settings import LOG_FILE, FULL_LOG_FILE
 from .converters import MyMemberConverter
 
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class DevCommands(commands.Cog, name='Development'):
-    """v1.2.4"""
+    """v1.3.0"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -25,17 +25,36 @@ class DevCommands(commands.Cog, name='Development'):
         """ⒹUruchamia podany kod"""
         exec(string)
 
+    @staticmethod
+    async def send_logs(ctx, full=False):
+        if full:
+            file = FULL_LOG_FILE
+            name = 'Manitobot {}_full.log'
+        else:
+            file = LOG_FILE
+            name = 'Manitobot {}.log'
+        time = dt.datetime.now()
+        logs = discord.File(file, filename=name.format(time.strftime("%Y-%m-%d_%H-%M-%S")))            
+        try:
+            await ctx.send(file=logs)
+        except discord.HTTPException:
+            await ctx.send('Wystąpił błąd')
+
     @commands.command(name='log')
     async def log(self, ctx):
         """ⒹWysyła logi błędów"""
-        try:
-            with open(LOG_FILE) as fp:
-                time = dt.datetime.now()
-                logs = discord.File(fp, filename='Manitobot {}.log'.format(time.strftime("%Y-%m-%d_%H-%M-%S")))
-                await ctx.send(file=logs)
-        except FileNotFoundError:
-            await ctx.send("Logs aren't available now.", delete_after=10)
-            await ctx.message.delete(delay=10)
+        await self.send_logs(ctx)
+
+    @commands.command()
+    async def full_log(self, ctx):
+        """ⒹWysyła pełne logi"""
+        await self.send_logs(ctx, full=True)
+
+    @commands.command()
+    async def clear_full_log(self, _):
+        """ⒹCzyści pełne logi"""
+        with open(FULL_LOG_FILE, 'w'):
+            pass
 
     @commands.command(name='started_at')
     async def start_time(self, ctx):
@@ -45,9 +64,7 @@ class DevCommands(commands.Cog, name='Development'):
     @commands.command(name='clear_logs', aliases=['logcls'])
     async def log_clear(self, _):
         """ⒹCzyści logi błędów"""
-        try:
-            os.remove(LOG_FILE)
-        except FileNotFoundError:
+        with open(LOG_FILE, 'w'):
             pass
 
     @commands.command(name='invoke', hidden=True)
@@ -60,5 +77,6 @@ class DevCommands(commands.Cog, name='Development'):
         msg.author = member
         msg.content = '&' + txt if not txt.startswith('&') else txt
         await self.bot.process_commands(msg)
+        # fixing message to be correct in cache
         msg.author = _author
         msg.content = _content

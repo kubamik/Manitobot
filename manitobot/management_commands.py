@@ -1,6 +1,7 @@
 import asyncio
 import datetime as dt
 from collections import defaultdict
+from typing import Optional, Union
 
 import discord
 from discord.ext import commands
@@ -172,3 +173,23 @@ class Management(commands.Cog, name='Dla Adminów'):
             for member in members:
                 tasks.append(member.send(zbiorka))
             await asyncio.gather(*tasks, return_exceptions=True)
+
+    @commands.command(name='wyślij')
+    @commands.dm_only()
+    async def special_send(self, ctx, channel_id: Optional[int] = None, *, content):
+        """Wysyła podaną wiadomośc na podany kanał lub obecny kanał"""
+        if not channel_id:
+            await ctx.send(content)
+        else:
+            try:
+                await ctx._state.http.send_message(channel_id, content)
+            except discord.HTTPException:
+                raise commands.BadArgument('Wrong channel id')
+
+    @commands.command(name='dodaj_reakcje', aliases=['emojis'])
+    async def add_reactions(self, _, wiadomosc: discord.Message, *emoji: Union[discord.Emoji, str]):
+        for e in emoji:
+            try:
+                await wiadomosc.add_reaction(e)
+            except discord.HTTPException:
+                pass

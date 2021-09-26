@@ -180,6 +180,12 @@ class Activity:
             await state.peace()
             await self.meantime_send()
 
+    async def del_state_special_msg(self):
+        try:
+            await bot.game.day.state.special_message.delete(delay=0)
+        except AttributeError:
+            pass
+
     def indian_win(self):
         if bot.game.stats["Indianie"] == len(get_player_role().members):
             raise GameEnd("Zostali sami Indianie", "Indianie")
@@ -233,6 +239,10 @@ class Activity:
 
     def signal(self):
         self.data += 1
+
+    def if_not_revealed(self):
+        if self.revealed:
+            raise InvalidRequest("Nie możesz więcej użyć tej zdolności")
 
     async def reveal(self, dead=False, verbose=True):
         self.revealed = True

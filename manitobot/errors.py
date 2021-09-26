@@ -2,7 +2,7 @@ import abc
 
 from discord.ext import commands
 
-from settings import TOWN_CHANNEL_ID
+from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID
 
 
 class MyBaseException(abc.ABC, Exception):
@@ -46,6 +46,14 @@ class WrongRolesNumber(commands.CommandError, MyBaseException):
 
     def __init__(self, should_be: int, is_: int):
         self.msg = self.msg.format(should_be, is_)
+
+
+class WrongSetNameError(MyCommandError):
+    msg = 'Nazwa składu może zawierać tylko znaki alfanumeryczne, "-" i "_" i musi mieć co najmniej 3 znaki'
+
+
+class SetExists(MyCommandError):
+    msg = 'Set o takiej nazwie już istnieje'
 
 
 class NoSuchSet(commands.CommandError, MyBaseException):
@@ -189,6 +197,10 @@ class NotTownChannel(commands.CheckFailure, MyBaseException):
     msg = f'Tej komendy można używać tylko na kanale <#{TOWN_CHANNEL_ID}>'
 
 
+class NotSetsChannel(MyCheckFailure):
+    msg = f'Tej komendy można używać tylko na kanale <#{SET_CHANNEL_ID}>'
+
+
 class VotingInProgress(commands.CheckFailure, MyBaseException):
     msg = 'Tej komendy nie można używać w trakcie głosowania'
 
@@ -202,3 +214,11 @@ class TooLessVotingOptions(commands.CommandError, MyBaseException):
 
     def __init__(self, is_: int, should_be: int = 1):
         self.msg = self.msg.format(is_, should_be)
+
+
+class NotAuthor(MyCommandError):
+    msg = 'Tylko autor może tego używać'
+
+
+class TooLongText(MyCommandError):
+    msg = 'Za długi tekst'

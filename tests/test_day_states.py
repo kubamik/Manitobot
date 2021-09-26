@@ -114,7 +114,7 @@ class TestChallenging(BaseStateTest):
         self.assertNotIn((member1, member2), self.day.challenges)
         channel = self.utility.get_town_channel()
         role = SPEC_ROLES['decline_duels']
-        channel.send.assert_any_await(f'**M1** wyzwał(a) **M2** na pojedynek.\n{role} nie żyje, '
+        channel.send.assert_any_await(f'**M1** wyzywa **M2** na pojedynek.\n{role} nie żyje, '
                                       f'więc pojedynek jest automatycznie przyjęty')
         self.assertIsInstance(self.state, Duel)
 
@@ -126,7 +126,7 @@ class TestChallenging(BaseStateTest):
         self.assertIn((member1, member2), self.day.challenges)
         self.assertIsInstance(self.day.challenges[0], Challenge)
         channel = self.utility.get_town_channel()
-        channel.send.assert_awaited_once_with('**M1** wyzwał(a) **M2** na pojedynek.\n<@123456> '
+        channel.send.assert_awaited_once_with('**M1** wyzywa **M2** na pojedynek.\n<@123456> '
                                               'czy chcesz przyjąć pojedynek? Użyj `&przyjmuję` lub `&odrzucam`')
         self.assertNotIsInstance(self.state, Duel)
 
@@ -171,7 +171,7 @@ class TestChallenging(BaseStateTest):
         await self.state.accept(member2)
         self.assertIsInstance(self.state, Duel)
         channel = self.utility.get_town_channel()
-        channel.send.assert_any_await('**M2** przyjął(-ęła) pojedynek od **M1**')
+        channel.send.assert_any_await('**M2** przyjmuje pojedynek od **M1**')
         channel.send.assert_awaited_with(f'Rozpoczynamy pojedynek:\n<:legacy_gun:{GUN_ID}> **M1** vs.:shield: **M2**')
 
     async def test_accepting_2(self):
@@ -212,7 +212,7 @@ class TestChallenging(BaseStateTest):
         await self.state.decline(member2)
         self.assertNotIsInstance(self.state, Duel)
         channel = self.utility.get_town_channel()
-        channel.send.assert_any_await('**M2** odrzucił(a) pojedynek od **M1**')
+        channel.send.assert_any_await('**M2** odrzuca pojedynek od **M1**')
         self.assertNotIn((member1, member2), self.day.challenges)
 
     async def test_declining_2(self):

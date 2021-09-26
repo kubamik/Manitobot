@@ -3,13 +3,17 @@ FACTION_FEATURES = {
 }
 
 factions_roles = {
+    "Miasto": ["Szeryf", "Burmistrz", "Dziwka", "Pastor", "Dobry_Rew", "Opój", "Ochroniarz", "Poborca_Podatków",
+               "Lekarz", "Hazardzista", "Agent_Ubezpieczeniowy", "Sędzia", "Uwodziciel", "Pijany_Sędzia", "Kat",
+               "Miastowy"],
     "Bandyci": ["Herszt", "Mściciel", "Złodziej", "Zły_Rew", "Szantażysta", "Szuler"],
     "Indianie": ["Wódz", "Szaman", "Szamanka", "Samotny_Kojot", "Wojownik", "Płonący_Szał", "Lornecie_Oko",
-                 "Cicha_Stopa"],
+                 "Cicha_Stopa", "Mały_Manitou"],
     "Ufoki": ["Wielki_Ufol", "Zielona_Macka", "Detektor", "Pożeracz_Umysłów", "Purpurowa_Przyssawka"],
     "Inkwizycja": ["Kardynał", "Biskup", "Misjonarz", "Spowiednik", "Wikary", "Anioł", "Ministrant"],
     "Bogowie": ["Kaszabara", "Chorągiew", "Bezimienny"],
-    "Murzyni": ["Kali", "Sprzątaczka"]
+    "Murzyni": ["Kali", "Sprzątaczka"],
+    "Inni": ["Lucky_Luke", "Janosik", "Lusterko"]
 }
 
 f_actions = {
