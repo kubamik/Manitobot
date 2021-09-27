@@ -288,6 +288,8 @@ class Starting(commands.Cog, name='Początkowe'):
         """/&skład/Wypisuje listę postaci w składzie podanym jako argument.
         """
         set_name = nazwa_skladu
+        if set_name not in self.sets_names:
+            raise NoSuchSet
         author_id, desc, roles = sklady.get_set(nazwa_skladu)
         if author_id:
             msg = f'**{set_name}**\nOpis: `{desc}`\nAutor: <@!{author_id}>\n'

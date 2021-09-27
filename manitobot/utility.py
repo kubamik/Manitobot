@@ -21,10 +21,6 @@ def get_manitou_role() -> discord.Role:
     return get_guild().get_role(MANITOU_ROLE_ID)
 
 
-def get_other_manitou_role() -> discord.Role:
-    return get_guild().get_role(OTHER_MANITOU_ROLE_ID)
-
-
 def get_dead_role() -> discord.Role:
     return get_guild().get_role(TRUP_ROLE_ID)
 
@@ -61,12 +57,16 @@ def get_qualified_manitou_role() -> discord.Role:
     return get_guild().get_role(QUALIFIED_MANITOU_ROLE_ID)
 
 
-def get_ping_reminder_role() -> discord.Role:
-    return get_guild().get_role(PING_REMINDER_ID)
+def get_ping_poll_role() -> discord.Role:
+    return get_guild().get_role(PING_POLL_ID)
 
 
 def get_ping_game_role() -> discord.Role:
     return get_guild().get_role(PING_GAME_ID)
+
+
+def get_ping_declaration_role() -> discord.Role:
+    return get_guild().get_role(PING_DECLARATION_ID)
 
 
 def get_control_panel() -> discord.TextChannel:
