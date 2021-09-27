@@ -8,11 +8,10 @@ from discord.ext import commands
 
 
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID
 from .converters import MyMemberConverter
-from .utility import get_newcommer_role, get_ping_reminder_role, \
-    get_ping_game_role, get_member, get_admin_role, \
-    get_ankietawka_channel, get_guild, get_voice_channel
+from .utility import get_newcommer_role, get_ping_game_role, get_member, get_admin_role, \
+    get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role
 
 ankietawka = '''**O której możesz grać {date}?**
 Zaznacz __wszystkie__ opcje, które ci odpowiadają.
@@ -59,11 +58,12 @@ class Management(commands.Cog, name='Dla Adminów'):
             return
         if event.user_id == self.bot.user.id:
             return
+        member = get_member(event.user_id)
+        if event.emoji.id == PING_YELLOW_ID:
+            await member.remove_roles(get_ping_poll_role())
         if event.emoji.id == PING_GREEN_ID:
-            member = get_member(event.user_id)
-            await member.remove_roles(get_ping_reminder_role())
+            await member.remove_roles(get_ping_declaration_role())
         if event.emoji.id == PING_BLUE_ID:
-            member = get_member(event.user_id)
             await member.remove_roles(get_ping_game_role())
 
     @commands.Cog.listener('on_raw_reaction_remove')
@@ -72,8 +72,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         if event.message_id != PING_MESSAGE_ID or event.user_id == self.bot.user.id:
             return
         member = get_member(event.user_id)
+        if event.emoji.id == PING_YELLOW_ID:
+            await member.add_roles(get_ping_poll_role())
         if event.emoji.id == PING_GREEN_ID:
-            await member.add_roles(get_ping_reminder_role())
+            await member.add_roles(get_ping_declaration_role())
         if event.emoji.id == PING_BLUE_ID:
             await member.add_roles(get_ping_game_role())
 
