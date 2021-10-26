@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-PROD = True  # if ktulu_serwer
+PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
 
 if PROD:
     GUILD_ID = 710039683798794270

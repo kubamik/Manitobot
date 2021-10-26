@@ -9,9 +9,8 @@ from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands
 from manitobot.bot_basics import bot
 from manitobot.errors import MyBaseException, VotingNotAllowed
-# from manitobot.keep_alive import keep_alive
 from manitobot.interactions.interaction import ComponentInteraction
-from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE
+from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
 
 
@@ -105,7 +104,7 @@ async def on_message(message):
 @bot.event
 async def on_command(ctx):
     if ctx.command.name != 'full_log':
-        log_command.info('{0.author} (<@!{0.author.id}>) used {0.command.name} by {0.message.content}'.format(ctx))
+        log_command.info('{0.author} (<@!{0.author.id}>) used {0.command.name} by {0.message.content!r}'.format(ctx))
 
 
 @bot.event
@@ -135,7 +134,8 @@ async def on_component_interaction(interaction):
     except Exception as exc:
         interaction.dispatch('interaction_error', interaction, exc)
     finally:
-        log_interaction.info('{0.author} (<@!{0.author.id}>) used {0.custom_id} in {0.message.content}'.format(interaction))
+        log_interaction.info('{0.author} (<@!{0.author.id}>) used {0.custom_id} in {0.message.content!r}'.format(
+            interaction))
 
 
 if __name__ == '__main__':
@@ -151,8 +151,15 @@ if __name__ == '__main__':
     log_app_command = logging.getLogger('app_command')
     log_interaction = logging.getLogger('interaction')
 
+    if PROD is None:
+        from dotenv import load_dotenv
+        load_dotenv()
+
     token = os.environ.get('TOKEN')
-    # keep_alive()
+
+    if PROD is False:
+        from manitobot.keep_alive import keep_alive
+        keep_alive()
 
     try:
         bot.add_cog(dev_commands.DevCommands(bot))
@@ -167,5 +174,6 @@ if __name__ == '__main__':
         bot.get_command('m').help = manitouhelp()
     except AttributeError:
         pass
+
     bot.loop.create_task(bot.overwrite_app_commands())
     bot.run(token)
