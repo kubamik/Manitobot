@@ -33,7 +33,8 @@ class Management(commands.Cog, name='Dla Adminów'):
     async def new_member_guild(self, member):
         if member.guild.id != GUILD_ID:
             return
-        await member.add_roles(get_newcommer_role(), get_ping_reminder_role(), get_ping_game_role())
+        await member.add_roles(get_newcommer_role(), get_ping_poll_role(), get_ping_game_role(),
+                               get_ping_declaration_role())
 
     @commands.Cog.listener('on_member_remove')
     async def member_leaves(self, member):
