@@ -107,15 +107,16 @@ class ManiBot(discord.ext.commands.Bot):
                     command.id = id_
                     self.app_commands[id_] = command
 
-            tasks = []
-            for guild in self.app_commands_names:
-                if not guild:
-                    continue
-                permissions = []
-                for command in self.app_commands_names[guild].values():
-                    permissions.append(command.permissions_list())
-                tasks.append(http.batch_edit_slash_commands_permissions(application_id, guild, permissions))
-            await asyncio.gather(*tasks)
+            # permissions cannot be updated with a bot token
+            # tasks = []
+            # for guild in self.app_commands_names:
+            #     if not guild:
+            #         continue
+            #     permissions = []
+            #     for command in self.app_commands_names[guild].values():
+            #         permissions.append(command.permissions_list())
+            #     tasks.append(http.batch_edit_slash_commands_permissions(application_id, guild, permissions))
+            # await asyncio.gather(*tasks)
         except Exception as e:
             logging.exception(e)
             await info.owner.send('Command registration error')
