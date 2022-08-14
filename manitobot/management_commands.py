@@ -1,28 +1,60 @@
 import asyncio
 import datetime as dt
 from collections import defaultdict
-from typing import Optional, Union
+from typing import Optional, Union, Any
 
 import discord
 from discord.ext import commands
 
-
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID
-from .converters import MyMemberConverter
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID
+from .bot_basics import bot
+from .converters import MyMemberConverter, MyDateConverter
+from .interactions import CommandsTypes
 from .utility import get_newcommer_role, get_ping_game_role, get_member, get_admin_role, \
     get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role
 
-ankietawka = '''**O której możesz grać {date}?**
-Zaznacz __wszystkie__ opcje, które ci odpowiadają.
 
-Zaznacz :eye: jeśli __zobaczyłæś__ (nawet, jeśli nic innego nie zaznaczasz).
-:strawberry: 17.00     :basketball: 18.00     :baby_chick: 19.00     :cactus: 20.00     :whale: 21.00\
-     :grapes: 22.00     :pig: 23.00     :no_entry_sign: Nie mogę grać tego dnia'''
+WEEKDAYS = dict(zip(range(7), ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']))
 
-ankietawka_emoji = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷', '🚫', '👁️']
+# Enquiries
+ENQUIRY = '''**Ankietka** na {period}
+<:ping_yellow:{ping_id}> <:ping_yellow:{ping_id}> <:ping_yellow:{ping_id}>
 
-zbiorka = 'Zaraz gramy, więc zapraszam na <#{}>'.format(TOWN_CHANNEL_ID)
+**Kiedy chcesz grać w ktulu?**
+
+Zaznacz wszystkie opcje, które ci pasują. Możesz zmienić swój wybór w dowolnym momencie.
+
+{data}
+🚫 W te dni nie gram.
+
+🔕 Nie chcę dostawać <:ping_green:{ping_green_id}> w dni, których nie zaznaczyłæm.
+'''
+ENQUIRY_OPTION = '{emoji} {weekday} {date}\n'
+ENQUIRY_PERIOD = '{} - {}'
+ENQUIRY_EMOJI = ['🚫', '🔕']
+MAX_DAYS = dt.timedelta(days=6)
+
+# Declarations
+DECLARATION = '''**Deklaracje** ({weekday} {date:dd.mm})
+<:ping_green:{ping_id}> <:ping_green:{ping_id}> <:ping_green:{ping_id}>
+
+**Kiedy chcesz grać w ktulu?**
+
+Zaznacz wszystkie opcje, które ci pasują. Postaraj się o dostępność w wybranych terminach.
+
+{data}
+🚫 Dzisiaj nie gram.
+
+⚜️ Mogę prowadzić grę.
+'''
+DECLARATION_OPTION = '{emoji} <t:{timestamp}:t>\n'
+DECLARATION_EMOJI = ['🚫', '⚜']
+STARTING_HOUR = 17  # hour to start declarations
+ENDING_HOUR = 21  # hour to end declarations
+INTERVAL = dt.timedelta(hours=1)
+
+OPTIONS_EMOJI = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷']
 
 
 class Management(commands.Cog, name='Dla Adminów'):
@@ -101,14 +133,38 @@ class Management(commands.Cog, name='Dla Adminów'):
         await member.remove_roles(get_admin_role())
 
     @commands.command()
-    async def ankietka(self, ctx, *, data):
+    async def ankietka(self, ctx, start: MyDateConverter, end: MyDateConverter, *, period: str = None):  # type: ignore
         """Wysyła na kanał ankietawka ankietę do gry w dzień podany w argumencie.
         Uwaga dzień należy podać w formacie <w/we> <dzień-tygodnia> <data>. Nie zawiera oznaczeń.
         """
+        start: dt.date
+        end: dt.date
+        days = end - start
+        if dt.timedelta(0) < days > MAX_DAYS:
+            raise commands.BadArgument('Too long or too short day interval')
+
+        data = ''
+        date = start
+        one_day = dt.timedelta(days=1)
+        days = days.days + 1
+        for emoji in OPTIONS_EMOJI[:days]:
+            weekday = WEEKDAYS[date.weekday()]
+            data += ENQUIRY_OPTION.format(emoji=emoji, weekday=weekday, date=date.strftime('%d.%m'))
+            date += one_day
+
+        period = period or ENQUIRY_PERIOD.format(start.strftime('%d.%m'), end.strftime('%d.%m'))
+        content = ENQUIRY.format(period=period, data=data.strip(), ping_id=PING_YELLOW_ID, ping_green_id=PING_GREEN_ID)
+
         async with ctx.typing():
-            m = await get_ankietawka_channel().send(ankietawka.format(date=data))
-            for emoji in ankietawka_emoji:
+            channel = get_ankietawka_channel()
+            m = await channel.send(content)
+            for emoji in OPTIONS_EMOJI[:days] + ENQUIRY_EMOJI:
                 await m.add_reaction(emoji)
+            await channel.send(f'<:ping_yellow:{PING_YELLOW_ID}> <@&{PING_POLL_ID}>', reference=m)
+
+            for p in await channel.pins():
+                await p.unpin()
+            await m.pin()
 
     @commands.command(name='usuń')
     @commands.guild_only()
@@ -158,25 +214,6 @@ class Management(commands.Cog, name='Dla Adminów'):
         else:
             await ctx.send('Do tej wiadomości nie dodano reakcji')
 
-    @commands.command(name='gramy', aliases=['zbiórka'])
-    async def special_send(self, ctx, wiadomosc: discord.Message, *emoji):
-        """Wysyła wiadomości o grze do wszystkich, którzy oznaczyli dane opcje w podanej wiadomości.
-        Należy podać link lub id wiadomości.
-        """
-        m = wiadomosc
-        reactions = filter(lambda rn: rn.emoji in emoji, m.reactions)
-        members = set()
-        tasks = []
-        async with ctx.typing():
-            for r in reactions:
-                async for member in r.users():
-                    members.add(member)
-            members -= {self.bot.user, get_member(self.bot.user.id)}
-            members -= set(get_voice_channel().members)
-            for member in members:
-                tasks.append(member.send(zbiorka))
-            await asyncio.gather(*tasks, return_exceptions=True)
-
     @commands.command(name='wyślij')
     @commands.dm_only()
     async def special_send(self, ctx, channel_id: Optional[int] = None, *, content):
@@ -196,3 +233,35 @@ class Management(commands.Cog, name='Dla Adminów'):
                 await wiadomosc.add_reaction(e)
             except discord.HTTPException:
                 pass
+
+
+@bot.bot_app_command('reakcje', type_=CommandsTypes.MessageCommand)
+async def reactions_msg(ctx, m):
+    """Wysyła na DM podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
+    """
+    await ctx.ack(ephemeral=True)
+    reactions = []
+    reactions = [await r.users().flatten() for r in m.reactions]
+    members = list(set(sum(reactions, start=list())))
+    parsed = defaultdict(list)
+    for r, users in zip(m.reactions, reactions):
+        emoji = str(r.emoji)
+        for member in members:
+            if member in users:
+                parsed[member].append(emoji)
+            else:
+                parsed[member].append('<:e:881860336712560660>')
+    members = [member for member in members if isinstance(member, discord.Member)]
+    maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
+    msg = ''
+    for member, r in parsed.items():
+        if isinstance(member, discord.Member):
+            txt = f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
+            if len(msg) + len(txt) >= 2000:  # maximum discord message len
+                await ctx.send(msg, ephemeral=True)
+                msg = ''
+            msg += txt
+    if msg:
+        await ctx.send(msg, ephemeral=True)
+    else:
+        await ctx.send('Do tej wiadomości nie dodano reakcji', ephemeral=True)
