@@ -11,7 +11,7 @@ started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class DevCommands(commands.Cog, name='Development'):
-    """v1.3.0"""
+    """v1.4.0"""
     def __init__(self, bot):
         self.bot = bot
 
