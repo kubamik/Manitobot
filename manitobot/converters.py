@@ -1,10 +1,11 @@
-from typing import Optional
+from datetime import date
+from typing import Optional, List
 
 import discord
 from discord.ext import commands
 
 from .errors import MemberNotPlaying
-from .utility import get_player_role, get_dead_role, get_member, get_guild
+from .utility import get_player_role, get_member, get_guild
 
 
 class MyFlagConverter(commands.Converter):
@@ -70,3 +71,36 @@ async def converter(ctx: commands.Context, name: str) -> Optional[discord.Member
         return await MyMemberConverter(player_only=False).convert(ctx, name)
     except commands.MemberNotFound:
         return None
+
+
+class MyDateConverter(commands.Converter):
+    delimiters: List[str] = ['-', '_', '/', '.']
+
+    async def convert(self, ctx: commands.Context, argument: str) -> date:
+        parsed = ['']
+        for char in argument:
+            if char not in self.delimiters:
+                parsed[-1] += char
+            elif parsed[-1]:
+                parsed.append('')  # add new empty element if not present
+
+        if len(parsed) == 3:
+            if len(parsed[0]) == 4:  # full year on first position
+                p = parsed[::-1]
+            elif len(parsed[2]) == 4:  # full year on last position
+                p = parsed
+            else:  # two digit year on last position
+                p = parsed
+                p[-1] = '20' + p[-1]
+        elif len(parsed) == 2:
+            p = parsed + [date.today().year]  # later we convert all to int, so we can add int (year)
+        else:
+            raise commands.BadArgument('Wrong date format')
+
+        try:
+            d, m, y = map(int, p)
+        except ValueError as e:
+            raise commands.BadArgument from e
+        return date(y, m, d)
+
+
