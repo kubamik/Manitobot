@@ -35,7 +35,7 @@ class Role(Activity):
             self.my_activities = {}
 
     def can_use(self, ability: str):
-        return ability in self.my_activities and self.my_activities[ability] != 0
+        return self.alive and ability in self.my_activities and self.my_activities[ability] != 0
 
     async def new_night_start(self):
         output = ""
