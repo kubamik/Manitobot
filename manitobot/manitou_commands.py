@@ -292,12 +292,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         loser_role = get_duel_loser_role()
         searched_role = get_searched_role()
         hanged_role = get_hanged_role()
-        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role]
+        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role]
         tasks = []
         async with ctx.typing():
             for member in dead_role.members + player_role.members:
                 roles = [r for r in member.roles if r not in to_delete]
-                if member in get_voice_channel().members and player_role not in roles:
+                if member in get_voice_channel().members:
                     roles.append(player_role)
                 tasks.append(member.edit(roles=roles))
             await self.remove_cogs()

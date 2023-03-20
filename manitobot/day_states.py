@@ -257,7 +257,7 @@ class HangIfSummary(DayState, Undoable):
         if self.hang:
             msg = 'Decyzją miasta wieszamy.'
         elif self.hang is False:
-            msg = 'Miasto idzie spać.'
+            msg = 'Decyzją miasta nie wieszamy.'
         if msg:
             await get_town_channel().send(msg)
 

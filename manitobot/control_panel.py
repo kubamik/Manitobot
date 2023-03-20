@@ -1,5 +1,6 @@
 import asyncio
-from typing import Dict, Optional, List, Union
+from contextlib import suppress
+from typing import Dict, Optional, List
 
 import discord
 from discord.ext import commands
@@ -9,7 +10,7 @@ from .basic_models import ManiBot
 from .interactions import ComponentCallback
 from .interactions.components import ButtonStyle, Button, ComponentMessage
 from .interactions.interaction import ComponentInteraction
-from .utility import get_control_panel, get_manitou_role, get_member, get_player_role, cleared_nickname
+from .utility import get_control_panel, get_player_role, cleared_nickname
 
 
 class ControlPanel(commands.Cog, name='Panel Sterowania'):
@@ -44,7 +45,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     async def prepare_panel(self):
         channel = get_control_panel()
-        await channel.purge()
+        with suppress(discord.DiscordException):
+            await channel.purge()
         for fac, id_ in FAC2EMOJI.items():
             if fac in self.bot.game.faction_map:
                 self.emoji2fac[id_] = fac
@@ -61,7 +63,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             messages.append(msg)
 
         comp = self._day_night_button(day=False)
-        daynight_msg = await base('**Noc**', components=comp)
+        daynight_msg = await base('*Trwa:* **Noc**', components=comp)
         self.daynight_msg = ComponentMessage.from_message(daynight_msg, components=comp)
 
         comp = self._faction_buttons()
@@ -121,10 +123,10 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             return []
         return components
 
-    @staticmethod
-    def _confirm_kill_button(player: discord.Member):
+    def _confirm_kill_button(self, player: discord.Member):
+        suffix = ' (w dzień)' if not self.bot.game.night_now else ''
         return [
-            Button(ButtonStyle.Destructive, label=f'Potwierdź zabicie {player.display_name}',
+            Button(ButtonStyle.Destructive, label=f'Potwierdź zabicie {player.display_name}' + suffix,
                    emoji='☠️', custom_id='confirm_kill'),
             Button(ButtonStyle.Success, label='Anuluj', emoji='❌', custom_id='cancel_kill')
         ]
@@ -214,6 +216,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             if len(comp) == 1:
                 comp.append(self._confirm_kill_button(player))
                 await ctx.edit_message(components=comp)
+                if not self.bot.game.night_now:
+                    await ctx.send("**Uwaga!**\nTrwa dzień", ephemeral=True)
         self.bot.add_component_callback(ComponentCallback('kill', kill))
 
         async def statue_give(ctx: ComponentInteraction):
@@ -261,7 +265,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def morning_reset(self) -> None:
         tasks = list()
 
-        tasks.append(self.daynight_msg.edit(content='**Dzień**', components=self._day_night_button(day=True)))
+        tasks.append(self.daynight_msg.edit(content='*Trwa:* **Dzień**', components=self._day_night_button(day=True)))
         for m in self.mbr2msg.values():
             comp = m.components
             if comp and comp[0] and comp[0][0].style is ButtonStyle.Destructive:
@@ -273,7 +277,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     async def evening(self):
         tasks = list()
-        tasks.append(self.daynight_msg.edit(content='**Noc**', components=self._day_night_button(day=False)))
+        tasks.append(self.daynight_msg.edit(content='*Trwa:* **Noc**', components=self._day_night_button(day=False)))
         tasks.append(self.day_message.edit(content='*Trwa noc*', components=[]))
         await asyncio.gather(*tasks)
 

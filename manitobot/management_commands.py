@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID, LEAVE_CHANNEL_ID
 from .bot_basics import bot
 from .converters import MyMemberConverter, MyDateConverter
 from .interactions import CommandsTypes
@@ -72,7 +72,10 @@ class Management(commands.Cog, name='Dla Adminów'):
     async def member_leaves(self, member):
         if member.guild.id != GUILD_ID:
             return
-        ch = member.guild.system_channel
+        if LEAVE_CHANNEL_ID is not None:
+            ch = self.bot.get_channel(LEAVE_CHANNEL_ID)
+        else:
+            ch = member.guild.system_channel
         if ch is None:
             return
         for wb in await ch.webhooks():

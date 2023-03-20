@@ -19,7 +19,7 @@ from .game import Game
 from .postacie import print_list
 from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
-    get_player_role, get_town_channel
+    get_player_role, get_town_channel, get_voice_channel, get_manitou_role
 from . import control_panel, roles_commands, sklady, daily_commands, postacie as post
 
 
@@ -375,6 +375,35 @@ class Starting(commands.Cog, name='Początkowe'):
         async with ctx.typing():
             await self.add_cogs()
             await start_game(ctx, *roles, retard=True)
+
+    @commands.command()
+    @manitou_cmd()
+    @game_check(reverse=True)
+    async def verify(self, ctx):
+        """ⓂSprawdza integralność osób z rolą gram z osobami na kanale głosowym
+        """
+        voice_members = set(get_voice_channel().members)
+        player_members = set(get_player_role().members)
+        observer_members = set(get_spectator_role().members)
+        manitou_members = set(get_manitou_role().members)
+
+        msg = ""
+        absent = player_members - voice_members
+        if absent:
+            msg = "**Nieobecni:**\n"
+        for m in absent:
+            msg += "*{}* ma rolę *Gram* a nie jest na kanale głosowym\n".format(m.display_name)
+
+        present = voice_members - player_members - observer_members - manitou_members
+        if present:
+            msg += "\n**Obecni:**"
+        for m in present:
+            msg += "*{}* jest na kanale głosowym a nie ma roli *Gram*, *Obserwator*, *Manitou*\n".format(m.display_name)
+
+        if msg:
+            await ctx.send(msg)
+        else:
+            await ctx.send("Wszyscy grający są na kanale głosowym")
 
     @commands.command()
     @manitou_cmd()

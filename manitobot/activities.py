@@ -181,6 +181,7 @@ class Activity:
             await self.meantime_send()
 
     async def del_state_special_msg(self):
+        await send_to_manitou("{} zdecydował nie działać".format(self.name))
         try:
             await bot.game.day.state.special_message.delete(delay=0)
         except AttributeError:

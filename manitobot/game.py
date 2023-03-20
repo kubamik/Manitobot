@@ -86,6 +86,7 @@ class Game:
         self.night = Night()
         if self.day:
             await self.day.state.cleanup()
+            await get_town_channel().send("Miasto idzie spać.")
         self.day = None
         self.nights.append(self.night)
         await self.panel.evening()
