@@ -70,11 +70,12 @@ operation_com_private = {
 
 webhook_com = {
     'wins': ("Decyzją jednoosobowej ławy przysięgłych pojedynek wygrywa **{member}**",
-             'http://www.myiconfinder.com/uploads/iconsets/256-256-e9909996c50fe344c944c09c430b8346-judge.png'),
+             'https://cdn.discordapp.com/attachments/694112855120674827/1146205902890864760/sedzia.png'),
     'arrest': ("Na mocy nadanej mi przez Manitou władzy oświadczam:\n**{member}** zostaje zamknięty(-a) do wyjaśnienia",
                'https://www.shareicon.net/data/512x512/2016/04/10/747358_people_512x512.png'),
     'peace': (
-    'Jako wybrany w demokratycznych (i wcale nie sfałszowanych) wyborach {role} **Bum Bum City** __uniewinniam__ wieszaną osobę!',
+    'Jako wybrany w demokratycznych (i wcale nie sfałszowanych) wyborach {role} **Bum Bum City** __uniewinniam__ '
+    'wieszaną osobę!',
     'https://media.discordapp.net/attachments/691394357571485696/720236813901365308/burmistrz.png?width=671&height=671')
 }
 
