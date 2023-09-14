@@ -1,6 +1,7 @@
 import asyncio
 import random
 import typing
+from contextlib import suppress
 
 import discord
 
@@ -35,7 +36,7 @@ class InitialState(Challenging, Reporting, DayState):
         return self
 
     async def end(self):
-        await self.day.push_state(States.next)
+        await self.day.push_state(States.NEXT)
         await get_town_channel().send('__Zakończono fazę pojedynków__')
 
 
@@ -47,9 +48,9 @@ class Duel(DuelInterface, DayState):
         self.author = author
         self.subject = subject
 
-    def set_message(self, msg: discord.Message) -> typing.Awaitable:
+    def set_msg_edit_callback(self, callback: typing.Callable) -> typing.Awaitable:
         text = self.title + '\n' + '**{}** vs. **{}**'.format(self.author.display_name, self.subject.display_name)
-        return msg.edit(content=text, embed=None)
+        return callback(content=text, embed=None)
 
     async def voting(self):
         metadata = {'author': self.author, 'subject': self.subject}
@@ -62,7 +63,7 @@ class Duel(DuelInterface, DayState):
 
     async def cancel(self):
         await get_town_channel().send('Manitou anulował trwający pojedynek')
-        await self.day.push_state(States.prev)
+        await self.day.push_state(States.PREV)
 
 
 class DuelSummary(DuelInterface, DayState, Undoable):
@@ -130,9 +131,9 @@ class DuelSummary(DuelInterface, DayState, Undoable):
         except AttributeError:
             pass
 
-    def set_message(self, msg: discord.Message) -> typing.Awaitable:
+    def set_msg_edit_callback(self, callback: typing.Callable) -> typing.Awaitable:
         text = self.title + '\n**{}** vs. **{}**'.format(self.author.display_name, self.subject.display_name)
-        return msg.edit(content=text, embed=None)
+        return callback(content=text, embed=None)
 
     async def change_winner(self, member: discord.Member):
         participants = self.winners + self.losers
@@ -140,12 +141,19 @@ class DuelSummary(DuelInterface, DayState, Undoable):
         loser_role = get_duel_loser_role()
         tasks = []
         for m in participants:
+            new_roles = m.roles
             if m != member:
-                await m.remove_roles(winner_role)
-                tasks.append(m.add_roles(loser_role))
+                with suppress(ValueError):
+                    new_roles.remove(winner_role)
+                if loser_role not in new_roles:
+                    new_roles.append(loser_role)
             else:
-                await m.remove_roles(loser_role)
-                tasks.append(m.add_roles(winner_role))
+                with suppress(ValueError):
+                    new_roles.remove(loser_role)
+                if winner_role not in new_roles:
+                    new_roles.append(winner_role)
+            tasks.append(m.edit(roles=new_roles))
+        tasks.append(self.special_message.delete(delay=0))
         await asyncio.gather(*tasks)
 
     async def end(self):
@@ -174,7 +182,7 @@ class DuelSummary(DuelInterface, DayState, Undoable):
                 player = self.game.player_map[member].role_class
                 await player.die('duel')  # could raise GameEnd
         finally:
-            await self.day.push_state(States.next)
+            await self.day.push_state(States.NEXT)
 
 
 class SearchingSummaryWithRevote(RandomizeSearch, SearchSummary, DayState, Undoable):
@@ -248,9 +256,9 @@ class HangIfSummary(DayState, Undoable):
             self.hang = None
         self.metadata = {'searched': self.searched}
 
-    def set_message(self, msg: discord.Message) -> typing.Awaitable:
+    def set_msg_edit_callback(self, callback: typing.Callable) -> typing.Awaitable:
         content = self.title + ' - {}wieszamy'.format('nie ' if self.hang is False else '')
-        return msg.edit(content=content, embed=None)
+        return callback(content=content, embed=None)
 
     async def async_init(self):
         msg = ''
@@ -266,7 +274,7 @@ class HangIfSummary(DayState, Undoable):
             if mbr not in get_player_role().members:
                 self.searched.remove(mbr)
         if len(self.searched) <= 1:
-            await self.day.push_state(States.voted, searched=self.searched)
+            await self.day.push_state(States.VOTED, searched=self.searched)
         else:
             await self.day.push_state(
                 'vote', title='Wieszanie\nMasz {} głos na osobę, która ma **zostać powieszona**',
@@ -278,7 +286,7 @@ class HangIfSummary(DayState, Undoable):
 class HangingSummaryWithRevote(HangSummary, DayState, Undoable):
     async def random(self):
         member = [random.choice(self.other)]
-        await self.day.push_state(States.voted, other=member, **self.metadata)
+        await self.day.push_state(States.VOTED, other=member, **self.metadata)
 
     async def voting(self):
         self.metadata.update(other=self.other)
@@ -315,8 +323,8 @@ class Voting(DayState):
     """State representing voting, designed to be used even during night
     """
 
-    state_msg: discord.Message = None
-    vote_msg: ComponentMessage = None
+    state_msg_edit: typing.Callable = None
+    vote_msg: typing.Optional[ComponentMessage] = None
     message = 'Zarejestrowałem twój(-oje) głos(y) na {}'
     V_INSTRUCTION = 'INSTRUKCJA\n' + \
         'Aby zagłosować wyślij tu dowolny wariant dowolnej opcji. ' + \
@@ -350,18 +358,16 @@ class Voting(DayState):
     async def async_init(self):
         self.vote_msg = await self.options_message()
 
-    def set_message(self, msg: discord.Message) -> typing.Awaitable:
-        """Edits state message to display voting and sends options to participants.
+    def set_msg_edit_callback(self, callback: typing.Callable) -> typing.Awaitable:
+        """Edits state message to display voting
         """
-        tasks = []
-        self.state_msg = msg
-        tasks.append(msg.edit(content=None, embed=self.results_embed()))
-        return asyncio.gather(*tasks)
+        self.state_msg_edit = callback
+        return callback(content=None, embed=self.results_embed())
 
     def update_message(self) -> typing.Awaitable:
         """Edits state message to display current voting information.
         """
-        return self.state_msg.edit(embed=self.results_embed())
+        return self.state_msg_edit(embed=self.results_embed())
 
     def options_embed(self) -> discord.Embed:
         """Generates embed with information about voting and options

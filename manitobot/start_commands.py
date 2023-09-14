@@ -138,13 +138,14 @@ class Starting(commands.Cog, name='Początkowe'):
         author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
         if user_id != author_id:
             raise NotAuthor
-        name, description, town, bandians, inqufo, other, _ = self.set_create_ops.get(user_id)
+        name, description, town, bandians, inqufo, other, handle, _ = self.set_create_ops.get(user_id)
         set_roles = town + bandians + inqufo + other
         set_len = str(len(set_roles))
         if set_len == '0':
             await ctx.respond('Skład nie może być pusty', ephemeral=True)
             return
         self.set_create_ops.pop(user_id)
+        handle.cancel()
         old_name = name
         if not name.startswith(set_len):
             name = (set_len + name) if not name[0].isdigit() else (set_len + '_' + name)
@@ -174,12 +175,12 @@ class Starting(commands.Cog, name='Początkowe'):
             pass
         else:
             await lst[-1].delete()
+            lst[-2].cancel()
             self.sets_under_creation.remove(lst[0])
 
     @commands.command()
     @sets_channel_only()
     @qualified_manitou_cmd()
-    @game_check(reverse=True)
     async def add_set(self, ctx, name, *, description):
         """Rozpoczyna proces tworzenia setu.
         Nazwa musi składać się ze znaków alfanumerycznych, '-' i '_' i być długości co najmniej 3 znaków,
@@ -197,11 +198,12 @@ class Starting(commands.Cog, name='Początkowe'):
         await ctx.message.delete(delay=0)
         self.sets_under_creation.append(name)
         loop = self.bot.loop
-        loop.call_later(60 * 15, loop.create_task, self.clean_set_creating(user_id))
+
         ops = [name, description, [], [], [], []]
         msg = await ctx.send(f'**Dodawanie składu**\nNazwa: **{name}**\nOpis: `{description}`\nAutor: <@!{user_id}>',
                              components=self._set_creating_components(ops))
-        self.set_create_ops[user_id] = ops + [msg]
+        handle = loop.call_later(60 * 15, loop.create_task, self.clean_set_creating(user_id))
+        self.set_create_ops[user_id] = ops + [handle, msg]
 
     async def _update_set(self, ctx, set_name, **kwargs):
         if set_name not in self.sets_names:
@@ -220,7 +222,6 @@ class Starting(commands.Cog, name='Początkowe'):
     @commands.command()
     @sets_channel_only()
     @qualified_manitou_cmd()
-    @game_check(reverse=True)
     async def rename_set(self, ctx, name, new_name):
         """Zmienia nazwę podanego setu, można używać tylko na swoich setach
         """
@@ -234,7 +235,6 @@ class Starting(commands.Cog, name='Początkowe'):
     @commands.command(aliases=['set_description'])
     @sets_channel_only()
     @qualified_manitou_cmd()
-    @game_check(reverse=True)
     async def redescript_set(self, ctx, name, *, new_description):
         """Zmienia opis podanego setu, można używać tylko na swoich setach
         """
@@ -243,7 +243,6 @@ class Starting(commands.Cog, name='Początkowe'):
     @commands.command(aliases=['remove_set'])
     @sets_channel_only()
     @qualified_manitou_cmd()
-    @game_check(reverse=True)
     async def delete_set(self, ctx, name):
         """Usuwa podany set, można używać tylko na swoich setach"""
         if name not in self.sets_names:
@@ -256,7 +255,6 @@ class Starting(commands.Cog, name='Początkowe'):
         self.sets_names.remove(name)
 
     @commands.command(aliases=['składy', 'sets'])
-    @game_check(reverse=True)
     async def setlist(self, ctx, count: int = None):
         """/&składy/Wypisuje listę predefiniowanych składów, jeśli podana zostanie liczba graczy to wypisuje składy
         dla danej liczby graczy wraz z autorami i opisami
@@ -283,7 +281,6 @@ class Starting(commands.Cog, name='Początkowe'):
             await ctx.send('Nie ma składów na podaną liczbę graczy')
 
     @commands.command(name='set', aliases=['skład'])
-    @game_check(reverse=True)
     async def set_(self, ctx, nazwa_skladu):
         """/&skład/Wypisuje listę postaci w składzie podanym jako argument.
         """
@@ -399,6 +396,12 @@ class Starting(commands.Cog, name='Początkowe'):
             msg += "\n**Obecni:**"
         for m in present:
             msg += "*{}* jest na kanale głosowym a nie ma roli *Gram*, *Obserwator*, *Manitou*\n".format(m.display_name)
+
+        if msg:
+            msg += '\n'
+        for m in observer_members:
+            if not m.display_name.startswith('!') and m not in player_members:
+                msg += "*{}* ma rolę *Obserwator* a nie jest oznaczony poprzez `!`\n".format(m.display_name)
 
         if msg:
             await ctx.send(msg)

@@ -160,8 +160,9 @@ class Role(Activity):
                 return a
         return abilities[0]
 
-    def button(self):
+    def reveal_button(self):
         act = self.my_activities
         if 'wins' in act or 'reveal' in act:
-            return [[Button(ButtonStyle.Primary, label='Ujawnij', custom_id='reveal')]]
+            label = 'Ujawnij się' if len(act) == 1 else 'Ujawnij się bez użycia zdolności'
+            return [[Button(ButtonStyle.Primary, label=label, custom_id='reveal')]]
         return []

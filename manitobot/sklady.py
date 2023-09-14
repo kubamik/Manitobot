@@ -1,15 +1,12 @@
 import sqlite3
 from typing import Dict, List, Tuple, Optional
 
-from settings import SETS_DB_PATH
+from settings import SETS_DB_PATH, PROD
 from . import postacie
 from .errors import NoSuchSet
 
 SETS: Dict[str, List[str]] = {
     "0": [],
-    "1": ["Sędzia"],
-    "4": ["Sędzia", "Burmistrz", "Szeryf", "Janosik"],
-    "5": ["Sędzia", "Burmistrz", "Szeryf", "Szaman", "Janosik"],
     "7": ["Szeryf", "Pastor", "Dobry_Rew", "Mściciel", "Zły_Rew", "Szaman", "Szamanka"],
     "11": ["Dziwka", "Szeryf", "Pastor", "Pijany_Sędzia", "Dobry_Rew", "Mściciel", "Złodziej", "Zły_Rew", "Szaman",
            "Szamanka", "Wojownik"],
@@ -31,6 +28,13 @@ SETS: Dict[str, List[str]] = {
            "Szuler", "Zły_Rew", "Szaman", "Szamanka", "Samotny_Kojot", "Wojownik", "Pożeracz_Umysłów", "Detektor",
            "Zielona_Macka", "Janosik"]
 }
+
+if not PROD:
+    SETS.update({
+        "1": ["Sędzia"],
+        "4": ["Sędzia", "Burmistrz", "Szeryf", "Janosik"],
+        "5": ["Sędzia", "Burmistrz", "Szeryf", "Szaman", "Janosik"]
+    })
 
 
 SET_NAME = r'[\w-]{3,}$'

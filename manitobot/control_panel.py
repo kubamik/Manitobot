@@ -78,6 +78,16 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         self.msg2mbr = dict(zip((m.id for m in messages), members))
         self.mbr2msg = dict(zip(members, messages))
 
+    async def _reset_day_message(self):
+        await self.day_message.message.delete(delay=0)
+        await self.statue_msg.delete(delay=0)
+
+        send = get_control_panel().send
+        day_message = await send(self.day_message.message.content, components=self.day_message.components)
+        self.day_message = ComponentMessage.from_message(day_message, components=self.day_message.components)
+
+        self.statue_msg = await send(self.statue_msg.content)
+
     @staticmethod
     def _day_night_button(day):
         if not day:
@@ -163,10 +173,20 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             button.custom_id = id_ + '-' + action
         return components[0] and components
 
+    async def edit_day_message(self, **fields):
+        try:
+            await self.day_message.edit(**fields)
+        except discord.HTTPException as e:
+            if e.status == 429:
+                await self._reset_day_message()
+                await self.day_message.edit(**fields)
+            else:
+                raise
+
     async def change_removable(self, command):
         components = self.day_message.components
         new_components = self._state_buttons(components, command)
-        await self.day_message.edit(components=new_components)
+        await self.edit_day_message(components=new_components)
 
     def register_callbacks(self):
         async def put_sleep(ctx: ComponentInteraction):
@@ -270,7 +290,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             comp = m.components
             if comp and comp[0] and comp[0][0].style is ButtonStyle.Destructive:
                 tasks.append(m.edit(components=self._player_buttons(comp, sleep=False)))
-        tasks.append(self.bot.game.day.state.set_message(self.day_message))
+        tasks.append(self.bot.game.day.state.set_msg_edit_callback(self.edit_day_message))
         tasks.append(self.bot.game.day.state.async_init())
         tasks.append(self.add_state_buttons())
         await asyncio.gather(*tasks)
@@ -278,11 +298,11 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def evening(self):
         tasks = list()
         tasks.append(self.daynight_msg.edit(content='*Trwa:* **Noc**', components=self._day_night_button(day=False)))
-        tasks.append(self.day_message.edit(content='*Trwa noc*', components=[]))
+        tasks.append(self.edit_day_message(content='*Trwa noc*', components=[]))
         await asyncio.gather(*tasks)
 
     async def add_state_buttons(self):
-        await self.day_message.edit(components=self._state_buttons())
+        await self.edit_day_message(components=self._state_buttons())
 
     async def swapping(self, first: discord.Member, second: discord.Member, first_role: str, second_role: str):
         m_1 = self.mbr2msg[first]

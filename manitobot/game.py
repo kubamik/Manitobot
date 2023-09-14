@@ -47,7 +47,7 @@ class Game:
 
     async def new_day(self) -> None:
         if self._day_backup is None:
-            day = Day(self, self.panel.day_message)
+            day = Day(self, self.panel.edit_day_message)
         else:
             day = self._day_backup
             self._day_backup = None
@@ -65,7 +65,7 @@ class Game:
                     tasks.append(self.player_map[member].role_class.reveal(verbose=False))
             raise
         else:
-            for member in get_dead_role().members:
+            for member in set(get_dead_role().members) & set(self.player_map):
                 if not self.player_map[member].role_class.revealed:
                     tasks.append(self.player_map[member].role_class.reveal())
         finally:
@@ -91,6 +91,7 @@ class Game:
         self.nights.append(self.night)
         await self.panel.evening()
         await get_town_channel().set_permissions(get_player_role(), send_messages=False)
+        await asyncio.gather(*(player.new_night() for player in self.player_map.values()))
         self.evening_bandits_win()
 
     def make_factions(self, roles, _) -> None:
@@ -108,7 +109,6 @@ class Game:
         self.role_map[role] = role_cls = Role(role, self.player_map[member])
         self.player_map[member].role_class = role_cls
         return role_cls
-
 
     async def end(self) -> None:
         tasks = []
@@ -178,7 +178,7 @@ class Game:
 
     @property
     def night_now(self) -> bool:
-        return self.night is not None
+        return self.night is not None or self.day is None
 
     async def on_die(self, reason, player) -> None:
         await self.panel.die(player.member)

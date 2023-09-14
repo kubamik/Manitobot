@@ -26,10 +26,9 @@ class MyMemberConverter(commands.MemberConverter):
     def transform_nickname(nick: str) -> str:
         if nick.startswith(('+', '!')):
             nick = nick[1:]
-        if nick.endswith('#'):
-            nick = nick[:-1]
+        nick = nick.replace('#', '')
         if all(nick.rpartition('(')):
-            nick = nick.rpartition('(')[0]
+            nick = nick.rpartition('(')[0].strip()
         return nick.lower()
 
     def nickname_fit(self, nick: str) -> Optional[discord.Member]:

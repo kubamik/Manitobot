@@ -82,18 +82,20 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
         """Wyzywa wskazaną osobę na pojedynek"""
         await self.invoke_state(ctx, ctx.author, osoba)
 
-    @commands.command(name='przyjmuję', aliases=['pr'])
+    @commands.command(name='przyjmuję', aliases=['akceptuję', 'pr'])
     @player_cmd()
     @town_only()
     async def accept(self, ctx):
         """/&pr/Służy do przyjęcia pojedynku, który został wyzwany najwcześniej"""
         await self.invoke_state(ctx, ctx.author)
 
-    @commands.command(name='odrzucam', aliases=['od', 'spierdalaj'])
+    @commands.command(name='odrzucam', aliases=['spierdalaj', 'od', 'nah'])
     @player_cmd()
     @town_only()
-    async def decline(self, ctx):
+    async def decline(self, ctx: commands.Context):
         """/&od/Służy do odrzucenia pojedynku, który został wyzwany najwcześniej"""
+        if ctx.invoked_with == 'spierdalaj':
+            await ctx.reply('**#STOP MOWIE NIENAWIŚCI**')
         await self.invoke_state(ctx, ctx.author)
 
     # ======================== Reporting commands =========================
@@ -111,7 +113,7 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
         await self.invoke_state(ctx)
         await self.bot.game.panel.change_removable(ctx.command.callback.__name__)
 
-    @commands.command(name='zgłaszam')
+    @commands.command(name='zgłaszam', aliases=['sus'])
     @player_or_manitou_cmd()
     @town_only()
     async def add_report(self, ctx, *, osoba: MyMemberConverter):

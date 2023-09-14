@@ -192,10 +192,10 @@ async def send_game_channels(content: str) -> None:
 
 def cleared_nickname(nick: str) -> str:
     """Perform nickname clearing on given nickname"""
-    if nick.startswith(('+', '!')):
+    if nick.startswith(('+', '!', '*')):
         nick = nick[1:]
-    if nick.endswith('#'):
-        nick = nick[:-1]
+    if '#' in nick:
+        nick = nick.replace('#', '')
     if all(nick.rpartition('(')):
         nick = nick.rpartition('(')[0]
     return nick

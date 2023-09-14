@@ -20,9 +20,9 @@ from .utility import get_town_channel, GUN_ID, get_searched_role, remove_roles, 
 class States(IntEnum):
     """Indexes from .day_states.ORDER meaning special behaviors
     """
-    prev = 0  # previous state
-    next = 1  # following state
-    voted = 2  # state after voting
+    PREV = 0  # previous state
+    NEXT = 1  # following state
+    VOTED = 2  # state after voting
 
 
 _args = ['author', 'subject']
@@ -39,10 +39,10 @@ class DayState(ABC):
         self.day = day
         self.game = game
 
-    def set_message(self, msg: discord.Message) -> Awaitable:
+    def set_msg_edit_callback(self, callback: typing.Callable) -> Awaitable:
         """Edit state message to show actual information
         """
-        return msg.edit(content=self.title, embed=None)
+        return callback(content=self.title, embed=None)
 
     async def async_init(self):
         """Function which is invoked on state change, use when need to to do some async initial work.
@@ -88,13 +88,16 @@ class Challenging(DayState, ABC):
         if author == subject:
             raise errors.SelfChallengeError
         msg = '**{0.display_name}** wyzywa **{1.display_name}** na pojedynek.\n'.format(author, subject)
-        decl_role = SPEC_ROLES['decline_duels']
-        if decl_role in self.game.role_map and self.game.role_map[decl_role].alive:
+        decl_role = self.game.role_map.get(SPEC_ROLES['decline_duels']) \
+            or self.game.role_map.get(SPEC_ROLES['decline_duels_dark'])
+        if decl_role is not None and decl_role.alive:
             msg += '<@{0.id}> czy chcesz przyjąć pojedynek? Użyj `&przyjmuję` lub `&odrzucam`'.format(subject)
             challenges.append(Challenge(author, subject))
             await get_town_channel().send(msg)
         else:
-            msg += f'{decl_role} nie żyje, więc pojedynek jest automatycznie przyjęty'
+            if decl_role is not None:
+                msg += f'{decl_role.qualified_name} nie żyje, więc pojedynek jest automatycznie przyjęty'
+
             challenges.append(AcceptedChallenge(author, subject))
             await get_town_channel().send(msg)
             await self._start_check(verbose=True)
@@ -153,7 +156,7 @@ class Challenging(DayState, ABC):
         if author == subject:
             raise AuthorIsSubjectChallengeError
         if self.game.duels - self.day.duels <= 0:
-            await self.day.push_state(States.next)
+            await self.day.push_state(States.NEXT)
             await get_town_channel().send('Limit pojedynków został wyczerpany')
             return
         await self.day.push_state('duel', author=author, subject=subject)
@@ -191,7 +194,7 @@ class Reporting(ABC):
                 reports.pop(subject)
             else:
                 msg += '**{}** *przez* '.format(subject.display_name) \
-                    + ', '.join([a.display_name for a in authors]) + '\n'
+                       + ', '.join([a.display_name for a in authors]) + '\n'
         msg += '\nLiczba przeszukań: {}'.format(self.game.searches)
         await channel.send(msg.format(len(reports)))
 
@@ -201,7 +204,7 @@ class Reporting(ABC):
             if not authors:
                 reports.pop(subject)
         if len(reports) <= self.game.searches:
-            await self.day.push_state(States.voted)
+            await self.day.push_state(States.VOTED)
         else:
             await self.day.push_state(
                 'vote', title='Przeszukania\nMasz {} głos(y) na osoby, które mają **zostać przeszukane**',
@@ -217,7 +220,7 @@ class DuelInterface(DayState, ABC):
     async def on_die(self, member: discord.Member, reason=None):
         if member in (self.author, self.subject) and reason != 'duel':
             await get_town_channel().send('Pojedynek został anulowany z powodu śmierci jednego z uczestników.')
-            await self.day.push_state(States.next)  # States.next is InitialState for states subclassing this
+            await self.day.push_state(States.NEXT)  # States.NEXT is InitialState for states subclassing this
         await super().on_die(member)
 
     async def start_duel(self, author: discord.Member, subject: discord.Member):
@@ -236,7 +239,7 @@ class Undoable(ABC):
     metadata = dict()
 
     async def undo(self):
-        await self.day.push_state(States.prev, **self.metadata)
+        await self.day.push_state(States.PREV, **self.metadata)
 
 
 class SearchSummary(DayState, Undoable, ABC):
@@ -322,7 +325,7 @@ class SearchSummary(DayState, Undoable, ABC):
             for member in to_search:
                 await get_town_channel().send(self.game.statue.day_search(member))  # could raise GameEnd
         finally:
-            await self.day.push_state(States.next, searched=to_search)
+            await self.day.push_state(States.NEXT, searched=to_search)
 
 
 class RandomizeSearch(SearchSummary, ABC):
@@ -330,7 +333,7 @@ class RandomizeSearch(SearchSummary, ABC):
         num = min(self.game.searches - len(self.searches), len(self.other))
         members = random.sample(self.other, num)
         self.searches.extend(members)
-        await self.day.push_state(States.voted, searches=self.searches)
+        await self.day.push_state(States.VOTED, searches=self.searches)
 
 
 class HangSummary(DayState, Undoable, ABC):
@@ -418,5 +421,5 @@ class HangSummary(DayState, Undoable, ABC):
             await get_town_channel().send('Powieszony(-a) zostaje **{}**'.format(self.hanged.display_name))
             role = self.game.player_map[hanged].role_class
             await role.die('hang')  # could raise GameEnd
-            # but this state is the last one so nothing happens when next are not pushed
-        await self.day.push_state(States.next)
+            # but this state is the last one so nothing happens when NEXT are not pushed
+        await self.day.push_state(States.NEXT)

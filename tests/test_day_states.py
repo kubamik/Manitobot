@@ -391,7 +391,7 @@ class TestDuel(BaseStateTest):
 
     async def test_set_message(self, *_):
         msg = AsyncMock(discord.Message)
-        await self.state.set_message(msg)
+        await self.state.set_msg_edit_callback(msg)
         msg.edit.assert_awaited_with(content='**Pojedynek:**\n**M1** vs. **M2**', embed=None)
 
     async def test_start_duel_1(self, *_):
@@ -457,7 +457,7 @@ class TestDuelSummary(BaseStateTest):
     async def test_set_message(self):
         await self.change_state()
         msg = AsyncMock(discord.Message)
-        await self.state.set_message(msg)
+        await self.state.set_msg_edit_callback(msg)
         msg.edit.assert_awaited_with(content='**Pojedynek - podsumowanie**\n**M1** vs. **M2**', embed=None)
 
     async def test_on_die(self):
@@ -899,19 +899,19 @@ class TestHangIfSummary(BaseStateTest):
     async def test_set_message_1(self):
         await self.change_state()
         msg = AsyncMock()
-        await self.state.set_message(msg)
+        await self.state.set_msg_edit_callback(msg)
         msg.edit.assert_awaited_with(content='**Przed wieszaniem** - wieszamy', embed=None)
 
     async def test_set_message_2(self):
         await self.change_state([1, 5])
         msg = AsyncMock()
-        await self.state.set_message(msg)
+        await self.state.set_msg_edit_callback(msg)
         msg.edit.assert_awaited_with(content='**Przed wieszaniem** - nie wieszamy', embed=None)
 
     async def test_set_message_3(self):
         await self.change_state([10, 1])
         msg = AsyncMock()
-        await self.state.set_message(msg)
+        await self.state.set_msg_edit_callback(msg)
         msg.edit.assert_awaited_with(content='**Przed wieszaniem** - wieszamy', embed=None)
 
     async def test_async_init_1(self):

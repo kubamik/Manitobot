@@ -22,7 +22,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
         """
         await ctx.send(postacie.get_role_details(rola))
 
-    @commands.command(name='obserwuję', aliases=['obs'])
+    @commands.command(name='obserwuję', aliases=['obs', 'obserwuje'])
     @playing_cmd(reverse=True)
     async def spectate(self, ctx):
         """/&obs/Zmienia rolę usera na spectator.

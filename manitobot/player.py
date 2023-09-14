@@ -17,10 +17,12 @@ class Player:
         self.sleeped = False
         self.protected = False
         self.killing_protected = False
+
+    async def new_night(self):
         nickname = self.member.display_name
-        if nickname.endswith('#'):
+        if '#' in nickname:
             try:
-                await self.member.edit(nick=nickname[:-1])
+                await self.member.edit(nick=nickname.replace('#', ''))
             except discord.errors.Forbidden:
                 pass
 

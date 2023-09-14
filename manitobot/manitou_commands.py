@@ -71,7 +71,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         results = self.bot.game.day.state.results_embed()
         await send_to_manitou(embed=results)
 
-    @commands.command(aliases=['MM'])
+    @commands.command(aliases=['MM'], enabled=False)
     @manitou_cmd()
     async def mass_mute(self, _):
         """ⓂMutuje graczy niebędących Manitou
@@ -84,7 +84,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
                 tasks.append(member.edit(mute=True))
         await asyncio.gather(*tasks)
 
-    @commands.command(aliases=['MU'])
+    @commands.command(aliases=['MU'], enabled=False)
     @manitou_cmd()
     async def mass_unmute(self, _):
         """ⓂUnmutuje graczy niebędących Manitou

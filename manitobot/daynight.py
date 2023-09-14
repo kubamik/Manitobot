@@ -31,8 +31,7 @@ class Night:
     def what_next(self):
         try:
             for i in night_order[self.active_number:]:
-                if (i in bot.game.role_map and bot.game.role_map[
-                    i].work()) or i in bot.game.faction_map:
+                if (i in bot.game.role_map and bot.game.role_map[i].work()) or i in bot.game.faction_map:
                     return ' ➡️{}'.format(i)
             return ' ➡️koniec nocy'
         except IndexError:
@@ -133,12 +132,12 @@ class Night:
 
 
 class Day:
-    def __init__(self, game: 'game.Game', msg: discord.Message):
+    def __init__(self, game: 'game.Game', callback: typing.Callable):
         self.challenges = deque()
         self.duels = 0
         self.reports = defaultdict(list)
         self.game = game
-        self.msg = msg
+        self.message_edit_callback = callback
         self.state = InitialState(game, self)
         self._prev = None
 
@@ -148,7 +147,7 @@ class Day:
         if inspect.isclass(state):
             await self._change_state(state, *args, **kwargs)
         elif state == 'vote':
-            flw = curr_order[States.voted]
+            flw = curr_order[States.VOTED]
             await self._change_state(Voting, *args, previous=curr, following=flw, **kwargs)
         elif state == 'duel':
             await self._change_state(Duel, *args, **kwargs)
@@ -161,7 +160,7 @@ class Day:
         self.state = state(self.game, self, *args, **kwargs)
         await prev.cleanup()
         await self.state.async_init()
-        await self.state.set_message(self.msg)
+        await self.state.set_msg_edit_callback(self.message_edit_callback)
         await self.game.panel.add_state_buttons()
 
     async def custom_voting(self, *args):
@@ -171,23 +170,24 @@ class Day:
         else:
             self.state = Voting(self.game, self, *args)
             await self.state.async_init()
-            await self.state.set_message(self.msg)
+            await self.state.set_msg_edit_callback(self.message_edit_callback)
             await self.game.panel.add_state_buttons()
 
     async def end_custom_voting(self):
         if self._prev:
             self.state = self._prev
             await self.state.async_init()
-            await self.state.set_message(self.msg)
+            await self.state.set_msg_edit_callback(self.message_edit_callback)
             await self.game.panel.add_state_buttons()
         else:
-            await self.msg.edit(content='*Trwa noc*', embed=None, components=[])
+            await self.message_edit_callback(content='*Trwa noc*', embed=None, components=[])
             self.game.day = None
 
 
 # noinspection PyMissingConstructor
 class PartialDay(Day):
     """Like day, but to use in emergency cases during night (custom voting)"""
+
     def __init__(self, game, msg):
         self.challenges = deque()
         self.duels = 0
