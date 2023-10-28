@@ -2,7 +2,7 @@ import abc
 
 from discord.ext import commands
 
-from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID
+from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID, ANKIETAWKA_CHANNEL_ID
 
 
 class MyBaseException(abc.ABC, Exception):
@@ -201,6 +201,10 @@ class NotSetsChannel(MyCheckFailure):
     msg = f'Tej komendy można używać tylko na kanale <#{SET_CHANNEL_ID}>'
 
 
+class NotPollChannel(MyCheckFailure):
+    msg = f'Tej komendy można używać tylko na kanale <#{ANKIETAWKA_CHANNEL_ID}>'
+
+
 class VotingInProgress(commands.CheckFailure, MyBaseException):
     msg = 'Tej komendy nie można używać w trakcie głosowania'
 
@@ -222,3 +226,7 @@ class NotAuthor(MyCommandError):
 
 class TooLongText(MyCommandError):
     msg = 'Za długi tekst'
+
+
+class TooMuchPing(MyCheckFailure):
+    msg = 'Nie można pingować więcej niż raz dziennie'

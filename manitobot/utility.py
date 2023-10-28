@@ -53,6 +53,10 @@ def get_newcommer_role() -> discord.Role:
     return get_guild().get_role(NEWCOMMER_ID)
 
 
+def get_marketer_role() -> discord.Role:
+    return get_guild().get_role(MARKETER_ROLE_ID)
+
+
 def get_qualified_manitou_role() -> discord.Role:
     return get_guild().get_role(QUALIFIED_MANITOU_ROLE_ID)
 

@@ -8,10 +8,11 @@ from .basic_models import NotAGame
 from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
     GameStartedException, DayOnly, VotingInProgress, \
     VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, \
-    NotTownChannel, DuelInProgress, NotSetsChannel
+    NotTownChannel, DuelInProgress, NotSetsChannel, NotPollChannel
 from .starting import if_game
 from .utility import if_manitou, get_manitou_role, get_player_role, on_voice, \
-    get_town_channel, if_player, if_qualified_manitou, get_qualified_manitou_role, get_sets_channel
+    get_town_channel, if_player, if_qualified_manitou, get_qualified_manitou_role, get_sets_channel, \
+    get_ankietawka_channel
 
 
 # ===================== Game checks =====================
@@ -147,6 +148,15 @@ def sets_channel_only():
     def predicate(ctx):
         if ctx.channel != get_sets_channel():
             raise NotSetsChannel
+        return True
+
+    return commands.check(predicate)
+
+
+def poll_channel_only():
+    def predicate(ctx):
+        if ctx.channel != get_ankietawka_channel():
+            raise NotPollChannel
         return True
 
     return commands.check(predicate)

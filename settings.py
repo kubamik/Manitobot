@@ -49,6 +49,7 @@ if PROD:
     PING_GREEN_ID = 891944200751427594
     PING_MESSAGE_ID = 891966724767899729
     LEAVE_CHANNEL_ID = 1074755791258660924
+    MARKETER_ROLE_ID = 1153075610386714654
 else:
     GUILD_ID = 694111942729662474
     PLAYER_ROLE_ID = 694112133880741888
@@ -95,6 +96,7 @@ else:
     PING_YELLOW_ID = None
     PING_MESSAGE_ID = None
     LEAVE_CHANNEL_ID = None
+    MARKETER_ROLE_ID = 1153075610386714654
 
 
 EMOJI2COMMAND: typing.Dict[str, typing.Tuple[str, str]] = {  # for DayState methods - emoji: (label, method_name)
@@ -118,3 +120,5 @@ LOG_FILE = 'error.log'
 FULL_LOG_FILE = 'full.log'
 
 SETS_DB_PATH = os.path.join('data', 'sets.sqlite3')
+
+REFERENCE_TIMEZONE = 'Europe/Warsaw'

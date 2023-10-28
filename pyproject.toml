@@ -11,4 +11,5 @@ version = "1.5.3"
 [tool.poetry.dependencies]
 "discord.py" = "^1.7.3"
 python = "^3.11"
+pytz = "^2023.3"
 [tool.poetry.dev-dependencies]
