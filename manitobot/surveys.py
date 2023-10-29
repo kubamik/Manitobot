@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Iterable
+from typing import Iterable, Tuple, List
 
 from pytz import UTC
 
@@ -9,8 +9,14 @@ EMOJIS = '🍓🏀🍌🌵🐳🍇🐷'
 NO_EMOJI = '❌'
 GM_EMOJI = '⚜'
 WEEKD = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd']
-WEEKDAYN = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']  # nominative
-WEEKDAYA = ['poniedziałek', 'wtorek', 'środę', 'czwartek', 'piątek', 'sobotę', 'niedzielę']  # accusative
+WEEKDAYN = [
+    'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota',
+    'niedziela'
+]  # nominative
+WEEKDAYA = [
+    'poniedziałek', 'wtorek', 'środę', 'czwartek', 'piątek', 'sobotę',
+    'niedzielę'
+]  # accusative
 
 ANKIETKA_PING = f'<:ping_yellow:{PING_YELLOW_ID}>'
 DEKLARACJE_PING = f'<:ping_green:{PING_GREEN_ID}>'
@@ -35,7 +41,7 @@ DEKLARACJE_FOOT = """
 """
 
 
-def ankietka(wdstart: int, wdend: int, tz: UTC) -> tuple[str, list[str]]:
+def ankietka(wdstart: int, wdend: int, tz: UTC) -> Tuple[str, List[str]]:
     now = dt.datetime.now(tz)
     duration = (wdend - wdstart) % 7 + 1
     offset = (wdstart - now.weekday()) % 7
@@ -52,8 +58,13 @@ def ankietka(wdstart: int, wdend: int, tz: UTC) -> tuple[str, list[str]]:
     return output, list(EMOJIS[:duration]) + [NO_EMOJI]
 
 
-def deklaracje(day: int, tz: UTC, hours: Iterable[int]) -> tuple[str, list[str]]:
-    now = dt.datetime.now(tz).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+def deklaracje(day: int, tz: UTC,
+               hours: Iterable[int]) -> Tuple[str, List[str]]:
+    now = dt.datetime.now(tz).replace(hour=0,
+                                      minute=0,
+                                      second=0,
+                                      microsecond=0,
+                                      tzinfo=None)
     offset = (day - now.weekday()) % 7
     time = now + dt.timedelta(days=offset)
     if offset == 0:
@@ -64,6 +75,6 @@ def deklaracje(day: int, tz: UTC, hours: Iterable[int]) -> tuple[str, list[str]]
         day = WEEKDAYA[time.weekday()]
     output = DEKLARACJE_BODY.format(day, time.day, time.month, DEKLARACJE_PING)
     for h, e in zip(hours, EMOJIS):
-        output += f"\n{e} <t:{int(time.replace(hour=h).astimezone(tz).timestamp())}:t>"
+        output += f"\n{e} <t:{int(tz.localize(time.replace(hour=h)).timestamp())}:t>"
     output += DEKLARACJE_FOOT.format(NO_EMOJI, GM_EMOJI)
     return output, list(EMOJIS[:len(hours)]) + [NO_EMOJI, GM_EMOJI]

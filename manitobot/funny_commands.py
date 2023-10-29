@@ -31,20 +31,9 @@ class Funny(commands.Cog, name='HONK'):
     async def honk6(self, ctx):
         await ctx.send("GULUGULUGULUGU")
 
-    @commands.command(name='ping', hidden=True)
-    async def honk7(self, ctx):
-        await ctx.send("pong")
-
     @commands.command(name='pingu', hidden=True)
     async def honk8(self, ctx):
         await ctx.send("NOOT NOOT")
-    
-    @commands.command(name='ważnawiadomość', hidden=True)
-    async def honk9(self, ctx, *, osoba: MyMemberConverter(player_only=False) = None):
-        member = osoba
-        if member:
-            await ctx.send(member.mention)
-        await ctx.send("ZABIJ SIĘ!")
 
     @commands.command(name='dziobak', hidden=True)
     async def honk10(self, ctx):
