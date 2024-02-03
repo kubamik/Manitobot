@@ -117,7 +117,7 @@ class DuelSummary(DuelInterface, DayState, Undoable):
                                custom_id='role_wins_first'),
                         Button(ButtonStyle.Primary, label=f'Wygrywa {self.subject.display_name}',
                                custom_id='role_wins_second'),
-                        Button(ButtonStyle.Destructive, label='Nie', custom_id='role_action_cancel')
+                        Button(ButtonStyle.Destructive, label='Nie', custom_id='duel_role_action_cancel')
                     ]])
                 break
 

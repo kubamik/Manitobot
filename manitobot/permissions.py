@@ -1,19 +1,18 @@
 # (gets up until(-1 - only zero night), number of using usable ability, abilities with keywords)
 role_activities = {
-    "Sędzia": (-1, 1, {"wins": 1, "day_refuse": -1}),
-    "Burmistrz": (-1, 1, {"peace": 1, "reveal": 1, "day_refuse": -1}),
-    "Pijany_Sędzia": (1, 2, {"drink": 2, "refuse": -1, "wins": 1, "day_refuse": -1}),
-    "Janosik": (1, 1, {"wave": 1, "die": "hang_win"}),
+    "Sędzia": (-1, 1, {"wins": 1, "duel_day_refuse": -1}),
+    "Szeryf": (0, -1, {"arrest": -1}),
+    "Pijany_Sędzia": (1, 2, {"drink": 2, "refuse": -1, "wins": 1, "duel_day_refuse": -1}),
+    "Opój": (1, 2, {"drink": 2, "refuse": -1}),
+    "Pastor": (0, -1, {"pasteur": -1}),
+    "Dziwka": (-1, -1, {"dziw": 1}),
     "Dobry_Rew": (-1, 0, {"revoling": -1}),
     "Zły_Rew": (-1, 0, {"revoling": -1}),
     "Lucky_Luke": (1, -1, {"start": "look", "revoling": -1, "search": -1, "kill": 1, "follow": 1, "who": -1,
                            "refused": "Lucky_Luke nie przejmuje posążka"}),
     "Agent_Ubezpieczeniowy": (0, 1, {"reveal": 1}),
-
-    "Szeryf": (0, -1, {"arrest": -1}),
-    "Opój": (1, 2, {"drink": 2, "refuse": -1}),
-    "Pastor": (0, -1, {"pasteur": -1}),
-    "Dziwka": (-1, -1, {"dziw": 1}),
+    "Janosik": (1, 1, {"wave": 1, "die": "hang_win"}),
+    "Burmistrz": (-1, 1, {"peace": 1, "reveal": 1, "hang_day_refuse": -1}),
     "Hazardzista": (2, 1, {"refuse": -1, "play": -1, "die": "shooted", "refused": "Nikt nie ginie"}),
     "Mściciel": (1, 1, {"refuse": -1, "kill": 1, "refused": "Nikt nie ginie"}),
     "Wojownik": (1, 1, {"refuse": -1, "kill": 1, "refused": "Nikt nie ginie"}),
@@ -50,14 +49,12 @@ SPEC_ROLES = {
 
 def get_activity(name, obj):
     activities = {
-        "wins": [obj.if_day, obj.if_duel, obj.reveal, obj.change_duel],
+        "wins": [obj.if_day, obj.if_duel, obj.reveal, obj.change_duel, obj.del_state_special_msg],
         "hang_win": [obj.hang_win],
-        "reveal": [obj.if_day, obj.if_not_revealed, obj.reveal],
-        "day_refuse": [obj.del_state_special_msg],
-        "peace": [obj.if_day, obj.if_not_revealed, obj.reveal, obj.make_peace],
-
-        "arrest": [obj.if_active, obj.if_not_prev, obj.sleep, obj.protect, obj.meantime_send, obj.search,
-                   obj.mark_arrest, obj.deactivate],
+        "reveal": [obj.if_day, obj.if_not_revealed, obj.reveal, obj.del_state_special_msg],
+        "duel_day_refuse": [obj.del_state_special_msg],
+        "hang_day_refuse": [obj.del_state_special_msg],
+        "peace": [obj.if_day, obj.if_not_revealed, obj.reveal, obj.make_peace, obj.del_state_special_msg],
         "dziw": [obj.if_active, obj.if_not_self, obj.check_role, obj.deactivate],
         "pasteur": [obj.if_active, obj.set_use, obj.check_faction, obj.deactivate],
         "drink": [obj.if_active, obj.if_protected, obj.deactivate, obj.sleep, obj.set_use],

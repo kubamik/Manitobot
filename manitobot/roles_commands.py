@@ -32,15 +32,17 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         self.lock = False
         add = bot.add_component_callback
         add(ComponentCallback('reveal', self.reveal_role))
-        add(ComponentCallback('role_action_cancel', self.role_action_cancel))
+        add(ComponentCallback('duel_role_action_cancel', self.duel_role_action_cancel))
+        add(ComponentCallback('hang_role_action_cancel', self.hang_role_action_cancel))
         add(ComponentCallback('role_wins_first', self.role_wins_first))
         add(ComponentCallback('role_wins_second', self.role_wins_second))
         add(ComponentCallback('role_veto', self.role_veto))
-        
+
     def cog_unload(self):
         rm = self.bot.remove_component_callback
         rm('reveal')
-        rm('role_action_cancel')
+        rm('duel_role_action_cancel')
+        rm('hang_role_action_cancel')
         rm('role_wins_first')
         rm('role_wins_second')
         rm('role_veto')
@@ -68,8 +70,14 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         await role.new_activity(ctx, ability)
         await ctx.edit_message(components=[])
 
-    async def role_action_cancel(self, ctx: ComponentInteraction):
-        """"For usage of canceling day changing (duel, hang) actions button"""
+    async def duel_role_action_cancel(self, ctx: ComponentInteraction):
+        """"For usage of canceling day changing (duel) actions button"""
+        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+        role = self._get_role(member)
+        await role.new_activity(ctx, 'day_refuse')
+
+    async def hang_role_action_cancel(self, ctx: ComponentInteraction):
+        """"For usage of canceling day changing (hang) actions button"""
         member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
         role = self._get_role(member)
         await role.new_activity(ctx, 'day_refuse')
@@ -95,7 +103,7 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
             pass
         else:
             await role.new_activity(ctx, 'wins', target)
-            
+
     async def role_veto(self, ctx: ComponentInteraction):
         member = get_member(ctx.author.id)
         role = self._get_role(member)
