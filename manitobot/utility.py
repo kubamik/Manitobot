@@ -73,6 +73,10 @@ def get_ping_declaration_role() -> discord.Role:
     return get_guild().get_role(PING_DECLARATION_ID)
 
 
+def get_ping_other_games_role() -> discord.Role:
+    return get_guild().get_role(PING_OTHER_GAMES_ID)
+
+
 def get_control_panel() -> discord.TextChannel:
     return get_guild().get_channel(CONTROL_PANEL_ID)
 

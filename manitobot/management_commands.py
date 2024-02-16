@@ -7,14 +7,14 @@ import discord
 from discord.ext import commands
 
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID, LEAVE_CHANNEL_ID
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID, LEAVE_CHANNEL_ID, PING_PINK_ID, OTHER_PING_MESSAGE_ID
 from .bot_basics import bot
 from .converters import MyMemberConverter, MyDateConverter
 from .interactions import CommandsTypes
-from .surveys import ankietka, deklaracje, WEEKD
+from .surveys import survey, declarations, WEEKD
 from .utility import get_newcommer_role, get_ping_game_role, get_member, get_admin_role, \
-    get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role
-
+    get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role, \
+    get_ping_other_games_role
 
 WEEKDAYS = dict(zip(range(7), ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']))
 
@@ -91,30 +91,38 @@ class Management(commands.Cog, name='Dla Adminów'):
     @commands.Cog.listener('on_raw_reaction_add')
     async def ping_reaction_add(
             self, event: discord.RawReactionActionEvent) -> None:
-        if event.message_id != PING_MESSAGE_ID:
-            return
         if event.user_id == self.bot.user.id:
             return
         member = get_member(event.user_id)
-        if event.emoji.id == PING_YELLOW_ID:
-            await member.remove_roles(get_ping_poll_role())
-        if event.emoji.id == PING_GREEN_ID:
-            await member.remove_roles(get_ping_declaration_role())
-        if event.emoji.id == PING_BLUE_ID:
-            await member.remove_roles(get_ping_game_role())
+        if event.message_id == PING_MESSAGE_ID:
+            if event.emoji.id == PING_YELLOW_ID:
+                await member.remove_roles(get_ping_poll_role())
+            if event.emoji.id == PING_GREEN_ID:
+                await member.remove_roles(get_ping_declaration_role())
+            if event.emoji.id == PING_BLUE_ID:
+                await member.remove_roles(get_ping_game_role())
+            if event.emoji.id == PING_PINK_ID:
+                await member.add_roles(get_ping_other_games_role())
+        elif event.message_id == OTHER_PING_MESSAGE_ID:
+            if event.emoji.id == PING_PINK_ID:
+                await member.remove_roles(get_ping_other_games_role())
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def ping_reaction_remove(
             self, event: discord.RawReactionActionEvent):
-        if event.message_id != PING_MESSAGE_ID or event.user_id == self.bot.user.id:
+        if event.user_id == self.bot.user.id:
             return
         member = get_member(event.user_id)
-        if event.emoji.id == PING_YELLOW_ID:
-            await member.add_roles(get_ping_poll_role())
-        if event.emoji.id == PING_GREEN_ID:
-            await member.add_roles(get_ping_declaration_role())
-        if event.emoji.id == PING_BLUE_ID:
-            await member.add_roles(get_ping_game_role())
+        if event.message_id == PING_MESSAGE_ID:
+            if event.emoji.id == PING_YELLOW_ID:
+                await member.add_roles(get_ping_poll_role())
+            if event.emoji.id == PING_GREEN_ID:
+                await member.add_roles(get_ping_declaration_role())
+            if event.emoji.id == PING_BLUE_ID:
+                await member.add_roles(get_ping_game_role())
+        elif event.message_id == OTHER_PING_MESSAGE_ID:
+            if event.emoji.id == PING_PINK_ID:
+                await member.remove_roles(get_ping_other_games_role())
 
     async def cog_check(self, ctx):
         if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
@@ -175,7 +183,14 @@ class Management(commands.Cog, name='Dla Adminów'):
                 raise commands.BadArgument('Wrong channel id')
 
     @commands.command(name='dodaj_reakcje', aliases=['emojis'])
-    async def add_reactions(self, _, wiadomosc: discord.Message, *emoji: Union[discord.Emoji, str]):
+    async def add_reactions(self, ctx: commands.Context, wiadomosc: Optional[discord.Message] = None,
+                            *emoji: Union[discord.Emoji, str]):
+        """Dodaje reakcje do wiadomości przekazanej przez ID/link lub do wiadomości, na którą odpowiadasz.
+        Reakcje powinny być oddzielone spacją.
+        """
+        if wiadomosc is None and ctx.message.reference is not None:
+            wiadomosc = (ctx.message.reference.resolved or
+                         await ctx.fetch_message(ctx.message.reference.message_id))
         for e in emoji:
             try:
                 await wiadomosc.add_reaction(e)
@@ -197,7 +212,7 @@ async def reactions_summary(m: discord.Message) -> list[str]:
     members = [member for member in members if isinstance(member, discord.Member)]
 
     if not members:
-        return['Do tej wiadomości nie dodano reakcji']
+        return ['Do tej wiadomości nie dodano reakcji']
 
     maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
     msg = ''

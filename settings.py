@@ -1,7 +1,9 @@
 import os.path
 import typing
 
-PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
+__version__ = '1.7.0'
+
+PROD = None  # True - prod. environment, False - web test hosting, None - local hosting
 
 if PROD:
     GUILD_ID = 710039683798794270
@@ -44,10 +46,13 @@ if PROD:
     PING_POLL_ID = 891811707272454194
     PING_GAME_ID = 779091611736604693
     PING_DECLARATION_ID = 779091574801301505
+    PING_OTHER_GAMES_ID = 1193327333097078904
     PING_BLUE_ID = 891944199539277844
     PING_YELLOW_ID = 891944199673491516
     PING_GREEN_ID = 891944200751427594
+    PING_PINK_ID = 1192602506010820648
     PING_MESSAGE_ID = 891966724767899729
+    OTHER_PING_MESSAGE_ID = ...  # FIXME: Add other ping message id
     LEAVE_CHANNEL_ID = 1074755791258660924
     MARKETER_ROLE_ID = 1153075610386714654
 else:
@@ -94,9 +99,11 @@ else:
     PING_BLUE_ID = None
     PING_GREEN_ID = None
     PING_YELLOW_ID = None
+    PING_PINK_ID = None
     PING_MESSAGE_ID = None
+    OTHER_PING_MESSAGE_ID = None
     LEAVE_CHANNEL_ID = None
-    MARKETER_ROLE_ID = 1153075610386714654
+    MARKETER_ROLE_ID = 694115711152291881
 
 
 EMOJI2COMMAND: typing.Dict[str, typing.Tuple[str, str]] = {  # for DayState methods - emoji: (label, method_name)

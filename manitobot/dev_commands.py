@@ -1,17 +1,15 @@
 import datetime as dt
-import os
 
 import discord
 from discord.ext import commands
 
-from settings import LOG_FILE, FULL_LOG_FILE
+from settings import LOG_FILE, FULL_LOG_FILE, __version__
 from .converters import MyMemberConverter
 
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class DevCommands(commands.Cog, name='Development'):
-    """v1.6.0"""
     def __init__(self, bot):
         self.bot = bot
 
@@ -45,12 +43,12 @@ class DevCommands(commands.Cog, name='Development'):
         """ⒹWysyła logi błędów"""
         await self.send_logs(ctx)
 
-    @commands.command()
+    @commands.command(aliases=['fulllog', 'flog'])
     async def full_log(self, ctx):
         """ⒹWysyła pełne logi"""
         await self.send_logs(ctx, full=True)
 
-    @commands.command()
+    @commands.command(aliases=['fulllogcls', 'flogcls'])
     async def clear_full_log(self, _):
         """ⒹCzyści pełne logi"""
         with open(FULL_LOG_FILE, 'w'):
@@ -60,6 +58,11 @@ class DevCommands(commands.Cog, name='Development'):
     async def start_time(self, ctx):
         """ⒹPokazuje czas rozpoczęcia sesji bota"""
         await ctx.send(f"Current bot session started at {started_at}")
+
+    @commands.command(name='version')
+    async def version(self, ctx):
+        """ⒹPokazuje wersję bota"""
+        await ctx.send(f"Manitobot version: {__version__}")
 
     @commands.command(name='clear_logs', aliases=['logcls'])
     async def log_clear(self, _):
