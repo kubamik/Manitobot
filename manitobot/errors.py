@@ -121,6 +121,10 @@ class NotDuelParticipant(MyCommandError):
 
 class ReportingLocked(MyCheckFailure):
     msg = 'Nie można już zgłaszać'
+
+
+class ReportsLimitExceeded(MyCheckFailure):
+    msg = 'Nie możesz zgłosić już więcej osób'
         
         
 class MoreSearchedThanSearches(MyCommandError):
