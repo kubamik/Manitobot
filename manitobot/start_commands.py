@@ -455,3 +455,19 @@ class Starting(commands.Cog, name='Początkowe'):
         """Służy do wyrejestrowania się z gry.
         """
         await ctx.author.remove_roles(get_player_role(), get_dead_role())
+
+    @commands.command(aliases=['manit'])
+    @game_check(reverse=True)
+    @qualified_manitou_cmd()
+    async def manitou(self, ctx):
+        """ⓂPrzyznaje rolę manitou
+        """
+        await ctx.author.add_roles(get_manitou_role())
+
+    @commands.command(aliases=['nmanit', 'notmanitou'])
+    @game_check(reverse=True)
+    @manitou_cmd()
+    async def not_manitou(self, ctx):
+        """ⓂUsuwa rolę manitou
+        """
+        await ctx.author.remove_roles(get_manitou_role())

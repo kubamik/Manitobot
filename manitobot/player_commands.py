@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import suppress
 
 import discord
 from discord.ext import commands
@@ -25,17 +26,15 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
     @commands.command(name='obserwuję', aliases=['obs', 'obserwuje'])
     @playing_cmd(reverse=True)
     async def spectate(self, ctx):
-        """/&obs/Zmienia rolę usera na spectator.
+        """/&obs/Zmienia rolę usera na obserwator.
         """
         member = ctx.author
         await member.remove_roles(get_player_role(), get_dead_role())
         await member.add_roles(get_spectator_role())
         nickname = member.display_name
         if not nickname.startswith('!'):
-            try:
+            with suppress(discord.errors.Forbidden):
                 await member.edit(nick='!' + nickname)
-            except discord.errors.Forbidden:
-                pass
 
     @commands.command(name='nie_obserwuję', aliases=['nie_obs', 'nieobs'])
     async def not_spectate(self, ctx):
@@ -109,6 +108,12 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
             'Pozostali:{}'.format(len(get_player_role().members),
                                   len(alive_roles) - len(get_player_role().members), team)
         )
+
+    @commands.command(name='#', aliases=['kratka'])
+    @player_cmd()
+    async def hash(self, ctx):
+        """Dodaje kratkę do nicka"""
+        await ctx.author.edit(nick=f'{ctx.author.display_name}#')
 
     @commands.command(aliases=['vpriv'])
     @player_cmd()
