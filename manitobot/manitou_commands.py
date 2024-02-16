@@ -131,16 +131,18 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         player_role = get_player_role()
         dead_role = get_dead_role()
         spec_role = get_spectator_role()
+        manit_role = get_manitou_role()
         tasks = [
-            utility.remove_roles(dead_role.members + player_role.members + spec_role.members,
-                                 dead_role, player_role, spec_role)]
+            utility.remove_roles(dead_role.members + player_role.members + spec_role.members
+                                 + manit_role.members, dead_role, player_role, spec_role, manit_role)
+        ]
         for member in get_guild().members:
             if member.id != self.bot.user.id:
                 tasks.append(clear_nickname(member))
         async with ctx.typing():
             await self.remove_cogs()
             await asyncio.gather(*tasks)
-        await ctx.message.add_reaction('❤️')
+        await ctx.message.add_reaction('☢️')
 
     @commands.command()
     @manitou_cmd()
@@ -335,14 +337,15 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd()
     @ktulu_check()
     async def number(self, _, name: str, n: int):
-        """Ⓜ/&num/Zmienia liczby gry (pojedynki, przeszukania, odpływanie)
-        Argumenty: <duels, searches, evening, morning lub pierwsze litery> <liczba>
+        """Ⓜ/&num/Zmienia liczby gry (pojedynki, przeszukania, odpływanie, limit zgłoszeń)
+        Argumenty: <duels, searches, evening, morning, reports lub pierwsze litery> <liczba>
         """
         name2attr = {
             'd': 'duels',
             's': 'searches',
             'm': 'bandit_morn',
-            'e': 'bandit_even'
+            'e': 'bandit_even',
+            'r': 'reports_limit'
         }
         try:
             setattr(self.bot.game, name2attr[name[0]], n)

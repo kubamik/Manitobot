@@ -177,6 +177,10 @@ class Reporting(ABC):
     async def add_report(self, author: discord.Member, subject: discord.Member):
         if self.locked:
             raise ReportingLocked
+
+        reports_count = sum((1 for reports in self.day.reports.values() if author in reports))
+        if reports_count >= self.game.reports_limit:
+            raise errors.ReportsLimitExceeded
         reports = self.day.reports[subject]
         if author not in reports:
             reports.append(author)

@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from math import inf
 from typing import Optional, Dict, List, Set, Tuple, Mapping
 
 import discord
@@ -34,6 +35,7 @@ class Game:
         self.searches: int = 2
         self.bandit_night: int = 3
         self.bandit_morning: bool = True
+        self.reports_limit: int = 100
         self.rioters: Set[discord.Member] = set()
         self.reveal_dead: bool = True
         self.stats: Mapping[str, int] = defaultdict(int)
