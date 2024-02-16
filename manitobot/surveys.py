@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Iterable, Tuple, List
+from typing import Tuple, List, Sequence
 
 from pytz import UTC
 
@@ -41,7 +41,7 @@ DEKLARACJE_FOOT = """
 """
 
 
-def ankietka(wdstart: int, wdend: int, tz: UTC) -> Tuple[str, List[str]]:
+def survey(wdstart: int, wdend: int, tz: UTC) -> Tuple[str, List[str]]:
     now = dt.datetime.now(tz)
     duration = (wdend - wdstart) % 7 + 1
     offset = (wdstart - now.weekday()) % 7
@@ -58,8 +58,8 @@ def ankietka(wdstart: int, wdend: int, tz: UTC) -> Tuple[str, List[str]]:
     return output, list(EMOJIS[:duration]) + [NO_EMOJI]
 
 
-def deklaracje(day: int, tz: UTC,
-               hours: Iterable[int]) -> Tuple[str, List[str]]:
+def declarations(day: int, tz: UTC,
+                 hours: Sequence[int]) -> Tuple[str, List[str]]:
     now = dt.datetime.now(tz).replace(hour=0,
                                       minute=0,
                                       second=0,

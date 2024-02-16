@@ -82,7 +82,7 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
         """Wyzywa wskazaną osobę na pojedynek"""
         await self.invoke_state(ctx, ctx.author, osoba)
 
-    @commands.command(name='przyjmuję', aliases=['akceptuję', 'pr'])
+    @commands.command(name='przyjmuję', aliases=['akceptuję', 'pr', 'przyjmuje'])
     @player_cmd()
     @town_only()
     async def accept(self, ctx):

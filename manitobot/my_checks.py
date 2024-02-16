@@ -101,8 +101,7 @@ def on_voice_check() -> Callable:
 
 def qualified_manitou_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
-        owner = await ctx.bot.is_owner(ctx.author)
-        if not if_qualified_manitou(ctx) and not owner:
+        if not if_qualified_manitou(ctx) and not await ctx.bot.is_owner(ctx.author):
             raise commands.MissingRole(get_qualified_manitou_role())
         return True
 

@@ -398,7 +398,7 @@ class Activity:
 
     async def hang_win(self):
         if self.die_reason == 'hang':
-            reason = "Powieszony został {}, czyli {}".format(self.player.member.display_name, self.name)
+            reason = "Powieszony(-a) został(a) {}, czyli {}".format(self.player.member.display_name, self.name)
             raise GameEnd(reason, self.name)
 
     def can_unplant(self):

@@ -1,15 +1,14 @@
-from typing import Union
 import datetime as dt
+from typing import Union
 
 import discord
-from discord.ext import commands
 import pytz
+from discord.ext import commands
 
-from settings import REFERENCE_TIMEZONE
+from settings import REFERENCE_TIMEZONE, ADMIN_ROLE_ID, MARKETER_ROLE_ID
 from .my_checks import poll_channel_only
-from .surveys import ankietka, deklaracje, WEEKD, ANKIETKA_PING
-
-from .utility import get_marketer_role, get_admin_role, get_ankietawka_channel, get_ping_poll_role
+from .surveys import survey, declarations, WEEKD, ANKIETKA_PING
+from .utility import get_marketer_role, get_ankietawka_channel, get_ping_poll_role, get_admin_role
 
 WEEKD_MAP = {WEEKD[i]: i for i in range(7)}
 
@@ -24,8 +23,7 @@ class Marketing(commands.Cog):
         }
 
     async def cog_check(self, ctx: commands.Context):
-        # TODO: add telemarketer role
-        if ctx.author in get_admin_role().members:
+        if ctx.author in get_admin_role().members or ctx.author in get_marketer_role().members:
             return True
         raise commands.MissingRole(get_marketer_role())
 
@@ -47,7 +45,7 @@ class Marketing(commands.Cog):
             await ctx.send('Niepoprawne argumenty. Użyj pn, wt, śr, cz, pt, sb, nd lub ich numerów 1-7.')
             return
 
-        text, emoji = ankietka(start, koniec, pytz.timezone(REFERENCE_TIMEZONE))
+        text, emoji = survey(start, koniec, pytz.timezone(REFERENCE_TIMEZONE))
 
         msg = await get_ankietawka_channel().send(text)
         for e in emoji:
@@ -71,7 +69,7 @@ class Marketing(commands.Cog):
             await ctx.send('Niepoprawne godziny. Użyj liczb od 0 do 23.')
             return
 
-        text, emoji = deklaracje(dzien, pytz.timezone(REFERENCE_TIMEZONE), godziny)
+        text, emoji = declarations(dzien, pytz.timezone(REFERENCE_TIMEZONE), godziny)
 
         msg = await get_ankietawka_channel().send(text)
         for e in emoji:
