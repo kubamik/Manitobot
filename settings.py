@@ -3,7 +3,7 @@ import typing
 
 __version__ = '1.7.0'
 
-PROD = None  # True - prod. environment, False - web test hosting, None - local hosting
+PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
 
 if PROD:
     GUILD_ID = 710039683798794270
@@ -52,7 +52,7 @@ if PROD:
     PING_GREEN_ID = 891944200751427594
     PING_PINK_ID = 1192602506010820648
     PING_MESSAGE_ID = 891966724767899729
-    OTHER_PING_MESSAGE_ID = ...  # FIXME: Add other ping message id
+    OTHER_PING_MESSAGE_ID = 1208193767568572497
     LEAVE_CHANNEL_ID = 1074755791258660924
     MARKETER_ROLE_ID = 1153075610386714654
 else:

@@ -101,8 +101,6 @@ class Management(commands.Cog, name='Dla Adminów'):
                 await member.remove_roles(get_ping_declaration_role())
             if event.emoji.id == PING_BLUE_ID:
                 await member.remove_roles(get_ping_game_role())
-            if event.emoji.id == PING_PINK_ID:
-                await member.add_roles(get_ping_other_games_role())
         elif event.message_id == OTHER_PING_MESSAGE_ID:
             if event.emoji.id == PING_PINK_ID:
                 await member.remove_roles(get_ping_other_games_role())
