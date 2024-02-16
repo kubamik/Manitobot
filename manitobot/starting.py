@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import secrets
 from random import shuffle
 from typing import List, Tuple, Optional
 
@@ -57,8 +58,7 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
     ctx.bot.game = game = Game() if not mafia else Mafia()
 
     shuffled_list = list(roles)
-    shuffle(shuffled_list)
-    shuffle(shuffled_list)
+    shuffle_roles(shuffled_list)
     tasks = []
 
     game.roles = roles
@@ -87,6 +87,13 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
     tasks.append(game.new_night())
     await game.panel.prepare_panel()
     await asyncio.gather(*tasks)
+
+
+def shuffle_roles(roles: list[str]):
+    n = len(roles)
+    for i in range(n):
+        idx = secrets.randbelow(n - i)
+        roles[idx], roles[-1] = roles[-1], roles[idx]
 
 
 def if_game():
