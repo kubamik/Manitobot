@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-__version__ = '1.7.0'
+__version__ = '1.7.1'
 
 PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
 

@@ -103,7 +103,7 @@ class Management(commands.Cog, name='Dla Adminów'):
                 await member.remove_roles(get_ping_game_role())
         elif event.message_id == OTHER_PING_MESSAGE_ID:
             if event.emoji.id == PING_PINK_ID:
-                await member.remove_roles(get_ping_other_games_role())
+                await member.add_roles(get_ping_other_games_role())
 
     @commands.Cog.listener('on_raw_reaction_remove')
     async def ping_reaction_remove(
