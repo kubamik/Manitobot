@@ -375,7 +375,6 @@ class Starting(commands.Cog, name='Początkowe'):
 
     @commands.command()
     @manitou_cmd()
-    @game_check(reverse=True)
     async def verify(self, ctx):
         """ⓂSprawdza integralność osób z rolą gram z osobami na kanale głosowym
         """
