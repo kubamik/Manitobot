@@ -74,13 +74,13 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         """"For usage of canceling day changing (duel) actions button"""
         member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
         role = self._get_role(member)
-        await role.new_activity(ctx, 'day_refuse')
+        await role.new_activity(ctx, 'duel_day_refuse')
 
     async def hang_role_action_cancel(self, ctx: ComponentInteraction):
         """"For usage of canceling day changing (hang) actions button"""
         member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
         role = self._get_role(member)
-        await role.new_activity(ctx, 'day_refuse')
+        await role.new_activity(ctx, 'hang_day_refuse')
 
     async def role_wins_first(self, ctx: ComponentInteraction):
         """For usage of Judge's button for change duel result"""
