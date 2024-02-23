@@ -84,7 +84,7 @@ async def handle_error(send, error):
     elif isinstance(error, (commands.MissingRole, commands.NotOwner)):
         await send('You have no power here!', delete_after=10)
     elif isinstance(error, commands.errors.MissingRequiredArgument):
-        await send('Brakuje parametru: ' + str(error.param), delete_after=10)
+        await send('Brakuje parametru: ' + str(error.param.name), delete_after=10)
     elif isinstance(error, commands.MemberNotFound):
         await send('Nie ma takiej osoby wśród żywych graczy', delete_after=10)
     elif isinstance(error, commands.errors.BadArgument):
