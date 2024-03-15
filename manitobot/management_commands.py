@@ -135,7 +135,6 @@ class Management(commands.Cog, name='Dla Adminów'):
         await member.add_roles(get_admin_role())
 
     @commands.command(name='nie_adminuj', hidden=True)
-    @commands.is_owner()
     async def not_adminate(self, _, *, osoba: MyMemberConverter(player_only=False)):
         """Usuwa admina
         """
