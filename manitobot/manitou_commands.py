@@ -1,6 +1,7 @@
 import asyncio
 from random import randint
 from typing import Union
+from time import time
 
 import discord
 import typing
@@ -286,6 +287,13 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂLosuje liczbę naturalną z przedziału [1, n]"""
         r = randint(1, n)
         await ctx.send(r)
+
+    @commands.command(name='timer')
+    @manitou_cmd()
+    async def timer(self, ctx, seconds: int, *, message):
+        """Ⓜ&timer n msg Ogłasza wydarzenie msg z timerem odliczającym n sekund"""
+        timstamp = int(time.time()) + seconds
+        await ctx.send(f'Manitou ogłasza {message} <t:{timestamp}:R>')
 
     async def reset(self, ctx: commands.Context):
         player_role = get_player_role()
