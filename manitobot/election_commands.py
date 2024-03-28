@@ -4,20 +4,14 @@ from random import randint
 from time import sleep
 
 from settings import DIE415_ID, DIE421_ID, DIE456_ID, DIE462_ID
-from .bot_basics import bot
-from .utility import get_admin_role
-
+from .my_checks import admin_cmd
 
 class Election(commands.Cog, name='Wybory'):
     def __init__(self, bot):
         self.bot = bot
 
-    async def cog_check(self, ctx):
-        if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
-            return True
-        raise commands.MissingRole(get_admin_role())
-
     @commands.command(name='losuj_kww')
+    @admin_cmd()
     async def rand_kww(self, ctx, komitet):
         """Przydziela losowy numer kandydatowi zgodnie z standardem RFC 1149.5
         """
