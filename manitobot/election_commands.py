@@ -1,10 +1,11 @@
-import discord
-from discord.ext import commands
+import asyncio
 from random import randint
-from time import sleep
+
+from discord.ext import commands
 
 from settings import DIE415_ID, DIE421_ID, DIE456_ID, DIE462_ID
 from .my_checks import admin_cmd
+
 
 class Election(commands.Cog, name='Wybory'):
     def __init__(self, bot):
@@ -16,8 +17,8 @@ class Election(commands.Cog, name='Wybory'):
         """Przydziela losowy numer kandydatowi zgodnie z standardem RFC 1149.5
         """
         await ctx.send('Losuję numer komitetu...')
-        time.sleep(2)
-        match random.randint(0, 3):
+        await asyncio.sleep(2)
+        match randint(0, 3):
             case 0:
                 await ctx.send(f'<:kostka4:{DIE415_ID}>')
             case 1:
@@ -26,5 +27,5 @@ class Election(commands.Cog, name='Wybory'):
                 await ctx.send(f'<:kostka4:{DIE456_ID}>')
             case 3:
                 await ctx.send(f'<:kostka4:{DIE462_ID}>')
-        time.sleep(1)
+        await asyncio.sleep(1)
         await ctx.send(f'Wylosowany numer KWW {komitet} to 4.')
