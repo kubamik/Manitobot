@@ -12,7 +12,7 @@ from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
 from .starting import if_game
 from .utility import if_manitou, get_manitou_role, get_player_role, on_voice, \
     get_town_channel, if_player, if_qualified_manitou, get_qualified_manitou_role, get_sets_channel, \
-    get_ankietawka_channel
+    get_ankietawka_channel, get_admin_role
 
 
 # ===================== Game checks =====================
@@ -103,6 +103,15 @@ def qualified_manitou_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
         if not if_qualified_manitou(ctx) and not await ctx.bot.is_owner(ctx.author):
             raise commands.MissingRole(get_qualified_manitou_role())
+        return True
+
+    return commands.check(predicate)
+
+
+def admin_cmd() -> Callable:
+    async def predicate(ctx: commands.Context) -> bool:
+        if ctx.author not in get_admin_role().members:
+            raise commands.MissingRole(get_admin_role())
         return True
 
     return commands.check(predicate)
