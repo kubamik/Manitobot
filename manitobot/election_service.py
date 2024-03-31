@@ -8,6 +8,21 @@ import discord
 from settings import ELECTION_DB_PATH
 
 Candidate = namedtuple('Candidate', 'id emoji emoji_id text description')
+Election = namedtuple('Election', 'name from_date to_date message confirmation_message '
+                                  'channel_id in_progress min_votes_count max_votes_count message_id')
+
+
+def connect_db(func):
+    async def wrapper(*args, **kwargs):
+        db = None
+        try:
+            db = await aiosqlite.connect(ELECTION_DB_PATH)
+            data = await func(db, *args, **kwargs)
+        finally:
+            if db:
+                await db.close()
+        return data
+    return wrapper
 
 
 def setup_election_db():
@@ -29,12 +44,13 @@ def setup_election_db():
             )''')
         db.execute('''
             CREATE TABLE IF NOT EXISTS candidates (
-                id INTEGER PRIMARY KEY,
+                id INTEGER,
                 emoji TEXT,
                 emoji_id INTEGER,
                 text TEXT,
                 description TEXT,
                 election_id INTEGER,
+                PRIMARY KEY (id, election_id),
                 FOREIGN KEY (election_id) REFERENCES elections(id)
             )''')
 
@@ -49,31 +65,31 @@ def setup_election_db():
             )''')
 
 
-def get_incoming_elections():
+def get_current_elections():
     with sqlite3.connect(ELECTION_DB_PATH) as db:
         return db.execute('''SELECT id, from_date, to_date, in_progress FROM elections 
-                                 WHERE from_date > ? OR to_date > ?''',
-                          (dt.datetime.now().isoformat(),)).fetchall()
+                             WHERE to_date > ?''',
+                          (dt.datetime.utcnow().isoformat(),)).fetchall()
 
 
-async def create_election(name, election_id, from_date, to_date, message,
+@connect_db
+async def create_election(db, name, election_id, from_date, to_date, message,
                           confirmation_message, min_votes_count, max_votes_count, channel_id, candidates):
-    with aiosqlite.connect(ELECTION_DB_PATH) as db:
+    await db.execute('''
+        INSERT INTO elections (
+            id, name, from_date, to_date, message, confirmation_message, 
+            channel_id, min_votes_count, max_votes_count, in_progress
+            )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    ''', (election_id, name, from_date, to_date, message, confirmation_message,
+          channel_id, min_votes_count, max_votes_count))
+    await db.commit()
+    for candidate in candidates:
         await db.execute('''
-            INSERT INTO elections (
-                id, name, from_date, to_date, message, confirmation_message, 
-                channel_id, min_votes_count, max_votes_count, in_progress
-                )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-        ''', (election_id, name, from_date, to_date, message, confirmation_message,
-              channel_id, min_votes_count, max_votes_count))
-        election_id = await db.execute('SELECT last_insert_rowid()')
-        for candidate in candidates:
-            await db.execute('''
-                INSERT INTO candidates (emoji, emoji_id, text, description, election_id)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (candidate.get(v) for v in ('emoji', 'emoji_id', 'text', 'description', election_id)))
-        await db.commit()
+            INSERT INTO candidates (id, emoji, emoji_id, text, description, election_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', tuple([candidate.get(v) for v in ('id', 'emoji', 'emoji_id', 'text', 'description')] + [election_id]))
+    await db.commit()
 
 
 async def query_election(query):
@@ -82,71 +98,81 @@ async def query_election(query):
             return await cursor.fetchall()
 
 
-async def check_voting_rights(member: discord.Member, election_id):
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        async with db.execute('''SELECT from_date FROM elections WHERE id = ?''', (election_id,)) as cursor:
-            from_date = await cursor.fetchone()[0]
-        return member.joined_at >= dt.datetime.fromisoformat(from_date)
+@connect_db
+async def check_voting_rights(db, member, election_id):
+    async with db.execute('''SELECT from_date FROM elections WHERE id = ?''', (election_id,)) as cursor:
+        from_date = (await cursor.fetchone())[0]
+    return member.joined_at.timestamp() < dt.datetime.fromisoformat(from_date).timestamp()
 
 
-async def start_election(election_id):
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        await db.execute('''UPDATE elections SET in_progress = 1 WHERE id = ?''', (election_id,))
-        await db.commit()
-        with db.execute('''SELECT channel_id, message, min_votes_count, max_votes_count, to_date
-                           FROM elections WHERE id = ?''', (election_id,)) as cursor:
-            return await cursor.fetchone()[0]
+@connect_db
+async def start_election(db, election_id):
+    await db.execute('''UPDATE elections SET in_progress = 1 WHERE id = ?''', (election_id,))
+    await db.commit()
 
 
-async def get_candidates(election_id):
+@connect_db
+async def get_election(db, election_id):
+    async with db.execute('''SELECT name, from_date, to_date, message, confirmation_message, channel_id, 
+                             in_progress, min_votes_count, max_votes_count, message_id 
+                             FROM elections WHERE id = ?''', (election_id,)) as cursor:
+        return Election(*await cursor.fetchone())
+
+
+@connect_db
+async def get_candidates(db, election_id):
     candidates = []
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        async with db.execute('''SELECT id, emoji, id, emoji, emoji_id, text, description 
-                                 FROM candidates WHERE election_id = ?''', (election_id,)) as cursor:
-            async for candidate in cursor.fetchall():
-                id_, emoji, emoji_id, text, description = candidate
-                candidates.append(Candidate(id=id_, emoji_id=emoji_id, emoji=emoji,
-                                            text=text, description=description))
+    cursor = await db.execute('''SELECT id, emoji, emoji_id, text, description 
+                             FROM candidates WHERE election_id = ?''', (election_id,))
+    db_candidates = await cursor.fetchall()
+    for candidate in db_candidates:
+        id_, emoji, emoji_id, text, description = candidate
+        candidates.append(Candidate(id=id_, emoji_id=emoji_id, emoji=emoji,
+                                    text=text, description=description))
     return candidates
 
 
-async def set_election_message_id(election_id, message_id):
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        await db.execute('''UPDATE elections SET message_id = ? WHERE id = ?''', (message_id, election_id))
-        await db.commit()
+@connect_db
+async def set_election_message_id(db, election_id, message_id):
+    await db.execute('''UPDATE elections SET message_id = ? WHERE id = ?''', (message_id, election_id))
+    await db.commit()
 
 
-async def register_election_vote(user_id, election_id, candidates_ids):
+@connect_db
+async def register_election_vote(db, user_id, election_id, candidates_ids):
+    if await db.execute('''SELECT * FROM votes WHERE user_id = ? AND election_id = ?''', (user_id, election_id)):
+        await db.execute('''DELETE FROM votes WHERE user_id = ? AND election_id = ?''', (user_id, election_id))
+    for candidate_id in candidates_ids:
+        await db.execute('''INSERT INTO votes (user_id, election_id, candidate_id) VALUES (?, ?, ?) ''',
+                         (user_id, election_id, candidate_id))
+    await db.commit()
+
+
+@connect_db
+async def get_confirmation_message(db, election_id, candidates_ids):
     names = []
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        if await db.execute('''SELECT * FROM votes WHERE user_id = ? AND election_id = ?''', (user_id, election_id)):
-            db.execute('''DELETE FROM votes WHERE user_id = ? AND election_id = ?''', (user_id, election_id))
-        for candidate_id in candidates_ids:
-            await db.execute('''INSERT INTO votes (user_id, election_id, candidate_id) VALUES (?, ?, ?) ''',
-                             (user_id, election_id, candidate_id))
-            async with db.execute('''SELECT text FROM candidates WHERE id = ?''', (candidate_id,)) as cursor:
-                names.append(await cursor.fetchone()[0])
-        await db.commit()
-        async with db.execute('''SELECT confirmation_message FROM elections WHERE id = ?''', (election_id,)) as cursor:
-            message = await cursor.fetchone()[0]
-    return message.format(*names)
+    for candidate_id in candidates_ids:
+        async with db.execute('''SELECT text FROM candidates WHERE id = ?''', (candidate_id,)) as cursor:
+            names.append((await cursor.fetchone())[0])
+    async with db.execute('''SELECT confirmation_message FROM elections WHERE id = ?''', (election_id,)) as cursor:
+        message = (await cursor.fetchone())[0]
+    return message.format(', '.join(names))
 
 
-async def end_election(election_id):
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        await db.execute('''UPDATE elections SET in_progress = 0 WHERE id = ?''', (election_id,))
-        async with db.execute('''SELECT channel_id, message_id FROM elections WHERE id = ?''', (election_id,)) as cursor:
-            return await cursor.fetchone()
+@connect_db
+async def end_election(db, election_id):
+    await db.execute('''UPDATE elections SET in_progress = 0 WHERE id = ?''', (election_id,))
+    await db.commit()
 
 
-async def get_election_results(election_name):
-    async with aiosqlite.connect(ELECTION_DB_PATH) as db:
-        async with db.execute('''SELECT candidates.text, COUNT(*) AS "Count" 
-                                 FROM votes
-                                 INNER JOIN candidates ON votes.candidate_id = candidates.id
-                                 INNER JOIN elections ON votes.election_id = elections.id
-                                 WHERE elections.name = ?
-                                 GROUP BY candidate_id, candidates.text
-                                 ORDER BY "Count" DESC''',
-                              (election_name,)) as cursor:
-            return await cursor.fetchall()
+@connect_db
+async def get_election_results(db, election_name):
+    async with db.execute('''SELECT candidates.text, COUNT(*) AS "Count" 
+                             FROM votes
+                             INNER JOIN candidates ON votes.candidate_id = candidates.id
+                             INNER JOIN elections ON votes.election_id = elections.id
+                             WHERE elections.name = ?
+                             GROUP BY candidate_id, candidates.text
+                             ORDER BY "Count" DESC''',
+                          (election_name,)) as cursor:
+        return await cursor.fetchall()

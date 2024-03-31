@@ -12,9 +12,9 @@ from settings import DIE415_ID, DIE421_ID, DIE456_ID, DIE462_ID
 from .basic_models import ManiBot
 from .election_service import create_election, query_election, check_voting_rights, register_election_vote, \
     setup_election_db, start_election, get_candidates, set_election_message_id, end_election, get_election_results, \
-    get_incoming_elections
+    get_current_elections, get_confirmation_message, get_election, Candidate
 from .interactions import Select, SelectOption
-from .interactions.components import ComponentMessage
+from .interactions.components import ComponentMessage, ComponentCallback
 from .interactions.interaction import ComponentInteraction
 from .my_checks import admin_cmd
 from .utility import get_election_backup_channel
@@ -28,7 +28,7 @@ class Election(commands.Cog, name='Wybory'):
 
     def schedule_elections(self):
         loop = self.bot.loop
-        elections = get_incoming_elections()
+        elections = get_current_elections()
         now = datetime.datetime.now().isoformat()
         for election_id, start_date, end_date, in_progress in elections:
             if start_date > now:
@@ -37,6 +37,8 @@ class Election(commands.Cog, name='Wybory'):
             elif not in_progress:
                 loop.call_soon(loop.create_task, self.start_election(election_id))
             elif end_date > now:
+                self.bot.add_component_callback(ComponentCallback(f'election-vote-{election_id}',
+                                                                  self.register_vote))
                 loop.call_later(end_date.timestamp() - datetime.datetime.now().timestamp(), loop.create_task,
                                 self.end_election(election_id))
 
@@ -60,13 +62,15 @@ class Election(commands.Cog, name='Wybory'):
         await ctx.send(f'Wylosowany numer KWW {komitet} to 4.')
 
     @staticmethod
-    async def register_vote(ctx: ComponentInteraction, votes):
+    async def register_vote(ctx: ComponentInteraction):
         await ctx.ack(ephemeral=True)
+        votes = ctx.values
         election_id = ctx.custom_id.removeprefix('election-vote-')
-        if not check_voting_rights(ctx.author, election_id):
-            await ctx.respond('Nie masz prawa głosu w tych wyborach', ephemeral=True)
+        if not (await check_voting_rights(ctx.author, election_id)):
+            await ctx.send('Nie masz prawa głosu w tych wyborach', ephemeral=True)
 
-        message = await register_election_vote(ctx.author.id, election_id, votes)
+        await register_election_vote(ctx.author.id, election_id, votes)
+        message = await get_confirmation_message(election_id, votes)
         await get_election_backup_channel().send(ctx.author.mention + ': ' + ', '.join(votes))
         await ctx.send(message)
 
@@ -96,7 +100,7 @@ class Election(commands.Cog, name='Wybory'):
         confirmation_message = data.get('confirmation_message')
         channel_id = data.get('channel_id')
         min_votes_count = data.get('min_votes_count', 1)
-        max_votes_count = data.get('votes_count')
+        max_votes_count = data.get('max_votes_count')
         candidates = data.get('candidates')
 
         if not (all([from_date, to_date, message, confirmation_message, channel_id, candidates, max_votes_count])
@@ -114,7 +118,7 @@ class Election(commands.Cog, name='Wybory'):
 
         loop = self.bot.loop
         start = datetime.datetime.fromisoformat(from_date)
-        loop.call_later(start.timestamp() - datetime.datetime.now().timestamp(), loop.create_task,
+        loop.call_later(max(0.0, start.timestamp() - datetime.datetime.now().timestamp()), loop.create_task,
                         self.start_election(election_id))
 
     @commands.command(name='wyniki')
@@ -123,7 +127,7 @@ class Election(commands.Cog, name='Wybory'):
         """Wyświetla wyniki wyborów o podanym ID
         """
         results = await get_election_results(election_name)
-        await ctx.send(f'Wyniki wyborów {election_name}' + '\n'.join(f'{text}: {votes}' for text, votes in results))
+        await ctx.send(f'Wyniki wyborów {election_name}:\n' + '\n'.join(f'{text}: {votes}' for text, votes in results))
 
     @commands.command(aliases=['queryel'], hidden=True)
     @commands.is_owner()
@@ -139,11 +143,8 @@ class Election(commands.Cog, name='Wybory'):
         else:
             await ctx.send(f'Query executed successfully:\n{query}')
 
-    async def start_election(self, election_id):
-        await self.bot.wait_until_ready()
-        channel_id, message, min_votes, max_votes, to_date = await start_election(election_id)
-        candidates = await get_candidates(election_id)
-        channel = self.bot.get_channel(channel_id)
+    @staticmethod
+    def create_select(candidates, election_id, min_votes, max_votes):
         options = []
         for candidate in candidates:
             emoji = discord.PartialEmoji(id=candidate.emoji_id, name=candidate.emoji) \
@@ -151,8 +152,18 @@ class Election(commands.Cog, name='Wybory'):
             options.append(SelectOption(label=candidate.text, value=candidate.id,
                                         description=candidate.description, emoji=emoji))
 
-        select = Select(custom_id=f'election-vote-{election_id}', placeholder='Oddaj głos', options=options,
-                        min_values=min_votes, max_values=max_votes)
+        return Select(custom_id=f'election-vote-{election_id}', placeholder='Oddaj głos', options=options,
+                      min_values=min_votes, max_values=max_votes)
+
+    async def start_election(self, election_id):
+        await self.bot.wait_until_ready()
+        await start_election(election_id)
+        election = await get_election(election_id)
+        _, _, to_date, message, _, channel_id, _, min_votes, max_votes, _ = election
+        candidates = await get_candidates(election_id)
+        channel = self.bot.get_channel(channel_id)
+
+        select = self.create_select(candidates, election_id, min_votes, max_votes)
 
         msg = await channel.send(message, components=[[select]])
         await set_election_message_id(election_id, msg.id)
@@ -160,15 +171,21 @@ class Election(commands.Cog, name='Wybory'):
         loop = self.bot.loop
         loop.call_later(end.timestamp() - datetime.datetime.now().timestamp(), loop.create_task,
                         self.end_election(election_id))
+        self.bot.add_component_callback(ComponentCallback(f'election-vote-{election_id}', self.register_vote))
 
     async def end_election(self, election_id):
         await self.bot.wait_until_ready()
-        channel_id, message_id = await end_election(election_id)
+        await end_election(election_id)
+        election = await get_election(election_id)
+        channel_id, message_id = election.channel_id, election.message_id
         channel = self.bot.get_channel(channel_id)
         message = await channel.fetch_message(message_id)
-        c_message = ComponentMessage.from_message(message)
-        select = c_message.components[0]
+
+        select = self.create_select([Candidate(
+            emoji_id=None, emoji=None, text='Placeholder', description=None, id=1,
+        )], election_id, 1, 1)
         select.disabled = True
         await message.edit(components=[[select]])
+
         self.bot.remove_component_callback(f'election-vote-{election_id}')
 
