@@ -136,4 +136,7 @@ FULL_LOG_FILE = 'full.log'
 
 SETS_DB_PATH = os.path.join('data', 'sets.sqlite3')
 
+ELECTION_DB_PATH = os.path.join('data', 'elections.sqlite3')
+ELECTION_BACKUP_CHANNEL_ID = 1223309118295642124
+
 REFERENCE_TIMEZONE = 'Europe/Warsaw'
