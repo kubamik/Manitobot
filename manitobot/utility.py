@@ -105,6 +105,10 @@ def get_sets_channel() -> discord.TextChannel:
     return get_guild().get_channel(SET_CHANNEL_ID)
 
 
+def get_election_backup_channel() -> discord.TextChannel:
+    return bot.get_channel(ELECTION_BACKUP_CHANNEL_ID)
+
+
 def get_member(member_id: int) -> discord.Member:
     return get_guild().get_member(member_id)
 

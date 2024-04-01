@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from manitobot import start_commands, manitou_commands, funny_commands, \
-    management_commands, dev_commands, player_commands, marketing_commands
+    management_commands, dev_commands, player_commands, marketing_commands, election_commands
 from manitobot.bot_basics import bot
 from manitobot.errors import MyBaseException, VotingNotAllowed
 from manitobot.interactions.interaction import ComponentInteraction
@@ -179,6 +179,7 @@ if __name__ == '__main__':
         bot.add_cog(player_commands.DlaGraczy(bot))
         bot.add_cog(management_commands.Management(bot))
         bot.add_cog(marketing_commands.Marketing(bot))
+        bot.add_cog(election_commands.Election(bot))
         bot.load_extension('manitobot.error_handler')
         bot.load_extension('manitobot.day_app_commands')
         bot.get_command('g').help = playerhelp()

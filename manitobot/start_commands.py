@@ -20,7 +20,7 @@ from .postacie import print_list
 from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
     get_player_role, get_town_channel, get_voice_channel, get_manitou_role
-from . import control_panel, roles_commands, sklady, daily_commands, postacie as post
+from . import control_panel, roles_commands, sklady, daily_commands, postacie as post, election_service
 
 
 class Starting(commands.Cog, name='Początkowe'):
