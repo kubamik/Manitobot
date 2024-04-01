@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import io
 import json
+import logging
 from random import randint
 
 import aiosqlite
@@ -166,7 +167,11 @@ class Election(commands.Cog, name='Wybory'):
 
         select = self.create_select(candidates, election_id, min_votes, max_votes)
 
-        msg = await channel.send(message, components=[[select]])
+        try:
+            msg = await channel.send(message, components=[[select]])
+        except Exception:
+            logging.exception('Error while sending election message')
+            raise
         await set_election_message_id(election_id, msg.id)
         end = datetime.datetime.fromisoformat(to_date)
         loop = self.bot.loop

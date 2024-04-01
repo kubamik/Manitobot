@@ -169,7 +169,8 @@ async def end_election(db, election_id):
 async def get_election_results(db, election_name):
     async with db.execute('''SELECT candidates.text, COUNT(*) AS "Count" 
                              FROM votes
-                             INNER JOIN candidates ON votes.candidate_id = candidates.id
+                             INNER JOIN candidates ON votes.candidate_id = candidates.id 
+                                AND votes.election_id = candidates.election_id
                              INNER JOIN elections ON votes.election_id = elections.id
                              WHERE elections.name = ?
                              GROUP BY candidate_id, candidates.text
