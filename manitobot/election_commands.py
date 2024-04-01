@@ -68,6 +68,7 @@ class Election(commands.Cog, name='Wybory'):
         election_id = ctx.custom_id.removeprefix('election-vote-')
         if not (await check_voting_rights(ctx.author, election_id)):
             await ctx.send('Nie masz prawa głosu w tych wyborach', ephemeral=True)
+            return
 
         await register_election_vote(ctx.author.id, election_id, votes)
         message = await get_confirmation_message(election_id, votes)
