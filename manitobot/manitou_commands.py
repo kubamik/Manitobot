@@ -291,7 +291,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @commands.command(name='timer')
     @manitou_cmd()
     async def timer(self, ctx, seconds: int, *, message):
-        """Ⓜ&timer n msg Ogłasza wydarzenie msg z timerem odliczającym n sekund"""
+        """ⓂOgłasza wydarzenie message z timerem odliczającym seconds sekund"""
         timstamp = int(time.time()) + seconds
         await ctx.send(f'Manitou ogłasza {message} <t:{timestamp}:R>')
 
