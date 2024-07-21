@@ -194,6 +194,22 @@ class Management(commands.Cog, name='Dla Adminów'):
             except discord.HTTPException:
                 pass
 
+    @commands.command(name='braki', aliases=['missing'])
+    async def missing_reactions(self, ctx, emoji: Union[discord.Emoji, str], first: discord.Message,
+                                second: discord.Message):
+        """Wysyła listę osób, które dodały emoji do pierwszej wiadomości, ale nie zareagowały na drugą
+        """
+        reaction = discord.utils.get(first.reactions, emoji=emoji)
+        first_users = set(await reaction.users().flatten())
+        second_users = set([m for r in second.reactions async for m in r.users()])
+        missing = first_users - second_users
+        if missing:
+            msg = f'**Brakujące osoby na {emoji}:**\n- '
+            msg += '\n- '.join([f'{m.display_name}' for m in missing])
+        else:
+            msg = f'Nie ma brakujących osób na {emoji}'
+        await ctx.send(msg)
+
 
 async def reactions_summary(m: discord.Message) -> list[str]:
     reactions = [await r.users().flatten() for r in m.reactions]

@@ -100,10 +100,10 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
 
     # ======================== Reporting commands =========================
 
-    @commands.command(name='reported', aliases=['rpt', 'pens'])
+    @commands.command(name='reported', aliases=['rpt', 'rep'])
     @manitou_cmd()
     async def pen_reports(self, ctx):
-        """Ⓜ/&rpt/&pens/Pokazuje aktualne zgłoszenia"""
+        """Ⓜ/&rpt/&rep/Pokazuje aktualne zgłoszenia"""
         await self.invoke_state(ctx, ctx)  # second ctx as channel to send data
 
     @commands.command(name='lock_reports', aliases=['repblok'])

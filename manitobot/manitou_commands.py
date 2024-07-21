@@ -292,7 +292,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd()
     async def timer(self, ctx, seconds: int, *, message):
         """ⓂOgłasza wydarzenie message z timerem odliczającym seconds sekund"""
-        timstamp = int(time.time()) + seconds
+        timestamp = int(time()) + seconds
         await ctx.send(f'Manitou ogłasza {message} <t:{timestamp}:R>')
 
     async def reset(self, ctx: commands.Context):
