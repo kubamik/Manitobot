@@ -3,7 +3,7 @@ import typing
 
 __version__ = '1.7.4'
 
-PROD = None  # True - prod. environment, False - web test hosting, None - local hosting
+PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
 
 if PROD:
     GUILD_ID = 710039683798794270
