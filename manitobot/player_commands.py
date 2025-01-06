@@ -109,12 +109,6 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
                                   len(alive_roles) - len(get_player_role().members), team)
         )
 
-    @commands.command(name='#', aliases=['kratka'])
-    @player_cmd()
-    async def hash(self, ctx):
-        """Dodaje kratkę do nicka"""
-        await ctx.author.edit(nick=f'{ctx.author.display_name}#')
-
     @commands.command(aliases=['vpriv'])
     @player_cmd()
     @game_check()

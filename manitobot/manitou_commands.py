@@ -153,6 +153,13 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """
         await self.bot.game.player_map[player].role_class.die()
 
+    @commands.command(name='#', aliases=['hash'])
+    @manitou_cmd()
+    @game_check()
+    async def hash(self, _, *, player: MyMemberConverter):
+        """ⓂDodaje kratkę do nicka wskazanej osobie"""
+        await player.edit(nick=f'{player.display_name}#')
+
     @commands.command()
     @manitou_cmd()
     @ktulu_check()
