@@ -7,13 +7,14 @@ import discord
 import typing
 from discord.ext import commands
 
-from settings import FAC2CHANN_ID, CONFIG
+from settings import FAC2CHANN_ID, CONFIG, ADMIN_ROLE_COLOUR, HOIST_ADMIN, NON_ADMIN_ROLES_COLOURS, \
+    HOISTED_NON_ADMIN_ROLES
 from . import postacie, daily_commands
 from . import utility
 from .basic_models import NotAGame, ManiBot
 from .daynight import Day, PartialDay
 from .errors import MembersNotPlaying
-from .my_checks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only, voting_check
+from .my_checks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only, voting_check, state_check
 from .converters import MyMemberConverter
 from .postacie import get_role_details
 from .starting import if_game
@@ -22,7 +23,7 @@ from .utility import playerhelp, manitouhelp, get_faction_channel, \
     get_manitou_role, get_voice_channel, get_member, get_dead_role, \
     get_spectator_role, get_guild, clear_nickname, send_to_manitou, \
     get_duel_winner_role, get_duel_loser_role, \
-    get_searched_role, get_hanged_role, get_control_panel
+    get_searched_role, get_hanged_role, get_control_panel, get_newcomer_role
 
 
 class DlaManitou(commands.Cog, name="Dla Manitou"):
@@ -42,8 +43,20 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         for faction in FAC2CHANN_ID:  # TODO: Optimize this
             ch = get_faction_channel(faction)
             tasks.append(ch.edit(sync_permissions=True))
-        tasks.append(get_admin_role().edit(permissions=p, colour=0xffa9f9))
         tasks.append(get_town_channel().edit(sync_permissions=True))
+
+        tasks.append(get_admin_role().edit(permissions=p, colour=ADMIN_ROLE_COLOUR, hoist=HOIST_ADMIN))
+        guild = get_guild()
+        for role_id, colour in NON_ADMIN_ROLES_COLOURS.items():
+            role = guild.get_role(role_id)
+            if role:
+                tasks.append(role.edit(colour=colour, hoist=(role_id in HOISTED_NON_ADMIN_ROLES)))
+
+        voice_channel = get_voice_channel()
+        overwrite = voice_channel.overwrites_for(get_guild().default_role)
+        overwrite.update(speak=None)
+        tasks.append(voice_channel.set_permissions(get_guild().default_role, overwrite=overwrite))
+
         tasks.append(self.bot.change_presence(activity=None))
         await asyncio.gather(*tasks)
 
@@ -81,7 +94,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         players = get_player_role().members
         for member in get_voice_channel().members:
             if member in players and member not in get_manitou_role().members \
-                    and not member.voice.self_mute:
+                    and not member.voice.self_mute and not member.voice.mute:
                 tasks.append(member.edit(mute=True))
         await asyncio.gather(*tasks)
 
@@ -140,6 +153,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         for member in get_guild().members:
             if member.id != self.bot.user.id:
                 tasks.append(clear_nickname(member))
+            if member.voice and member.voice.mute:
+                tasks.append(member.edit(mute=False))
         async with ctx.typing():
             await self.remove_cogs()
             await asyncio.gather(*tasks)
@@ -254,6 +269,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             await self.bot.game.end()
             await self.remove_cogs()
             self.bot.game = NotAGame()
+            tasks = []
+            for member in get_voice_channel().members:
+                if member.voice.mute:
+                    tasks.append(member.edit(mute=False))
+            await asyncio.gather(*tasks)
             await get_town_channel().send('Gra została zakończona')
 
     @commands.command(name='end')
@@ -309,7 +329,8 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         loser_role = get_duel_loser_role()
         searched_role = get_searched_role()
         hanged_role = get_hanged_role()
-        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role]
+        newcomer_role = get_newcomer_role()
+        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
         tasks = []
         async with ctx.typing():
             for member in dead_role.members + player_role.members:
@@ -406,9 +427,42 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @game_check()
     @day_only()
     async def special_night(self, _):
-        """Rozpoczyna specjalną noc, gdy Manitou coś zepsuje"""
+        """ⓂRozpoczyna specjalną noc, gdy Manitou coś zepsuje"""
         await self.bot.game.emergency_night()
 
     @commands.command(name='m', help=manitouhelp(), hidden=True, brief='&help m')
     async def manitou_help(self, ctx):
         await ctx.message.delete(delay=0)
+
+    @commands.group(name='people')
+    @game_check()
+    @manitou_cmd()
+    async def people(self, ctx):
+        """ⓂZmienia role użytkowników w wynikach: pojedynków, przeszukań wieszania """
+        if ctx.invoked_subcommand is None:
+            subcommands = [f'* &people {c.name}`' for c in ctx.command.commands]
+            await ctx.send('Dostępne polecenia:\n' + '\n'.join(subcommands), delete_after=10)
+
+    @people.command(name='winners')
+    @state_check()
+    async def set_winners(self, _, *winners: MyMemberConverter):
+        """ⓂUstawia zwycięzców pojedynku"""
+        await self.bot.game.day.state.set_winners(winners)
+
+    @people.command(name='losers')
+    @state_check()
+    async def set_losers(self, _, *losers: MyMemberConverter):
+        """ⓂUstawia przegranych pojedynku"""
+        await self.bot.game.day.state.set_losers(losers)
+
+    @people.command(name='searched')
+    @state_check()
+    async def set_searched(self, _, *searched: MyMemberConverter):
+        """ⓂUstawia przeszukiwanych"""
+        await self.bot.game.day.state.set_searched(searched)
+
+    @people.command(name='hanged')
+    @state_check()
+    async def set_hanged(self, _, hanged: MyMemberConverter):
+        """ⓂUstawia wieszaną osobę"""
+        await self.bot.game.day.state.set_hanged(hanged)

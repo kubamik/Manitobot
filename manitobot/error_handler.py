@@ -75,7 +75,7 @@ async def handle_error(send, error):
     if isinstance(error, (MyBaseException, InvalidRequest)):
         await send(error.msg, delete_after=10)
     elif isinstance(error, commands.CommandNotFound):
-        await send('HONK?', delete_after=10)
+        await send('Komenda nie istnieje', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.Forbidden):
         await send('Chcem coś zrobić, ale nie mogem.', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and \

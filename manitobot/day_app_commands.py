@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from settings import GUILD_ID, PLAYER_ROLE_ID, MANITOU_ROLE_ID
 from .bot_basics import bot
-from .my_checks import game_check, town_only
+from .my_checks import game_check, town_only, state_check
 from .errors import MemberNotPlaying, DayOnly, WrongState
 from .interactions.slash_args import Arg
 from .interactions import command_role_permissions, CommandsTypes
@@ -14,17 +14,6 @@ def setup(_):
     """Do nothing while loading extension
     """
     pass
-
-
-def state_check():
-    def predicate(ctx):
-        day = bot.game.day
-        if day is None:
-            raise DayOnly
-        if not hasattr(day.state, ctx.command.callback.__name__):
-            raise WrongState
-        return True
-    return commands.check(predicate)
 
 
 def checks(func):

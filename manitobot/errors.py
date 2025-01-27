@@ -81,6 +81,22 @@ class WrongValidVotesNumber(commands.CommandError, MyBaseException):
         self.msg = self.msg.format(is_, should_be)
 
 
+class NotEnoughTrustLevel(MyCheckFailure):
+    msg = 'Nie możesz użyć tej komendy'
+
+
+class MissingAdministrativePermissions(MyCheckFailure):
+    msg = 'Brak uprawnień'
+
+
+class MissingManitouRole(MyCheckFailure):
+    msg = 'Komenda tylko dla Manitou'
+
+
+class MissingQualifications(MyCheckFailure):
+    msg = 'Nie masz wystarczających kwalifikacji'
+
+
 class GameStartedException(commands.CheckFailure, MyBaseException):
     msg = 'Nie można wykonać tej akcji podczas gry'
 
@@ -90,7 +106,7 @@ class SelfChallengeError(MyCheckFailure):
 
 
 class AuthorIsSubjectChallengeError(MyCheckFailure):
-    msg = 'W pojedyn ku muszą brać udział dwie różne osoby'
+    msg = 'W pojedynku muszą brać udział dwie różne osoby'
 
 
 class DuplicateChallenge(MyCheckFailure):
@@ -234,3 +250,7 @@ class TooLongText(MyCommandError):
 
 class TooMuchPing(MyCheckFailure):
     msg = 'Nie można pingować więcej niż raz dziennie'
+
+
+class MissingMembers(MyCommandError):
+    msg = 'Podaj listę osób'

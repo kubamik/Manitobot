@@ -2,6 +2,7 @@
 
 import logging
 import os
+
 import discord
 from discord.ext import commands
 
@@ -10,8 +11,8 @@ from manitobot import start_commands, manitou_commands, funny_commands, \
 from manitobot.bot_basics import bot
 from manitobot.errors import MyBaseException, VotingNotAllowed
 from manitobot.interactions.interaction import ComponentInteraction
-from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
+from settings import LOSER_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD
 
 
 @bot.event
@@ -25,24 +26,24 @@ async def be_sory(ctx):
     await ctx.send("Przepraszam")
 
 
-@bot.command(name='przegrywam')
+@bot.command(name='przegrywam', enabled=False, hidden=True)
 async def lose(ctx):
     """Dodaje usera do zbioru przegrywów."""
     guild = get_guild()
     member = get_member(ctx.author.id)
     await member.add_roles(
-        discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID))
+        discord.utils.get(guild.roles, id=LOSER_ROLE_ID))
     await ctx.send("Zostałeś przegranym {}".format(get_nickname(ctx.author.id))
                    )
 
 
-@bot.command(name='wygrywam')
+@bot.command(name='wygrywam', enabled=False, hidden=True)
 async def not_lose(ctx):
     """Usuwa usera ze zbioru przegrywów."""
     guild = get_guild()
     member = get_member(ctx.author.id)
     await member.remove_roles(
-        discord.utils.get(guild.roles, id=PRZEGRALEM_ROLE_ID))
+        discord.utils.get(guild.roles, id=LOSER_ROLE_ID))
     await ctx.send("Już nie jesteś przegranym {}".format(
         get_nickname(ctx.author.id)))
 
@@ -50,15 +51,8 @@ async def not_lose(ctx):
 @bot.command(name='przegrałem')
 @commands.cooldown(rate=1, per=30 * 60)
 async def you_lost(ctx):
-    """Przypomina przegrywom o grze."""
-    loser = get_guild().get_role(PRZEGRALEM_ROLE_ID)
-    await get_member(ctx.author.id).add_roles(loser)
+    """Przegrałem."""
     await ctx.send("Przegrałem!")
-    for i in loser.members:
-        try:
-            await i.send("Przegrałem!")
-        except (AttributeError, discord.DiscordException):
-            pass
 
 
 @bot.component_callback('add_vote')
@@ -176,7 +170,7 @@ if __name__ == '__main__':
         bot.add_cog(funny_commands.Funny(bot))
         bot.add_cog(manitou_commands.DlaManitou(bot))
         bot.add_cog(start_commands.Starting(bot))
-        bot.add_cog(player_commands.DlaGraczy(bot))
+        bot.add_cog(player_commands.PlayerCommands(bot))
         bot.add_cog(management_commands.Management(bot))
         bot.add_cog(marketing_commands.Marketing(bot))
         bot.add_cog(election_commands.Election(bot))

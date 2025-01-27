@@ -156,6 +156,30 @@ class DuelSummary(DuelInterface, DayState, Undoable):
         tasks.append(self.special_message.delete(delay=0))
         await asyncio.gather(*tasks)
 
+    async def set_winners(self, winners: list[discord.Member]):
+        participants = self.winners + self.losers
+        winner_role = get_duel_winner_role()
+        loser_role = get_duel_loser_role()
+        tasks = []
+        for m in participants:
+            new_roles = m.roles
+            if m not in winners:
+                with suppress(ValueError):
+                    new_roles.remove(winner_role)
+                if loser_role not in new_roles:
+                    new_roles.append(loser_role)
+            else:
+                with suppress(ValueError):
+                    new_roles.remove(loser_role)
+                if winner_role not in new_roles:
+                    new_roles.append(winner_role)
+            tasks.append(m.edit(roles=new_roles))
+        await asyncio.gather(*tasks)
+
+    async def set_losers(self, losers: list[discord.Member]):
+        participants = set(self.losers + self.winners)
+        await self.set_winners(list(participants - set(losers)))
+
     async def end(self):
         winner_role = get_duel_winner_role()
         loser_role = get_duel_loser_role()

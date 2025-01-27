@@ -7,74 +7,78 @@ import discord
 from discord.ext import commands
 
 from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID, LEAVE_CHANNEL_ID, PING_PINK_ID, OTHER_PING_MESSAGE_ID
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ROLE_ID, SYSTEM_MESSAGES_CHANNEL_ID, PING_PINK_ID, \
+    OTHER_PING_MESSAGE_ID, BOT_TRAP_CHANNEL_ID, VERIFICATION_CORRECT_EMOJI
 from .bot_basics import bot
 from .converters import MyMemberConverter, MyDateConverter
-from .interactions import CommandsTypes
+from .errors import MissingMembers
+from .interactions import CommandsTypes, ComponentCallback
+from .interactions.interaction import ComponentInteraction
+from .my_checks import admin_cmd
 from .surveys import survey, declarations, WEEKD
-from .utility import get_newcommer_role, get_ping_game_role, get_member, get_admin_role, \
+from .utility import get_newcomer_role, get_ping_game_role, get_member, get_admin_role, \
     get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role, \
-    get_ping_other_games_role
+    get_ping_other_games_role, get_mod_role, is_trusted_member, get_system_messages_channel, get_verified_role
 
-WEEKDAYS = dict(zip(range(7), ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']))
-
-# Enquiries
-ENQUIRY = '''**Ankietka** na {period}
-<:ping_yellow:{ping_id}> <:ping_yellow:{ping_id}> <:ping_yellow:{ping_id}>
-
-**Kiedy chcesz grać w ktulu?**
-
-Zaznacz wszystkie opcje, które ci pasują. Możesz zmienić swój wybór w dowolnym momencie.
-
-{data}
-🚫 W te dni nie gram.
-
-🔕 Nie chcę dostawać <:ping_green:{ping_green_id}> w dni, których nie zaznaczyłæm.
-'''
-ENQUIRY_OPTION = '{emoji} {weekday} {date}\n'
-ENQUIRY_PERIOD = '{} - {}'
-ENQUIRY_EMOJI = ['🚫', '🔕']
-MAX_DAYS = dt.timedelta(days=6)
-
-# Declarations
-DECLARATION = '''**Deklaracje** ({weekday} {date:dd.mm})
-<:ping_green:{ping_id}> <:ping_green:{ping_id}> <:ping_green:{ping_id}>
-
-**Kiedy chcesz grać w ktulu?**
-
-Zaznacz wszystkie opcje, które ci pasują. Postaraj się o dostępność w wybranych terminach.
-
-{data}
-🚫 Dzisiaj nie gram.
-
-⚜️ Mogę prowadzić grę.
-'''
-DECLARATION_OPTION = '{emoji} <t:{timestamp}:t>\n'
-DECLARATION_EMOJI = ['🚫', '⚜']
-STARTING_HOUR = 17  # hour to start declarations
-ENDING_HOUR = 21  # hour to end declarations
-INTERVAL = dt.timedelta(hours=1)
-
-OPTIONS_EMOJI = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷']
+VERIFICATION_EMOJIS = [
+    ["😊", "😂", "😍", "😎", "🤩"],
+    ["🙌", "🙏", "😢", "🥺", "🥳"],
+    ["🔥", "💯", "🍕", "🎉", "🚀"],
+    ["❤️", "🌟", "🦄", "🎶", "💥"],
+    ["🐱", "🐶", "🌈", "🍀", "🌍"]
+]
 
 
 class Management(commands.Cog, name='Dla Adminów'):
     def __init__(self, bot):
         self.bot = bot
+        for emoji_row in VERIFICATION_EMOJIS:
+            for emoji in emoji_row:
+                bot.add_component_callback(
+                    ComponentCallback(f'verification-{emoji}',
+                                      self.verification_callback(emoji == VERIFICATION_CORRECT_EMOJI))
+                )
+
+    @staticmethod
+    def verification_callback(is_correct: bool):
+        async def callback(interaction: ComponentInteraction):
+            await interaction.ack(ephemeral=True)
+            if interaction.author in get_verified_role().members:
+                await interaction.send('Jesteś już pomyślnie zweryfikowany(-a).', ephemeral=True)
+                return
+
+            if not is_correct:
+                await interaction.author.kick(reason='Nieprawidłowa odpowiedź na weryfikację')
+                await get_system_messages_channel().send(f'Użytkownik {interaction.author.mention} został wyrzucony'
+                                                         f' za nieprawidłową odpowiedź na weryfikację')
+            else:
+                await interaction.send('Zostaniesz zweryfikowany(-a) w ciągu 15 sekund. **Nie wciskaj żadnego '
+                                       'przycisku!**', ephemeral=True)
+                await asyncio.sleep(15)
+                try:
+                    member = await get_guild().fetch_member(interaction.author.id)
+                except discord.NotFound:
+                    return
+                if member and member not in get_verified_role().members:
+                    await member.add_roles(get_verified_role())
+                    await interaction.send('Zostałeś(-aś) zweryfikowany(-a).', ephemeral=True)
+
+        return callback
 
     @commands.Cog.listener('on_member_join')
-    async def new_member_guild(self, member):
+    async def add_new_member_roles(self, member):
         if member.guild.id != GUILD_ID:
             return
-        await member.add_roles(get_newcommer_role(), get_ping_poll_role(), get_ping_game_role(),
+        # TODO: maybe remove auto role adding (or wait for rule acceptance)
+        await member.add_roles(get_newcomer_role(), get_ping_poll_role(), get_ping_game_role(),
                                get_ping_declaration_role())
 
     @commands.Cog.listener('on_member_remove')
     async def member_leaves(self, member):
         if member.guild.id != GUILD_ID:
             return
-        if LEAVE_CHANNEL_ID is not None:
-            ch = self.bot.get_channel(LEAVE_CHANNEL_ID)
+        if SYSTEM_MESSAGES_CHANNEL_ID is not None:
+            ch = self.bot.get_channel(SYSTEM_MESSAGES_CHANNEL_ID)
         else:
             ch = member.guild.system_channel
         if ch is None:
@@ -85,8 +89,26 @@ class Management(commands.Cog, name='Dla Adminów'):
                 break
         else:
             wbhk = await ch.create_webhook(name='System')
-        await wbhk.send("**{}** opuścił(-a) serwer".format(member.display_name),
+        await wbhk.send("{} **({})** opuścił(-a) serwer".format(member.mention, member.display_name),
                         avatar_url='https://cdn.discordapp.com/embed/avatars/5.png')
+
+    @commands.Cog.listener('on_message')
+    async def on_message(self, message: discord.Message):
+        if message.channel.id != BOT_TRAP_CHANNEL_ID or message.author.id == self.bot.user.id:
+            return
+
+        await message.delete()
+        await get_system_messages_channel().send(f'Użytkownik {message.author.mention} wysłał wiadomość '
+                                                 f'na zabronionym kanale:\n```\n{message.content}\n```',
+                                                 allowed_mentions=discord.AllowedMentions.none()
+                                                 )
+        if is_trusted_member(message.author):
+            await message.author.send('Nie używaj tego kanału. Potraktuj to jako upomnienie.')
+        else:
+            await message.author.ban(reason='Użycie kanału bot_trap')
+            await get_system_messages_channel().send(
+                f'Użytkownik {message.author.mention} został zbanowany za użycie kanału bot_trap'
+            )
 
     @commands.Cog.listener('on_raw_reaction_add')
     async def ping_reaction_add(
@@ -123,18 +145,21 @@ class Management(commands.Cog, name='Dla Adminów'):
                 await member.remove_roles(get_ping_other_games_role())
 
     async def cog_check(self, ctx):
-        if ctx.author in get_admin_role().members or await self.bot.is_owner(ctx.author):
+        if (ctx.author in get_admin_role().members or ctx.author in get_mod_role().members
+                or await self.bot.is_owner(ctx.author)):
             return True
         raise commands.MissingRole(get_admin_role())
 
     @commands.command(name='adminuj')
-    async def adminate(self, ctx, *, osoba: MyMemberConverter(player_only=False)):
+    @admin_cmd()
+    async def adminate(self, _, *, osoba: MyMemberConverter(player_only=False)):
         """Mianuje nowego admina
         """
         member = osoba
         await member.add_roles(get_admin_role())
 
     @commands.command(name='nie_adminuj', hidden=True)
+    @admin_cmd()
     async def not_adminate(self, _, *, osoba: MyMemberConverter(player_only=False)):
         """Usuwa admina
         """
@@ -154,7 +179,10 @@ class Management(commands.Cog, name='Dla Adminów'):
             return
 
         if not members:
-            members = list(get_guild().members)
+            if ctx.author in get_admin_role().members:
+                members = list(get_guild().members)
+            else:
+                raise MissingMembers
 
         await ctx.channel.purge(after=ctx.message.created_at - dt.timedelta(minutes=time),
                                 before=ctx.message.created_at, check=lambda mess: mess.author in members)
@@ -168,7 +196,7 @@ class Management(commands.Cog, name='Dla Adminów'):
             await ctx.send(msg)
 
     @commands.command(name='wyślij')
-    @commands.dm_only()
+    @admin_cmd()
     async def special_send(self, ctx, channel_id: Optional[int] = None, *, content):
         """Wysyła podaną wiadomośc na podany kanał lub obecny kanał"""
         if not channel_id:
@@ -178,6 +206,7 @@ class Management(commands.Cog, name='Dla Adminów'):
                 await ctx._state.http.send_message(channel_id, content)
             except discord.HTTPException:
                 raise commands.BadArgument('Wrong channel id')
+        await ctx.message.delete()
 
     @commands.command(name='dodaj_reakcje', aliases=['emojis'])
     async def add_reactions(self, ctx: commands.Context, wiadomosc: Optional[discord.Message] = None,

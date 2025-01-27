@@ -57,7 +57,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         messages = []
         for player in players:
             comp = self._player_buttons()
-            msg = await base(f'{cleared_nickname(player.member.display_name)} ({player.role_class.qualified_name})',
+            newcomer_sign = '🔰 ' if player.is_newcomer else ''
+            msg = await base(f'{newcomer_sign}{cleared_nickname(player.member.display_name)} '
+                             f'({player.role_class.qualified_name})',
                              components=comp)
             msg = ComponentMessage.from_message(msg, components=comp)
             messages.append(msg)

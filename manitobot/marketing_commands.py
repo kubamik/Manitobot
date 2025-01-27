@@ -5,10 +5,10 @@ import discord
 import pytz
 from discord.ext import commands
 
-from settings import REFERENCE_TIMEZONE, ADMIN_ROLE_ID, MARKETER_ROLE_ID
+from settings import REFERENCE_TIMEZONE, ADMIN_ROLE_ID
 from .my_checks import poll_channel_only
 from .surveys import survey, declarations, WEEKD, ANKIETKA_PING
-from .utility import get_marketer_role, get_ankietawka_channel, get_ping_poll_role, get_admin_role
+from .utility import get_ankietawka_channel, get_ping_poll_role, get_admin_role, get_mod_role
 
 WEEKD_MAP = {WEEKD[i]: i for i in range(7)}
 
@@ -23,9 +23,9 @@ class Marketing(commands.Cog):
         }
 
     async def cog_check(self, ctx: commands.Context):
-        if ctx.author in get_admin_role().members or ctx.author in get_marketer_role().members:
+        if ctx.author in get_admin_role().members or ctx.author in get_mod_role().members:
             return True
-        raise commands.MissingRole(get_marketer_role())
+        raise commands.MissingRole(get_admin_role())
 
     @commands.command(name='ankietka')
     @poll_channel_only()
@@ -84,14 +84,3 @@ class Marketing(commands.Cog):
                 return True
         return False
 
-    @commands.command(disabled=True)
-    @poll_channel_only()
-    async def ping(self, ctx, ping: str):
-        """Wysyła ping podanego typu
-        """
-        if ping == 'ankietka' or ping == get_ping_poll_role().mention or ping == ANKIETKA_PING:
-            if self.last['ankietka'] == dt.date.today() or self._find_ping_in_messages_today(get_ping_poll_role()):
-                await ctx.send('Dzisiaj już był ping na ankietkę')
-                return
-            text = f'{ANKIETKA_PING} {get_ping_poll_role().mention}'
-        await ctx.send('Pong!')

@@ -2,12 +2,13 @@ import asyncio
 import itertools
 import re
 from collections import Counter
+from contextlib import suppress
 from typing import Dict, List, Union
 
 import discord
 from discord.ext import commands
 
-from settings import RULLER
+from settings import RULLER, NON_ADMIN_ROLES_COLOURS
 from .basic_models import ManiBot
 from .f_database import factions_roles
 from .interactions import ComponentCallback, Select, SelectOption, Button
@@ -19,7 +20,7 @@ from .game import Game
 from .postacie import print_list
 from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
-    get_player_role, get_town_channel, get_voice_channel, get_manitou_role
+    get_player_role, get_town_channel, get_voice_channel, get_manitou_role, get_guild
 from . import control_panel, roles_commands, sklady, daily_commands, postacie as post, election_service
 
 
@@ -53,9 +54,20 @@ class Starting(commands.Cog, name='Początkowe'):
         p = discord.Permissions.all()
         p.administrator = False
         try:
-            await get_admin_role().edit(permissions=p, colour=0)
+            await get_admin_role().edit(permissions=p, colour=0, hoist=False)
         except (NameError, discord.errors.Forbidden):
             pass
+        guild = get_guild()
+        for role_id in NON_ADMIN_ROLES_COLOURS:
+            role = guild.get_role(role_id)
+            if role:
+                with suppress(discord.Forbidden):
+                    await role.edit(hoist=False, colour=0)
+
+        voice_channel = get_voice_channel()
+        overwrite = voice_channel.overwrites_for(get_guild().default_role)
+        overwrite.update(speak=False)
+        await voice_channel.set_permissions(get_guild().default_role, overwrite=overwrite)
 
     async def add_cogs_lite(self):
         try:

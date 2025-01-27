@@ -1,5 +1,6 @@
 from typing import Callable
 
+import discord.ext.commands
 from discord.ext import commands
 
 from . import game
@@ -8,11 +9,12 @@ from .basic_models import NotAGame
 from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
     GameStartedException, DayOnly, VotingInProgress, \
     VotingNotInProgress, NightOnly, AuthorPlaying, AuthorNotOnVoice, \
-    NotTownChannel, DuelInProgress, NotSetsChannel, NotPollChannel
+    NotTownChannel, DuelInProgress, NotSetsChannel, NotPollChannel, MissingManitouRole, \
+    MissingAdministrativePermissions, MissingQualifications, NotEnoughTrustLevel, WrongState
 from .starting import if_game
-from .utility import if_manitou, get_manitou_role, get_player_role, on_voice, \
-    get_town_channel, if_player, if_qualified_manitou, get_qualified_manitou_role, get_sets_channel, \
-    get_ankietawka_channel, get_admin_role
+from .utility import is_manitou, get_manitou_role, get_player_role, on_voice, \
+    get_town_channel, is_player, is_qualified_manitou, get_qualified_manitou_role, get_sets_channel, \
+    get_ankietawka_channel, get_admin_role, get_trusted_role, get_ex_admin_role, get_mod_role, is_trusted_member
 
 
 # ===================== Game checks =====================
@@ -54,8 +56,8 @@ def mafia_check() -> Callable:
 
 def manitou_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
-        if not if_manitou(ctx):
-            raise commands.MissingRole(get_manitou_role())
+        if not is_manitou(ctx):
+            raise MissingManitouRole
         return True
 
     return commands.check(predicate)
@@ -63,7 +65,7 @@ def manitou_cmd() -> Callable:
 
 def player_cmd() -> Callable:
     def predicate(ctx: commands.Context) -> bool:
-        if not if_player(ctx):
+        if not is_player(ctx):
             raise AuthorNotPlaying
         return True
 
@@ -72,7 +74,7 @@ def player_cmd() -> Callable:
 
 def player_or_manitou_cmd() -> Callable:
     def predicate(ctx: commands.Context) -> bool:
-        if not (if_player(ctx) or if_manitou(ctx)):
+        if not (is_player(ctx) or is_manitou(ctx)):
             raise AuthorNotPlaying
         return True
 
@@ -101,8 +103,8 @@ def on_voice_check() -> Callable:
 
 def qualified_manitou_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
-        if not if_qualified_manitou(ctx) and not await ctx.bot.is_owner(ctx.author):
-            raise commands.MissingRole(get_qualified_manitou_role())
+        if not is_qualified_manitou(ctx) and not await ctx.bot.is_owner(ctx.author):
+            raise MissingQualifications
         return True
 
     return commands.check(predicate)
@@ -110,8 +112,17 @@ def qualified_manitou_cmd() -> Callable:
 
 def admin_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:
-        if ctx.author not in get_admin_role().members:
-            raise commands.MissingRole(get_admin_role())
+        if ctx.author not in get_admin_role().members and not await ctx.bot.is_owner(ctx.author):
+            raise MissingAdministrativePermissions
+        return True
+
+    return commands.check(predicate)
+
+
+def trusted_cmd() -> Callable:
+    async def predicate(ctx: commands.Context) -> bool:
+        if not is_trusted_member(ctx.author):
+            raise NotEnoughTrustLevel
         return True
 
     return commands.check(predicate)
@@ -138,6 +149,17 @@ def voting_check(reverse=False):
             raise VotingNotInProgress
         return True
 
+    return commands.check(predicate)
+
+
+def state_check():
+    def predicate(ctx):
+        day = ctx.bot.game.day
+        if day is None:
+            raise DayOnly
+        if not hasattr(day.state, ctx.command.callback.__name__):
+            raise WrongState
+        return True
     return commands.check(predicate)
 
 # ===================== Place checks =====================
