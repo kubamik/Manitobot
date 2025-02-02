@@ -9,7 +9,8 @@ from manitobot import start_commands, manitou_commands, funny_commands, \
     management_commands, dev_commands, player_commands, marketing_commands, election_commands, reaction_analysis
 from manitobot.bot_basics import bot
 from manitobot.errors import MyBaseException, VotingNotAllowed
-from manitobot.interactions.interaction import ComponentInteraction
+
+from manitobot.interactions import CustomIdNotFound, MismatchedComponentCallbackType
 from settings import PRZEGRALEM_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
 
@@ -62,7 +63,7 @@ async def you_lost(ctx):
 
 
 @bot.component_callback('add_vote')
-async def get_vote(ctx: ComponentInteraction):
+async def get_vote(ctx):
     try:
         await ctx.ack(ephemeral=True)
         if ctx.message.id != bot.game.day.state.vote_msg.id:
@@ -113,36 +114,29 @@ async def on_command(ctx):
 
 
 @bot.event
-async def on_command_interaction(interaction):
-    try:
-        try:
-            interaction.command = bot.app_commands[interaction.command_id]
-        except (KeyError, AttributeError):
-            raise commands.CommandNotFound(interaction.name)
-    except Exception as error:
-        bot.dispatch('interaction_error', interaction, error)
-    else:
-        await bot.invoke_app_command(interaction)
-        log_app_command.info(
-            '{0.author} (<@!{0.author.id}>) used {0.name} with {0.kwargs}/{0.target}'
-            .format(interaction))
-
-
-@bot.event
-async def on_component_interaction(interaction):
+async def on_component_interaction(interaction: discord.Interaction):
     if not hasattr(bot, 'component_callbacks'):
         bot.component_callbacks = dict()
-    callback = bot.component_callbacks.get(interaction.custom_id)
+    inner_data = interaction.data
+    custom_id = inner_data.get('custom_id')
+    component_type = inner_data.get('component_type')
+    callback = bot.component_callbacks.get(custom_id)
     try:
         if not callback:
-            raise commands.CommandNotFound(interaction.custom_id)
-        await callback.callback(interaction)
+            raise CustomIdNotFound(custom_id)
+        if callback.component_type != component_type:
+            raise MismatchedComponentCallbackType(callback.component_type, component_type)
+        if component_type == discord.ComponentType.button:
+            await callback.callback(interaction, custom_id)
+        elif component_type == discord.ComponentType.select:
+            values = inner_data.get('values', list())
+            await callback.callback(interaction, custom_id, values)
     except Exception as exc:
-        interaction.dispatch('interaction_error', interaction, exc)
+        bot.dispatch('interaction_error', interaction, exc)
     finally:
         log_interaction.info(
-            '{0.author} (<@!{0.author.id}>) used {0.custom_id} in {0.message.content!r}'
-            .format(interaction))
+            '{0.author} (<@!{0.author.id}>) used {1} in {0.message.content!r} ({0.message.channel.id}/{0.message.id})'
+            .format(interaction, custom_id))
 
 
 if __name__ == '__main__':
