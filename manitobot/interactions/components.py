@@ -1,4 +1,6 @@
+import abc
 import inspect
+from abc import abstractmethod
 from enum import IntEnum
 
 import discord
@@ -64,7 +66,7 @@ class ButtonStyle(IntEnum):
 class ComponentCallback:
     def __init__(self, custom_id, callback):
         if len(custom_id) > 100:
-            raise discord.InvalidArgument('custom_id cannot be longer than 100 characters')
+            raise ValueError('custom_id cannot be longer than 100 characters')
         if not inspect.iscoroutinefunction(callback):
             raise TypeError('component callback has to be a coroutine')
         self.custom_id = str(custom_id)
@@ -110,13 +112,34 @@ class SelectOption:
             data['emoji'] = discord.PartialEmoji.from_dict(data['emoji'])
         return cls(**data)
 
+    @classmethod
+    def from_discord_option(cls, option: discord.SelectOption):
+        return cls(label=option.label, value=option.value, description=option.description, emoji=option.emoji,
+                   default=option.default)
 
-class Button:
+
+class Component(abc.ABC):
+    @abstractmethod
+    def to_dict(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, data):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_discord_component(self, component: discord.Component):
+        pass
+
+
+class Button(Component):
     def __init__(self, style, label=None, emoji=None, url=None, disabled=False, custom_id=None, **_):
         if not isinstance(style, ButtonStyle):
             raise TypeError('style has to be one of ButtonStyle')
         if label and len(label) > 80:
-            raise discord.InvalidArgument('label cannot be longer than 80 characters')
+            raise ValueError('label cannot be longer than 80 characters')
         if emoji and not isinstance(emoji, (discord.PartialEmoji, str, discord.Emoji)):
             raise TypeError('emoji has to be the type of PartialEmoji')
         elif emoji:
@@ -128,14 +151,14 @@ class Button:
             raise TypeError('disabled must be boolean')
 
         if url and style is not ButtonStyle.Link:
-            raise discord.InvalidArgument('url cannot be passed when not using Link style')
+            raise ValueError('url cannot be passed when not using Link style')
         elif not url and style is ButtonStyle.Link:
-            raise discord.InvalidArgument('url nas to be passed when using Link style')
+            raise ValueError('url nas to be passed when using Link style')
 
         if not custom_id and style is not ButtonStyle.Link:
-            raise discord.InvalidArgument('custom_id has to be passed when not using Link style')
+            raise ValueError('custom_id has to be passed when not using Link style')
         if url and custom_id:
-            raise discord.InvalidArgument('cannot provide both custom_id and url')
+            raise ValueError('cannot provide both custom_id and url')
 
         self.custom_id = str(custom_id)
         self.disabled = disabled
@@ -146,7 +169,7 @@ class Button:
 
     def to_dict(self):
         d = {
-            'type': ComponentTypes.Button,
+            'type': discord.ComponentType.button,
             'disabled': self.disabled,
             'style': int(self.style),
         }
@@ -168,13 +191,18 @@ class Button:
         data['emoji'] = data.get('emoji') and discord.PartialEmoji.from_dict(data.get('emoji'))
         return cls(**data)
 
+    @classmethod
+    def from_discord_component(cls, button: discord.Button):
+        return cls(style=button.style, label=button.label, emoji=button.emoji, url=button.url,
+                   disabled=button.disabled, custom_id=button.custom_id)
+
 
 class Select:
     def __init__(self, custom_id, options, placeholder=None, min_values=1, max_values=1, disabled=False, **_):
         if len(options) > 25:
-            raise discord.InvalidArgument('options cannot have more than 25 elements')
+            raise ValueError('options cannot have more than 25 elements')
         if len(options) < max_values or min_values > max_values or min_values < 0:
-            raise discord.InvalidArgument('wrong value of min_values/max_values')
+            raise ValueError('wrong value of min_values/max_values')
         if (placeholder and not isinstance(placeholder, str)) or not isinstance(min_values, int) \
                 or not isinstance(max_values, int) or not isinstance(disabled, bool):
             raise TypeError('Wrong types')
@@ -192,7 +220,7 @@ class Select:
 
     def to_dict(self):
         d = {
-            'type': ComponentTypes.Select,
+            'type': discord.ComponentType.select,
             'custom_id': self.custom_id,
             'options': [option.to_dict() for option in self.options],
             'min_values': self.min_values,
@@ -209,3 +237,10 @@ class Select:
         data.pop('type')
         data['options'] = [SelectOption.from_dict(option) for option in data['options']]
         return cls(**data)
+
+    @classmethod
+    def from_discord_component(cls, select: discord.SelectMenu):
+        return cls(custom_id=select.custom_id, options=[SelectOption.from_discord_option(option)
+                                                        for option in select.options],
+                   placeholder=select.placeholder, min_values=select.min_values, max_values=select.max_values,
+                   disabled=select.disabled)

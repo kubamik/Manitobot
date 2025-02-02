@@ -1,16 +1,57 @@
+import asyncio
 from abc import ABC
-from typing import Optional
+from typing import Optional, Sequence, Any, List, Union
 
 import discord
+from discord import Poll, File, Embed, AllowedMentions, MessageFlags, Attachment, ForumTag
+from discord.abc import Snowflake
+from discord.http import handle_message_parameters
+from discord.utils import MISSING
+import discord.webhook.async_ as async_webhook
 
-from manitobot.interactions.components import ComponentMessage, ComponentTypes
+from manitobot.interactions.components import ComponentMessage, ComponentTypes, Button, Select
 from manitobot.interactions.commands_types import SlashOptionType
+
+
+class Components(discord.ui.View):
+    """
+    Class to *mock* discord.ui.View to put components in messages
+    """
+
+    def __init__(self, components):
+        super().__init__()
+        self.components_list = components
+
+    def to_components(self):
+        if self.components_list:
+            custom_ids = set()
+            for action in self.components_list:
+                for c in action:
+                    if c.custom_id in custom_ids:
+                        raise ValueError('custom_ids have to be unique in one message')
+                    custom_ids.add(c.custom_id)
+            return [{
+                'type': ComponentTypes.ActionRow,
+                'components': [comp.to_dict() for comp in action]
+                } for action in self.components_list
+            ]
+
+        return None
+
+    @classmethod
+    def from_message(cls, message: discord.Message, /, *, timeout: Optional[float] = None):
+        # TODO: Implement this method
+        raise NotImplementedError()
+
+    def is_finished(self):
+        return True
 
 
 class BaseInteraction(ABC):
     """Base interaction for all types of interactions sent by discord"""
     def __init__(self, state, channel, data):
         self._state = state
+        self._session = state.http._HTTPClient__session
         self.id = int(data['id'])
         self.channel = channel
         self.type = int(data['type'])
@@ -25,13 +66,6 @@ class BaseInteraction(ABC):
             self.author = self._handle_member(data['member'], self.author)
         except KeyError:
             pass
-
-        webhook_data = {
-            'id': self.application_id,
-            'type': 1,
-            'token': self.token,
-        }
-        self._webhook = discord.Webhook.from_state(webhook_data, state=state)
 
     @discord.utils.cached_property
     def guild(self):
@@ -59,80 +93,177 @@ class BaseInteraction(ABC):
         if self.acked:
             raise discord.ClientException('Response already created')
         self.acked = True
-        await self._state.http.ack_interaction(self.token, self.id, (1 << 6) * ephemeral)
 
-    async def respond(self, content=None, *, embed=None, embeds=None,
-                      tts=False, allowed_mentions=None, ephemeral=False):
-        state = self._state
-        content = str(content) if content is not None else None
+        await self._ack_interaction(type_=discord.InteractionResponseType.deferred_channel_message.value,
+                                    ephemeral=ephemeral)
 
-        if embeds is not None and embed is not None:
-            raise discord.InvalidArgument('Cannot mix embed and embeds keyword arguments.')
+    async def _ack_interaction(self, type_, ephemeral=False):
+        adapter = async_webhook.async_context.get()
+        http = self._state.http
+        params = async_webhook.interaction_response_params(type_, {'flags': (1 << 6) * ephemeral})
+        await adapter.create_interaction_response(
+            self.id, self.token,
+            session=self._session,
+            proxy=http.proxy,
+            proxy_auth=http.proxy_auth,
+            params=params)
 
-        if embeds is not None:
-            if len(embeds) > 10:
-                raise discord.InvalidArgument('embeds has a maximum of 10 elements.')
-            embeds = [e.to_dict() for e in embeds]
-        if embed is not None:
-            embed = embed.to_dict()
-
-        if allowed_mentions is not None:
-            if state.allowed_mentions is not None:
-                allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
-            else:
-                allowed_mentions = allowed_mentions.to_dict()
-        else:
-            allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
+    async def respond(
+        self,
+        content: Optional[Any] = None,
+        *,
+        embed: Embed = MISSING,
+        embeds: Sequence[Embed] = MISSING,
+        file: File = MISSING,
+        files: Sequence[File] = MISSING,
+        components: List[List[Button | Select]] = MISSING,
+        tts: bool = False,
+        ephemeral: bool = False,
+        allowed_mentions: AllowedMentions = MISSING,
+        suppress_embeds: bool = False,
+        silent: bool = False,
+        delete_after: Optional[float] = None,
+        poll: Poll = MISSING,
+    ):
         if self.acked:
             raise discord.ClientException('Response already created')
-        self.acked = True
-        await state.http.respond_interaction(self.token, self.id, content, tts=tts, embed=embed, embeds=embeds,
-                                             allowed_mentions=allowed_mentions, ephemeral=ephemeral)
 
-    async def edit(self, **fields):
-        await self._webhook.edit_message('@original', **fields)
+        if ephemeral or suppress_embeds or silent:
+            flags = MessageFlags._from_value(0)
+            flags.ephemeral = ephemeral
+            flags.suppress_embeds = suppress_embeds
+            flags.suppress_notifications = silent
+        else:
+            flags = MISSING
+
+        adapter = async_webhook.async_context.get()
+        params = async_webhook.interaction_message_response_params(
+            type=discord.InteractionResponseType.channel_message.value,
+            content=content,
+            tts=tts,
+            flags=flags,
+            embed=embed,
+            embeds=embeds,
+            file=file,
+            files=files,
+            view=Components(components) if components else MISSING,
+            allowed_mentions=allowed_mentions,
+            previous_allowed_mentions=self._state.allowed_mentions,
+            poll=poll
+        )
+
+        http = self._state.http
+        await adapter.create_interaction_response(
+            self.id,
+            self.token,
+            session=self._session,
+            proxy=http.proxy,
+            proxy_auth=http.proxy_auth,
+            params=params,
+        )
+
+        self.acked = True
+
+        if delete_after is not None:
+
+            async def inner_call(delay: float = delete_after):
+                await asyncio.sleep(delay)
+                try:
+                    await self.delete()
+                except discord.HTTPException:
+                    pass
+
+            asyncio.create_task(inner_call())
+
+    async def edit(
+        self, *,
+        content: Optional[str] = MISSING,
+        embeds: Sequence[Embed] = MISSING,
+        embed: Optional[Embed] = MISSING,
+        attachments: Sequence[Union[Attachment, File]] = MISSING,
+        components: Optional[List[List[Button | Select]]] = MISSING,
+        allowed_mentions: Optional[AllowedMentions] = None
+    ):
+        previous_mentions: Optional[AllowedMentions] = self._state.allowed_mentions
+        with handle_message_parameters(
+                content=content,
+                attachments=attachments,
+                embed=embed,
+                embeds=embeds,
+                view=Components(components) if isinstance(components, list) else components,
+                allowed_mentions=allowed_mentions,
+                previous_allowed_mentions=previous_mentions,
+        ) as params:
+            adapter = async_webhook.async_context.get()
+            http = self._state.http
+            await adapter.edit_original_interaction_response(
+                self.application_id,
+                self.token,
+                session=self._session,
+                proxy=http.proxy,
+                proxy_auth=http.proxy_auth,
+                payload=params.payload,
+                multipart=params.multipart,
+                files=params.files,
+            )
 
     async def delete(self):
-        await self._webhook.delete_message('@original')
+        adapter = async_webhook.async_context.get()
+        http = self._state.http
+        await adapter.delete_original_interaction_response(
+            self.application_id,
+            self.token,
+            session=self._session,
+            proxy=http.proxy,
+            proxy_auth=http.proxy_auth,
+        )
 
-    async def send(self, content=None, *, tts=False, file=None, files=None,
-                   embed=None, embeds=None, allowed_mentions=None, ephemeral=False):
+    async def send(
+        self,
+        content: str = MISSING,
+        *,
+        tts: bool = False,
+        ephemeral: bool = False,
+        file: File = MISSING,
+        files: Sequence[File] = MISSING,
+        embed: Embed = MISSING,
+        embeds: Sequence[Embed] = MISSING,
+        allowed_mentions: AllowedMentions = MISSING,
+        components: List[List[Button | Select]] = MISSING,
+        thread: Snowflake = MISSING,
+        thread_name: str = MISSING,
+        suppress_embeds: bool = False,
+        silent: bool = False,
+        applied_tags: List[ForumTag] = MISSING,
+        poll: Poll = MISSING,
+    ):
         if not self.acked:
             await self.ack(ephemeral)
 
-        payload = {}
-        if files is not None and file is not None:
-            raise discord.InvalidArgument('Cannot mix file and files keyword arguments.')
-        if embeds is not None and embed is not None:
-            raise discord.InvalidArgument('Cannot mix embed and embeds keyword arguments.')
+        payload = {
+            'id': self.application_id,
+            'type': 3,
+            'token': self.token,
+        }
+        webhook = async_webhook.Webhook.from_state(data=payload, state=self._state)
 
-        if embeds is not None:
-            if len(embeds) > 10:
-                raise discord.InvalidArgument('embeds has a maximum of 10 elements.')
-            payload['embeds'] = [e.to_dict() for e in embeds]
-
-        if embed is not None:
-            payload['embeds'] = [embed.to_dict()]
-
-        if content is not None:
-            payload['content'] = str(content)
-
-        if ephemeral:
-            payload['flags'] = 1 << 6
-
-        payload['tts'] = tts
-
-        previous_mentions = getattr(self._state, 'allowed_mentions', None)
-
-        if allowed_mentions:
-            if previous_mentions is not None:
-                payload['allowed_mentions'] = previous_mentions.merge(allowed_mentions).to_dict()
-            else:
-                payload['allowed_mentions'] = allowed_mentions.to_dict()
-        elif previous_mentions is not None:
-            payload['allowed_mentions'] = previous_mentions.to_dict()
-
-        return await self._webhook._adapter.execute_webhook(wait=True, file=file, files=files, payload=payload)
+        return await webhook.send(
+            content=content,
+            tts=tts,
+            file=file,
+            files=files,
+            embed=embed,
+            embeds=embeds,
+            allowed_mentions=allowed_mentions,
+            view=Components(components) if components else None,
+            thread=thread,
+            thread_name=thread_name,
+            suppress=suppress_embeds,
+            silent=silent,
+            applied_tags=applied_tags,
+            poll=poll,
+            wait=True
+        )
 
 
 class CommandInteraction(BaseInteraction):
@@ -215,63 +346,61 @@ class ComponentInteraction(BaseInteraction):
         if self.acked:
             raise discord.ClientException('Response already created')
         self.acked = True
-        await self._state.http.ack_interaction_update(self.token, self.id)
+        await self._ack_interaction(type_=discord.InteractionResponseType.deferred_message_update.value)
 
-    async def edit_message(self, **fields):
+    async def edit_message(
+        self,
+        *,
+        content: Optional[Any] = MISSING,
+        embed: Optional[Embed] = MISSING,
+        embeds: Sequence[Embed] = MISSING,
+        attachments: Sequence[Union[Attachment, File]] = MISSING,
+        components: Optional[List[List[Button | Select]]] = MISSING,
+        allowed_mentions: Optional[AllowedMentions] = MISSING,
+        delete_after: Optional[float] = None,
+        suppress_embeds: bool = MISSING,
+    ):
         if self.acked:
             raise discord.ClientException('Response already created')
 
-        try:
-            content = fields['content']
-        except KeyError:
-            pass
+        if suppress_embeds is not MISSING:
+            flags = MessageFlags._from_value(0)
+            flags.suppress_embeds = suppress_embeds
         else:
-            if content is not None:
-                fields['content'] = str(content)
+            flags = MISSING
 
-        try:
-            embed = fields['embed']
-        except KeyError:
-            pass
-        else:
-            if embed is not None:
-                fields['embed'] = embed.to_dict()
+        adapter = async_webhook.async_context.get()
+        params = async_webhook.interaction_message_response_params(
+            type=discord.InteractionResponseType.message_update.value,
+            content=content,
+            embed=embed,
+            embeds=embeds,
+            view=Components(components) if isinstance(components, list) else components,
+            attachments=attachments,
+            previous_allowed_mentions=self._state.allowed_mentions,
+            allowed_mentions=allowed_mentions,
+            flags=flags,
+        )
 
-        try:
-            suppress = fields.pop('suppress')
-        except KeyError:
-            pass
-        else:
-            flags = discord.MessageFlags._from_value(self.message.flags.value)
-            flags.suppress_embeds = suppress
-            fields['flags'] = flags.value
+        http = self._state.http
+        await adapter.create_interaction_response(
+            self.id,
+            self.token,
+            session=self._session,
+            proxy=http.proxy,
+            proxy_auth=http.proxy_auth,
+            params=params,
+        )
 
-        delete_after = fields.pop('delete_after', None)
-
-        try:
-            allowed_mentions = fields.pop('allowed_mentions')
-        except KeyError:
-            pass
-        else:
-            if allowed_mentions is not None:
-                if self._state.allowed_mentions is not None:
-                    allowed_mentions = self._state.allowed_mentions.merge(allowed_mentions).to_dict()
-                else:
-                    allowed_mentions = allowed_mentions.to_dict()
-                fields['allowed_mentions'] = allowed_mentions
-
-        try:
-            components = [{'type': ComponentTypes.ActionRow, 'components': [comp.to_dict() for comp in action]}
-                          for action in fields['components']]
-        except KeyError:
-            pass
-        else:
-            fields['components'] = components
-
-        if fields:
-            self.acked = True
-            await self._state.http.interaction_edit_message(self.token, self.id, **fields)
-            self.message._update(fields)
+        self.acked = True
 
         if delete_after is not None:
-            await self.message.delete(delay=delete_after)
+
+            async def inner_call(delay: float = delete_after):
+                await asyncio.sleep(delay)
+                try:
+                    await self.delete()
+                except discord.HTTPException:
+                    pass
+
+            asyncio.create_task(inner_call())

@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import inspect
 import logging
 import re
@@ -6,11 +7,11 @@ import typing
 from collections import namedtuple
 
 import discord
-from discord import InvalidArgument
+from discord.abc import MISSING
 from discord.ext import commands
 
 from . import slash_args
-from .components import ComponentTypes
+from .components import Components
 from .commands_types import CommandsTypes
 
 Permissions = namedtuple('Permissions', ['id', 'permission', 'type'])
@@ -31,15 +32,15 @@ class ApplicationCommand(commands.Command):
         self._max_concurency = None
         self.type = kwargs.get('type_', 1)
         if self.type != 1 and not isinstance(self.type, CommandsTypes):
-            raise discord.InvalidArgument('type_ has to be interactions.CommandsTypes')
+            raise TypeError('type_ has to be interactions.CommandsTypes')
         self.type = int(self.type)
         self.default_permission = kwargs.get('default_permission', True)
         self.id = None
         if self.type == 1 and not (1 <= len(self.help) <= 100):
-            raise discord.InvalidArgument('Description for a command should have 1-100 characters')
+            raise ValueError('Description for a command should have 1-100 characters')
         if re.match(r'^[\w-]{1,32}$', self.name) is None:
-            raise discord.InvalidArgument('Command names can contain only [A-Za-z0-9] and dashes or underscores'
-                                          ' and have 1-32 characters')
+            raise ValueError('Command names can contain only [A-Za-z0-9] and dashes or underscores'
+                             ' and have 1-32 characters')
 
     @property
     def qualified_name(self):
@@ -212,144 +213,25 @@ def command_user_permissions(user_id, allow=True):
     return decorator
 
 
-async def send(self, content=None, *, tts=False, embed=None, file=None,
-                               files=None, delete_after=None, nonce=None,
-                               allowed_mentions=None, reference=None,
-                               mention_author=None, components=None):
-    channel = await self._get_channel()
-    state = self._state
-    content = str(content) if content is not None else None
-    if embed is not None:
-        embed = embed.to_dict()
+def send_decorator(func):
+    @functools.wraps(func)
+    async def wrapper(*args, components=MISSING, **kwargs):
+        if components:
+            kwargs['view'] = Components(components)
+        return await func(*args, **kwargs)
+    return wrapper
 
-    if allowed_mentions is not None:
-        if state.allowed_mentions is not None:
-            allowed_mentions = state.allowed_mentions.merge(allowed_mentions).to_dict()
+
+async def message_edit_decorator(func):
+    @functools.wraps(func)
+    async def wrapper(*args, components=MISSING, **kwargs):
+        if isinstance(components, list):
+            kwargs['view'] = Components(components)
         else:
-            allowed_mentions = allowed_mentions.to_dict()
-    else:
-        allowed_mentions = state.allowed_mentions and state.allowed_mentions.to_dict()
-
-    if mention_author is not None:
-        allowed_mentions = allowed_mentions or discord.AllowedMentions().to_dict()
-        allowed_mentions['replied_user'] = bool(mention_author)
-
-    if reference is not None:
-        try:
-            reference = reference.to_message_reference_dict()
-        except AttributeError:
-            raise InvalidArgument('reference parameter must be Message or MessageReference') from None
-
-    if components:
-        custom_ids = set()
-        for action in components:
-            for c in action:
-                if c.custom_id in custom_ids:
-                    raise discord.InvalidArgument('custom_ids have to be unique in one message')
-                custom_ids.add(c.custom_id)
-        components = [{'type': ComponentTypes.ActionRow, 'components': [comp.to_dict() for comp in action]}
-                      for action in components]
-
-    if file is not None and files is not None:
-        raise InvalidArgument('cannot pass both file and files parameter to send()')
-
-    if file is not None:
-        if not isinstance(file, discord.File):
-            raise InvalidArgument('file parameter must be File')
-
-        try:
-            data = await state.http.send_files_components(channel.id, files=[file], allowed_mentions=allowed_mentions,
-                                               content=content, tts=tts, embed=embed, nonce=nonce,
-                                               message_reference=reference, components=components)
-        finally:
-            file.close()
-
-    elif files is not None:
-        if len(files) > 10:
-            raise InvalidArgument('files parameter must be a list of up to 10 elements')
-        elif not all(isinstance(file, discord.File) for file in files):
-            raise InvalidArgument('files parameter must be a list of File')
-
-        try:
-            data = await state.http.send_files_components(channel.id, files=files, content=content, tts=tts,
-                                               embed=embed, nonce=nonce, allowed_mentions=allowed_mentions,
-                                               message_reference=reference, components=components)
-        finally:
-            for f in files:
-                f.close()
-    else:
-        data = await state.http.send_message_components(channel.id, content, tts=tts, embed=embed,
-                                             nonce=nonce, allowed_mentions=allowed_mentions,
-                                             message_reference=reference, components=components)
-
-    ret = state.create_message(channel=channel, data=data)
-    if delete_after is not None:
-        await ret.delete(delay=delete_after)
-    return ret
+            kwargs['view'] = components
+        return await func(*args, **kwargs)
+    return wrapper
 
 
-async def edit(self, **fields):
-    try:
-        content = fields['content']
-    except KeyError:
-        pass
-    else:
-        if content is not None:
-            fields['content'] = str(content)
-
-    try:
-        embed = fields['embed']
-    except KeyError:
-        pass
-    else:
-        if embed is not None:
-            fields['embed'] = embed.to_dict()
-
-    try:
-        suppress = fields.pop('suppress')
-    except KeyError:
-        pass
-    else:
-        flags = discord.MessageFlags._from_value(self.flags.value)
-        flags.suppress_embeds = suppress
-        fields['flags'] = flags.value
-
-    delete_after = fields.pop('delete_after', None)
-
-    try:
-        allowed_mentions = fields.pop('allowed_mentions')
-    except KeyError:
-        pass
-    else:
-        if allowed_mentions is not None:
-            if self._state.allowed_mentions is not None:
-                allowed_mentions = self._state.allowed_mentions.merge(allowed_mentions).to_dict()
-            else:
-                allowed_mentions = allowed_mentions.to_dict()
-            fields['allowed_mentions'] = allowed_mentions
-
-    try:
-        custom_ids = set()
-        for action in fields['components']:
-            for c in action:
-                if c.custom_id in custom_ids:
-                    raise discord.InvalidArgument('custom_ids have to be unique in one message')
-                custom_ids.add(c.custom_id)
-
-        components = [{'type': ComponentTypes.ActionRow, 'components': [comp.to_dict() for comp in action]}
-                      for action in fields['components']]
-    except KeyError:
-        pass
-    else:
-        fields['components'] = components
-
-    if fields:
-        data = await self._state.http.edit_message(self.channel.id, self.id, **fields)
-        self._update(data)
-
-    if delete_after is not None:
-        await self.delete(delay=delete_after)
-
-
-discord.abc.Messageable.send = send
-discord.Message.edit = edit
+discord.abc.Messageable.send = send_decorator(discord.abc.Messageable.send)
+discord.Message.edit = message_edit_decorator(discord.Message.edit)
