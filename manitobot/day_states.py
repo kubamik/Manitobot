@@ -10,7 +10,8 @@ from .base_day_states import DayState, Challenging, Reporting, Undoable, States,
 from .errors import VotingNotAllowed, WrongValidVotesNumber, DuplicateVote, WrongVote, DuelDoublePerson, \
     NotDuelParticipant
 from .interactions import Select, SelectOption
-from .interactions.components import ComponentMessage, Button, ButtonStyle
+from .interactions.components import Button, Components
+from discord import ButtonStyle
 from .permissions import SPEC_ROLES
 from .utility import get_player_role, get_town_channel, add_roles, get_duel_winner_role, get_duel_loser_role, \
     remove_roles
@@ -112,13 +113,13 @@ class DuelSummary(DuelInterface, DayState, Undoable):
                 if not can:
                     continue
                 self.special_message = await get_town_channel().send(
-                    f'Czy {role.replace("_", " ")} chce zmienić wynik pojedynku?', components=[[
-                        Button(ButtonStyle.Primary, label=f'Wygrywa {self.author.display_name}',
+                    f'Czy {role.replace("_", " ")} chce zmienić wynik pojedynku?', view=Components([[
+                        Button(ButtonStyle.primary, label=f'Wygrywa {self.author.display_name}',
                                custom_id='role_wins_first'),
-                        Button(ButtonStyle.Primary, label=f'Wygrywa {self.subject.display_name}',
+                        Button(ButtonStyle.primary, label=f'Wygrywa {self.subject.display_name}',
                                custom_id='role_wins_second'),
-                        Button(ButtonStyle.Destructive, label='Nie', custom_id='duel_role_action_cancel')
-                    ]])
+                        Button(ButtonStyle.danger, label='Nie', custom_id='duel_role_action_cancel')
+                    ]]))
                 break
 
     async def cleanup(self):
@@ -324,7 +325,7 @@ class Voting(DayState):
     """
 
     state_msg_edit: typing.Callable = None
-    vote_msg: typing.Optional[ComponentMessage] = None
+    vote_msg: typing.Optional[discord.Message] = None
     message = 'Zarejestrowałem twój(-oje) głos(y) na {}'
     V_INSTRUCTION = 'INSTRUKCJA\n' + \
         'Aby zagłosować wyślij tu dowolny wariant dowolnej opcji. ' + \
@@ -356,7 +357,7 @@ class Voting(DayState):
         self.voters = {}
 
     async def async_init(self):
-        self.vote_msg = await self.options_message()
+        self.vote_msg: discord.Message = await self.options_message()
 
     def set_msg_edit_callback(self, callback: typing.Callable) -> typing.Awaitable:
         """Edits state message to display voting
@@ -382,16 +383,15 @@ class Voting(DayState):
         embed.set_footer(text=self.V_INSTRUCTION)
         return embed
 
-    async def options_message(self) -> ComponentMessage:
+    async def options_message(self) -> discord.Message:
         title = self.title
         em_title = "Głosowanie: {}".format(title[0])
         description = title[1].format(self.required_votes)
         embed = discord.Embed(title=em_title, colour=discord.Colour(0x00aaff), description=description)
         options = [SelectOption(option, option) for option in self.votes]
         vnum = min(self.required_votes, len(self.votes))
-        components = [[Select('add_vote', options, min_values=vnum, max_values=vnum)]]
-        msg = await get_town_channel().send(content=get_player_role().mention, embed=embed, components=components)
-        return ComponentMessage.from_message(msg, components=components)
+        components = Components([[Select('add_vote', options, min_values=vnum, max_values=vnum)]])
+        return await get_town_channel().send(content=get_player_role().mention, embed=embed, view=components)
 
     def results_embed(self, end: bool = False) -> discord.Embed:
         """Generates embed with current voting results, with ending note if needed
@@ -415,7 +415,7 @@ class Voting(DayState):
         return embed
 
     def parse_vote(self, vote: str) -> typing.List[str]:
-        vote = [v.strip().lower() for v in vote.split(',')]
+        vote: typing.List[str] = [v.strip().lower() for v in vote.split(',')]
         votes = []
         for v in vote:
             for i, option in enumerate(self.lowered_options):
@@ -445,9 +445,9 @@ class Voting(DayState):
         return self.message.format(', '.join(votes))
 
     async def end(self):
-        components = self.vote_msg.components
-        components[0][0].disabled = True
-        await self.vote_msg.edit(components=components)
+        components = Components.from_message(self.vote_msg)
+        components.components_list[0][0].disabled = True
+        await self.vote_msg.edit(view=components)
         embed = self.results_embed(end=True)
         await get_town_channel().send(embed=embed)
         if self.resolved:

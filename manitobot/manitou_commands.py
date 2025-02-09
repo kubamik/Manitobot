@@ -34,7 +34,6 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         rm_cog = self.bot.remove_cog
         rm_cog('Polecenia postaci i frakcji')
         rm_cog('Panel Sterowania')
-        rm_cog(daily_commands.DailyCommands.__cog_name__)
         self.bot.get_command('g').help = playerhelp()
         self.bot.get_command('m').help = manitouhelp()
         p = discord.Permissions().all()

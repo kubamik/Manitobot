@@ -22,10 +22,6 @@ class ManiBot(discord.ext.commands.Bot):
         self.game: typing.Union[Game, Mafia, NotAGame] = NotAGame()
         self.component_callbacks = dict()
 
-    # TODO: For removal
-    def bot_app_command(self, *args, **kwargs):
-        pass
-
     def add_component_callback(self, callback):
         if not isinstance(callback, ComponentCallback):
             raise TypeError('callback has to be ComponentCallback')

@@ -1,19 +1,17 @@
-import asyncio
 import datetime as dt
 from collections import defaultdict
-from typing import Optional, Union, Any
+from typing import Optional, Union
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
-from settings import TOWN_CHANNEL_ID, PING_MESSAGE_ID, PING_GREEN_ID, \
-    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, PING_POLL_ID, LEAVE_CHANNEL_ID, PING_PINK_ID, OTHER_PING_MESSAGE_ID
-from .bot_basics import bot
-from .converters import MyMemberConverter, MyDateConverter
-from .interactions import CommandsTypes
-from .surveys import survey, declarations, WEEKD
+from settings import PING_MESSAGE_ID, PING_GREEN_ID, \
+    PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, LEAVE_CHANNEL_ID, PING_PINK_ID, OTHER_PING_MESSAGE_ID
+from .basic_models import ManiBot
+from .converters import MyMemberConverter
 from .utility import get_newcommer_role, get_ping_game_role, get_member, get_admin_role, \
-    get_ankietawka_channel, get_guild, get_voice_channel, get_ping_poll_role, get_ping_declaration_role, \
+    get_guild, get_ping_poll_role, get_ping_declaration_role, \
     get_ping_other_games_role
 
 WEEKDAYS = dict(zip(range(7), ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela']))
@@ -59,8 +57,9 @@ OPTIONS_EMOJI = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷']
 
 
 class Management(commands.Cog, name='Dla Adminów'):
-    def __init__(self, bot):
+    def __init__(self, bot: ManiBot):
         self.bot = bot
+        self.bot.tree.add_command(app_commands.ContextMenu)
 
     @commands.Cog.listener('on_member_join')
     async def new_member_guild(self, member):
@@ -164,7 +163,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         """Wysyła podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
         """
         m = wiadomosc
-        for msg in await reactions_summary(m):
+        for msg in await self.reactions_summary(m):
             await ctx.send(msg)
 
     @commands.command(name='wyślij')
@@ -209,44 +208,43 @@ class Management(commands.Cog, name='Dla Adminów'):
         else:
             msg = f'Nie ma brakujących osób na {emoji}'
         await ctx.send(msg)
+    
+    @staticmethod
+    async def reactions_summary(m: discord.Message) -> list[str]:
+        reactions = [await r.users().flatten() for r in m.reactions]
+        members = list(set(sum(reactions, start=list())))
+        parsed = defaultdict(list)
+        for r, users in zip(m.reactions, reactions):
+            emoji = str(r.emoji)
+            for member in members:
+                if member in users:
+                    parsed[member].append(emoji)
+                else:
+                    parsed[member].append('<:e:881860336712560660>')
+        members = [member for member in members if isinstance(member, discord.Member)]
+    
+        if not members:
+            return ['Do tej wiadomości nie dodano reakcji']
+    
+        maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
+        msg = ''
+        msgs = []
+        for member, r in parsed.items():
+            if isinstance(member, discord.Member):
+                txt = f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
+                if len(msg) + len(txt) >= 2000:  # maximum discord message len
+                    msgs.append(msg)
+                    msg = ''
+                msg += txt
+    
+        msgs.append(msg)
+        return msgs
 
-
-async def reactions_summary(m: discord.Message) -> list[str]:
-    reactions = [await r.users().flatten() for r in m.reactions]
-    members = list(set(sum(reactions, start=list())))
-    parsed = defaultdict(list)
-    for r, users in zip(m.reactions, reactions):
-        emoji = str(r.emoji)
-        for member in members:
-            if member in users:
-                parsed[member].append(emoji)
-            else:
-                parsed[member].append('<:e:881860336712560660>')
-    members = [member for member in members if isinstance(member, discord.Member)]
-
-    if not members:
-        return ['Do tej wiadomości nie dodano reakcji']
-
-    maxlen = len(max(members, key=lambda mem: len(mem.display_name)).display_name)
-    msg = ''
-    msgs = []
-    for member, r in parsed.items():
-        if isinstance(member, discord.Member):
-            txt = f'`{member.display_name:{maxlen}} `' + ''.join(r) + '\n'
-            if len(msg) + len(txt) >= 2000:  # maximum discord message len
-                msgs.append(msg)
-                msg = ''
-            msg += txt
-
-    msgs.append(msg)
-    return msgs
-
-
-@bot.bot_app_command('reakcje', type_=CommandsTypes.MessageCommand)
-async def reactions_msg(ctx, m):
-    """Wysyła na DM podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
-    """
-    await ctx.ack(ephemeral=True)
-    for msg in await reactions_summary(m):
-        await ctx.send(msg, ephemeral=True)
+    async def reactions_msg(self, interaction: discord.Interaction, m: discord.Message):
+        """Wysyła na DM podsumowanie reakcji dodanych do wiadomości przekazanej przez ID lub link
+        """
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer(ephemeral=True)
+        for msg in await self.reactions_summary(m):
+            await interaction.followup.send(msg, ephemeral=True)
 

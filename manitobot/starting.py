@@ -68,7 +68,7 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
         if not retard:
             button = role_cls.reveal_button()
             tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, postacie.get_role_details(role, role)),
-                                     components=button))
+                                     view=button))
 
     game.make_factions(roles, faction_data)
     await asyncio.gather(*tasks, return_exceptions=True)

@@ -180,7 +180,7 @@ class Day:
             await self.state.set_msg_edit_callback(self.message_edit_callback)
             await self.game.panel.add_state_buttons()
         else:
-            await self.message_edit_callback(content='*Trwa noc*', embed=None, components=[])
+            await self.message_edit_callback(content='*Trwa noc*', embed=None, view=None)
             self.game.day = None
 
 

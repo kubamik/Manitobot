@@ -1,7 +1,9 @@
 from datetime import date
-from typing import Optional, List
+from enum import member
+from typing import Optional, List, Any
 
 import discord
+from discord import AppCommandType, Interaction
 from discord.ext import commands
 
 from .errors import MemberNotPlaying
@@ -62,6 +64,24 @@ class MyMemberConverter(commands.MemberConverter):
         if self.player_only and member not in get_player_role().members:
             raise MemberNotPlaying('This person is not playing.')
         return member
+
+
+class MyMemberConverterWithUserTransformer(MyMemberConverter, discord.app_commands.Transformer):
+    def __init__(self, *, player_only: bool = True):
+        super().__init__(player_only=player_only)
+
+    @property
+    def type(self):
+        return discord.AppCommandOptionType.user
+
+    def transform(self, interaction: Interaction, value: Any, /) -> Any:
+        if isinstance(value, discord.User):
+            value = get_member(value.id)
+        if not isinstance(value, discord.Member):
+            raise commands.MemberNotFound(value)
+        if self.player_only and member not in get_player_role().members:
+            raise MemberNotPlaying('This person is not playing.')
+        return value
 
 
 async def converter(ctx: commands.Context, name: str) -> Optional[discord.Member]:

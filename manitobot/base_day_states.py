@@ -11,7 +11,9 @@ from . import errors
 from .errors import MoreSearchedThanSearches, IllegalSearch, TooMuchHang, IllegalHang, DuplicateChallenge, \
     ChallengeNotFound, DuelAlreadyAccepted, ReportingLocked, AuthorIsSubjectChallengeError
 from .interactions import Button
-from .interactions.components import ButtonStyle
+from discord import ButtonStyle
+
+from .interactions.components import Components
 from .permissions import SPEC_ROLES
 from .utility import get_town_channel, GUN_ID, get_searched_role, remove_roles, get_player_role, add_roles, \
     get_hanged_role
@@ -390,10 +392,10 @@ class HangSummary(DayState, Undoable, ABC):
                     if not can:
                         continue
                     self.special_message = await get_town_channel().send(
-                        'Czy Burmistrz chce ułaskawić wieszaną osobę?', components=[[
-                            Button(ButtonStyle.Primary, label='Ułaskaw', custom_id='role_veto'),
+                        'Czy Burmistrz chce ułaskawić wieszaną osobę?', view=Components([[
+                            Button(ButtonStyle.primary, label='Ułaskaw', custom_id='role_veto'),
                             Button(ButtonStyle.Destructive, label='Nie', custom_id='hang_role_action_cancel')
-                        ]])
+                        ]]))
                     break
         elif self.other:
             msg = "Potrzebne jest głosowanie uzupełniające dla:\n"

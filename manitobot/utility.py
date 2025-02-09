@@ -3,10 +3,12 @@ from typing import Optional, List
 
 import discord
 from discord.ext import commands
+from discord.utils import MISSING
 
 from .bot_basics import bot, command_prefix
 from .errors import InvalidRequest
 from settings import *
+from .interactions.components import Components
 
 
 def get_guild() -> discord.Guild:
@@ -183,15 +185,15 @@ async def remove_roles(members: List[discord.Member], *roles: discord.Role) -> N
     await asyncio.gather(*tasks)
 
 
-async def send_to_manitou(content: Optional[str] = None,
-                          embed: Optional[discord.Embed] = None,
-                          file: Optional[discord.File] = None,
-                          components: Optional[List[list]] = None) -> None:
+async def send_to_manitou(content: str = MISSING,
+                          embed: discord.Embed = MISSING,
+                          file: discord.File = MISSING,
+                          view: Components = MISSING) -> None:
     if CONFIG['DM_Manitou']:
         for member in get_manitou_role().members:
-            await member.send(content, embed=embed, file=file, components=components)
+            await member.send(content, embed=embed, file=file, view=view)
     else:
-        await get_manitou_notebook().send(content, embed=embed, file=file, components=components)
+        await get_manitou_notebook().send(content, embed=embed, file=file, view=view)
 
 
 async def send_game_channels(content: str) -> None:

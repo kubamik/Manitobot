@@ -9,7 +9,9 @@ from .activities import Activity
 from .bot_basics import bot
 from .converters import converter
 from .interactions import Button
-from .interactions.components import ButtonStyle
+from discord import ButtonStyle
+
+from .interactions.components import Components
 from .night_comunicates import operation_send, new_night_com
 from .player import Player
 from .utility import *
@@ -69,7 +71,7 @@ class Role(Activity):
             output += c.format(self.my_activities[f])
         return output
 
-    async def new_activity(self, ctx, operation, member=None):
+    async def new_activity(self, ctx: commands.Context | discord.Interaction, operation, member=None):
         # works in progress
         if operation not in self.my_activities:
             raise InvalidRequest("Nie możesz użyć tego polecenia", 1)
@@ -100,7 +102,11 @@ class Role(Activity):
         # if self.my_activities[operation]>-1:
         # self.count -= 1
         if output:
-            await ctx.send(output)
+            if isinstance(ctx, discord.Interaction):
+                # noinspection PyUnresolvedReferences
+                await ctx.response.send_message(output)
+            else:
+                await ctx.send(output)
         await operation_send(operation, self.player.member, self.name, member)
         self.roled_members.append(self.member)
 
@@ -160,9 +166,9 @@ class Role(Activity):
                 return a
         return abilities[0]
 
-    def reveal_button(self):
+    def reveal_button(self) -> Components:
         act = self.my_activities
         if 'wins' in act or 'reveal' in act:
             label = 'Ujawnij się' if len(act) == 1 else 'Ujawnij się bez użycia zdolności'
-            return [[Button(ButtonStyle.Primary, label=label, custom_id='reveal')]]
-        return []
+            return Components([[Button(ButtonStyle.primary, label=label, custom_id='reveal')]])
+        return Components([])

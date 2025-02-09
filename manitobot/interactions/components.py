@@ -3,24 +3,23 @@ from __future__ import annotations
 import abc
 import inspect
 from abc import abstractmethod
-from enum import IntEnum
-from typing import Optional
+from typing import Optional, overload, Literal, List
 
 import discord
-
-
-# TODO: For removal
-class ComponentMessage:
-    pass
-
-
-# TODO: For removal
-class ButtonStyle(IntEnum):
-    pass
+from collections.abc import Callable, Awaitable
 
 
 class ComponentCallback:
-    def __init__(self, custom_id, callback, component_type=discord.ComponentType.button):
+    @overload
+    def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str], Awaitable[None]], 
+                 component_type: Literal[discord.ComponentType.button] = discord.ComponentType.button):
+        ...
+    @overload
+    def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str, List[str]], Awaitable[None]], 
+                 component_type: Literal[discord.ComponentType.select]):
+        ...
+    
+    def __init__(self, custom_id: str, callback: Callable, component_type: discord.ComponentType = discord.ComponentType.button):
         if len(custom_id) > 100:
             raise ValueError('custom_id cannot be longer than 100 characters')
         if not inspect.iscoroutinefunction(callback):

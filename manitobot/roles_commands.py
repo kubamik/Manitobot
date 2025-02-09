@@ -5,7 +5,6 @@ from . import bot_basics
 from . import utility
 from .errors import AuthorNotPlaying
 from .interactions import ComponentCallback
-from .interactions.interaction import ComponentInteraction
 from .utility import get_member, InvalidRequest
 
 
@@ -62,52 +61,54 @@ class PoleceniaPostaci(commands.Cog, name="Polecenia postaci i frakcji",
         except KeyError:
             raise AuthorNotPlaying from None
 
-    async def reveal_role(self, ctx: ComponentInteraction):
+    async def reveal_role(self, interaction: discord.Interaction, _: str):
         """For usage of reveal button"""
-        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
         ability = role.usable_ability('wins', 'reveal')
-        await role.new_activity(ctx, ability)
-        await ctx.edit_message(components=[])
+        await role.new_activity(interaction, ability)
+        # noinspection PyTypeChecker
+        resp: discord.InteractionResponse = interaction.response
+        await resp.edit_message(view=None)
 
-    async def duel_role_action_cancel(self, ctx: ComponentInteraction):
+    async def duel_role_action_cancel(self, interaction: discord.Interaction, _: str):
         """"For usage of canceling day changing (duel) actions button"""
-        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
-        await role.new_activity(ctx, 'duel_day_refuse')
+        await role.new_activity(interaction, 'duel_day_refuse')
 
-    async def hang_role_action_cancel(self, ctx: ComponentInteraction):
-        """"For usage of canceling day changing (hang) actions button"""
-        member = get_member(ctx.author.id)  # ctx.author will probably be of type discord.User
+    async def hang_role_action_cancel(self, interaction: discord.Interaction, _: str):
+        """For usage of canceling day changing (hang) actions button"""
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
-        await role.new_activity(ctx, 'hang_day_refuse')
+        await role.new_activity(interaction, 'hang_day_refuse')
 
-    async def role_wins_first(self, ctx: ComponentInteraction):
+    async def role_wins_first(self, interaction: discord.Interaction, _: str):
         """For usage of Judge's button for change duel result"""
-        member = get_member(ctx.author.id)
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
         try:
             target = self.bot.game.day.state.author
         except AttributeError:
             pass
         else:
-            await role.new_activity(ctx, 'wins', target)
+            await role.new_activity(interaction, 'wins', target)
 
-    async def role_wins_second(self, ctx: ComponentInteraction):
+    async def role_wins_second(self, interaction: discord.Interaction, _: str):
         """For usage of Judge's button for change duel result"""
-        member = get_member(ctx.author.id)
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
         try:
             target = self.bot.game.day.state.subject
         except AttributeError:
             pass
         else:
-            await role.new_activity(ctx, 'wins', target)
+            await role.new_activity(interaction, 'wins', target)
 
-    async def role_veto(self, ctx: ComponentInteraction):
-        member = get_member(ctx.author.id)
+    async def role_veto(self, interaction: discord.Interaction, _: str):
+        member = get_member(interaction.user.id)
         role = self._get_role(member)
-        await role.new_activity(ctx, "peace")
+        await role.new_activity(interaction, "peace")
 
     async def command_template(self, ctx, member, operation):
         author = get_member(ctx.author.id)

@@ -21,19 +21,18 @@ AUTHOR:     {0.author.display_name}
 '''
 
 INTER_ISSUE_TEMPLATE_2 = '''
-KWARGS:     {0.kwargs}
+DATA:       {0.data}
 COMMAND:    {0.command.name}
 CHANNEL:    {0.channel}
-AUTHOR:     {0.author.display_name}
+AUTHOR:     {0.user}
 {1}
 '''
 
 INTER_ISSUE_TEMPLATE_3 = '''
 MESSAGE_ID: {0.message.id}
-COMPONENT:  {0.component_type}
+DATA:       {0.data}
 CHANNEL:    {0.channel}
-AUTHOR:     {0.author.display_name}
-VALUES:     {0.values}
+AUTHOR:     {0.user}
 {1}
 '''
 
@@ -59,7 +58,7 @@ def report_error(ctx, error):
         raise
 
 
-def report_inter_error(inter, error):
+def report_interaction_error(inter, error):
     if inter.type == 2:
         msg = INTER_ISSUE_TEMPLATE_2.format(inter, RULLER)
     else:
@@ -132,15 +131,19 @@ async def on_command_error(ctx, error):
     err = await handle_error(ctx.send, error)
     if err:
         report_error(ctx, error)
-    
 
+
+@bot.tree.error
 @bot.event
-async def on_interaction_error(inter, error):
+async def on_interaction_error(interaction: discord.Interaction, error):
     async def send(content=None, *, reference=None, delete_after=None, **kwargs):
-        await inter.send(content, ephemeral=True, **kwargs)
+        if interaction.response.is_done():
+            await interaction.response.send_message(content, ephemeral=True, **kwargs)
+        else:
+            await interaction.followup.send(content, ephemeral=True, **kwargs)
     err = await handle_error(send, error)
     if err:
-        report_inter_error(inter, error)
+        report_interaction_error(interaction, error)
 
 
 @bot.event
