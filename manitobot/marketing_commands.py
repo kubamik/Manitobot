@@ -22,7 +22,7 @@ class Marketing(commands.Cog):
             'deklaracje': None
         }
 
-    async def cog_check(self, ctx: commands.Context):
+    async def cog_check(self, ctx: commands.Context) -> bool:
         if ctx.author in get_admin_role().members or ctx.author in get_marketer_role().members:
             return True
         raise commands.MissingRole(get_marketer_role())

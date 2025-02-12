@@ -44,9 +44,9 @@ class Starting(commands.Cog, name='Początkowe'):
 
     async def add_cogs(self):
         try:
-            self.bot.add_cog(roles_commands.PoleceniaPostaci(self.bot))
+            await self.bot.add_cog(roles_commands.PoleceniaPostaci(self.bot))
 
-            self.bot.add_cog(control_panel.ControlPanel(self.bot))
+            await self.bot.add_cog(control_panel.ControlPanel(self.bot))
         except discord.errors.ClientException:
             pass
         self.bot.get_command('g').help = playerhelp()
@@ -99,11 +99,11 @@ class Starting(commands.Cog, name='Początkowe'):
         inqufo = factions_roles['Ufoki'] + factions_roles['Inkwizycja']
         other = factions_roles['Murzyni'] + factions_roles['Bogowie'] + factions_roles['Inni']
         return Components([
-            [Select('modify_set_town', [SelectOption(r, r, default=r in ops[2]) for r in town], 'Miasto', 0, len(town))],
-            [Select('modify_set_bandians', [SelectOption(r, r, default=r in ops[3]) for r in bandians], 'Bandyci/Indianie', 0, len(bandians))
+            [Select('modify_set_town', [SelectOption(r.replace('_', ' '), r, default=r in ops[2]) for r in town], 'Miasto', 0, len(town))],
+            [Select('modify_set_bandians', [SelectOption(r.replace('_', ' '), r, default=r in ops[3]) for r in bandians], 'Bandyci/Indianie', 0, len(bandians))
              ],
-            [Select('modify_set_inqufo', [SelectOption(r, r, default=r in ops[4]) for r in inqufo], 'Inkwizycja/Ufoki', 0, len(inqufo))],
-            [Select('modify_set_other', [SelectOption(r, r, default=r in ops[5]) for r in other], 'Inni', 0, len(other))],
+            [Select('modify_set_inqufo', [SelectOption(r.replace('_', ' '), r, default=r in ops[4]) for r in inqufo], 'Inkwizycja/Ufoki', 0, len(inqufo))],
+            [Select('modify_set_other', [SelectOption(r.replace('_', ' '), r, default=r in ops[5]) for r in other], 'Inni', 0, len(other))],
             [Button(ButtonStyle.success, label='Zatwierdź', emoji='✅', custom_id='set_create_confirm'),
              Button(ButtonStyle.danger, label='Anuluj', emoji='❌', custom_id='set_create_cancel')]
         ])

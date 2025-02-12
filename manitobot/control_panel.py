@@ -13,6 +13,23 @@ from .interactions.components import Button, Components
 from .utility import get_control_panel, get_player_role, cleared_nickname
 
 
+class MessageGetter:
+    """Class holding message data, used to get message from cache or fetch it to have newest content
+    """
+    
+    def __init__(self, bot: ManiBot, msg: discord.Message):
+        self.bot = bot
+        self.msg_id = msg.id
+        self.msg_channel = msg.channel
+        
+    async def __call__(self):
+        if msg := discord.utils.get(self.bot.cached_messages, id=self.msg_id):
+            return msg
+        return await self.msg_channel.fetch_message(self.msg_id)
+    
+    def partial(self):
+        return self.msg_channel.get_partial_message(self.msg_id)
+
 # noinspection PyAttributeOutsideInit
 class ControlPanel(commands.Cog, name='Panel Sterowania'):
     """Class which is used as Manitou Control Panel
@@ -20,13 +37,16 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     def __init__(self, bot):  # '🌇' - day, '🌃' - night
         self.bot: ManiBot = bot
-        self.faction_message: discord.Message
-        self.day_message: discord.Message
-        self.statue_msg: discord.Message
+        self.faction_message: MessageGetter
+        self.day_message: MessageGetter
+        self.statue_msg: MessageGetter
         self.msg2mbr: Dict[int, discord.Member]
-        self.mbr2msg: Dict[discord.Member, discord.Message]
-        self.daynight_msg: discord.Message
+        self.mbr2msg: Dict[discord.Member, MessageGetter]
+        self.daynight_msg: MessageGetter
         self.emoji2fac: Dict[int, str] = dict()
+        
+    def create_message_getter(self, message: discord.Message) -> MessageGetter:
+        return MessageGetter(self.bot, message)
 
     async def cog_unload(self):
         rm = self.bot.remove_component_callback
@@ -53,36 +73,44 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 self.emoji2fac[id_] = fac
 
         base = channel.send
+        getter = self.create_message_getter
         self.register_callbacks()
         players = sorted(self.bot.game.player_map.values(), key=lambda pl: pl.member.display_name.lower())
-        messages = []
+        player_messages_getters = []
         for player in players:
             comp = self._player_buttons()
             msg = await base(f'{cleared_nickname(player.member.display_name)} ({player.role_class.qualified_name})',
                              view=comp)
-            messages.append(msg)
+            player_messages_getters.append(self.create_message_getter(msg))
 
         comp = self._day_night_button(day=False)
-        self.daynight_msg = await base('*Trwa:* **Noc**', view=comp)
+        msg = await base('*Trwa:* **Noc**', view=comp)
+        self.daynight_msg = getter(msg)
 
         comp = self._faction_buttons()
-        self.faction_message = await base('Aktywna frakcja', view=comp)
-
-        self.day_message = await base('*Trwa noc*')
-
-        self.statue_msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
+        msg = await base('Aktywna frakcja', view=comp)
+        self.faction_message = getter(msg)
+        
+        msg = await base('*Trwa noc*')
+        self.day_message = getter(msg)
+        
+        msg = await base('Posążek ma frakcja: **{}**'.format(self.bot.game.statue.faction_holder))
+        self.statue_msg = getter(msg)
+        
         members = sorted(self.bot.game.player_map.keys(), key=lambda mbr: mbr.display_name.lower())
-        self.msg2mbr = dict(zip((m.id for m in messages), members))
-        self.mbr2msg = dict(zip(members, messages))
+        self.msg2mbr = dict(zip((m.msg_id for m in player_messages_getters), members))
+        self.mbr2msg = dict(zip(members, player_messages_getters))
 
     async def _reset_day_message(self):
-        await self.day_message.delete(delay=0)
-        await self.statue_msg.delete(delay=0)
+        await self.day_message.partial().delete(delay=0)
+        await self.statue_msg.partial().delete(delay=0)
 
         send = get_control_panel().send
-        self.day_message = await send(self.day_message.content, view=Components.from_message(self.day_message))
-
-        self.statue_msg = await send(self.statue_msg.content)
+        day_message = await self.day_message()
+        self.day_message = await send(day_message.content, view=Components.from_message(day_message))
+        
+        statue_msg = await self.statue_msg()
+        self.statue_msg = await send(statue_msg.content)
 
     @staticmethod
     def _day_night_button(day: bool) -> Components:
@@ -130,7 +158,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 components[0].pop(-1)
         elif statue is not None:
             return Components([])
-        return Components(current_components)
+        return Components(components)
 
     def _confirm_kill_button(self, player: discord.Member) -> List[Button]:
         suffix = ' (w dzień)' if not self.bot.game.night_now else ''
@@ -141,8 +169,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         ]
 
     def _state_buttons(self, current_components: Components | None = None, command=None) -> Components:
-        components = current_components.components_list
         if command is not None:
+            components = current_components.components_list
             button = discord.utils.get(components[0], custom_id=command)
             if button is not None:
                 button.style = ButtonStyle.danger if button.style is ButtonStyle.success else ButtonStyle.success
@@ -165,7 +193,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 components[0].append(Button(ButtonStyle.success, name, emoji, custom_id=f'{id_}-wake'))
         else:
             components = current_components.components_list
-            button = discord.utils.get(components, label=change)
+            button = discord.utils.get(components[0], label=change)
             style = button.style
             style = ButtonStyle.success if style is ButtonStyle.danger else ButtonStyle.danger
             action = 'wake' if style is ButtonStyle.success else 'sleep'
@@ -176,16 +204,16 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     async def edit_day_message(self, **fields):
         try:
-            await self.day_message.edit(**fields)
+            await self.day_message.partial().edit(**fields)
         except discord.HTTPException as e:
             if e.status == 429:
                 await self._reset_day_message()
-                await self.day_message.edit(**fields)
+                await self.day_message.partial().edit(**fields)
             else:
                 raise
 
     async def change_removable(self, command):
-        components = Components.from_message(self.day_message)
+        components = Components.from_message(await self.day_message())
         new_components = self._state_buttons(components, command)
         await self.edit_day_message(view=new_components)
 
@@ -201,7 +229,6 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
             await resp.edit_message(view=components)
-            self.mbr2msg[player] = interaction.message
 
         self.bot.add_component_callback(ComponentCallback('sleep', put_sleep))
 
@@ -215,7 +242,6 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
             await resp.edit_message(view=components)
-            self.mbr2msg[player] = interaction.message
 
         self.bot.add_component_callback(ComponentCallback('unsleep', unsleep))
 
@@ -294,11 +320,10 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 await self.bot.game.faction_map[fac].wake_up()
             elif fac:
                 await self.bot.game.faction_map[fac].put_to_sleep()
-            comp = Components.from_message(self.faction_message)
+            comp = Components.from_message(await self.faction_message())
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
             await resp.edit_message(view=self._faction_buttons(comp, change=fac))
-            self.faction_message = interaction.message
 
         for id_ in self.emoji2fac:
             self.bot.add_component_callback(ComponentCallback(f'{id_}-wake', faction_action))
@@ -307,12 +332,13 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def morning_reset(self) -> None:
         tasks = list()
 
-        tasks.append(self.daynight_msg.edit(content='*Trwa:* **Dzień**', view=self._day_night_button(day=True)))
+        tasks.append(self.daynight_msg.partial().edit(content='*Trwa:* **Dzień**', view=self._day_night_button(day=True)))
         for m in self.mbr2msg.values():
-            components = Components.from_message(m)
+            msg = await m()
+            components = Components.from_message(msg)
             comp = components.components_list
             if comp and comp[0] and comp[0][0].style is ButtonStyle.danger:
-                tasks.append(m.edit(view=self._player_buttons(components, sleep=False)))
+                tasks.append(msg.edit(view=self._player_buttons(components, sleep=False)))
         tasks.append(self.bot.game.day.state.set_msg_edit_callback(self.edit_day_message))
         tasks.append(self.bot.game.day.state.async_init())
         tasks.append(self.add_state_buttons())
@@ -320,7 +346,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
     async def evening(self):
         tasks = list()
-        tasks.append(self.daynight_msg.edit(content='*Trwa:* **Noc**', view=self._day_night_button(day=False)))
+        tasks.append(self.daynight_msg.partial().edit(content='*Trwa:* **Noc**', view=self._day_night_button(day=False)))
         tasks.append(self.edit_day_message(content='*Trwa noc*', view=None))
         await asyncio.gather(*tasks)
 
@@ -328,8 +354,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         await self.edit_day_message(view=self._state_buttons())
 
     async def swapping(self, first: discord.Member, second: discord.Member, first_role: str, second_role: str):
-        m_1 = self.mbr2msg[first]
-        m_2 = self.mbr2msg[second]
+        m_1 = self.mbr2msg[first].partial()
+        m_2 = self.mbr2msg[second].partial()
         content_1 = f'{first.display_name} ({first_role.replace("_", " ")})'
         content_2 = f'{second.display_name} ({second_role.replace("_", " ")})'
         await asyncio.gather(m_1.edit(content=content_1), m_2.edit(content=content_2))
@@ -337,27 +363,27 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
     async def replace_player(self, first: discord.Member, second: discord.Member, role: str):
         msg = self.mbr2msg[first]
         self.mbr2msg[second] = msg
-        self.msg2mbr[msg.id] = second
+        self.msg2mbr[msg.msg_id] = second
         self.mbr2msg.pop(first)
-        await msg.edit(
+        await msg.partial().edit(
             content=f'{second.display_name} ({role.replace("_", " ")})' + '\t' + msg.content.partition('\t')[2])
 
     async def statue_change(self, prev_holder: discord.Member, holder: discord.Member,
                             faction: str, planted: bool = False) -> None:
         tasks = []
         if prev_holder != holder and prev_holder:
-            m = self.mbr2msg[prev_holder]
+            m = await self.mbr2msg[prev_holder]()
             comp = Components.from_message(m)
             tasks.append(m.edit(view=self._player_buttons(comp, statue=False)))
-        m = self.mbr2msg[holder]
+        m = await self.mbr2msg[holder]()
         comp = self._player_buttons(Components.from_message(m), statue=not planted, planted=planted)
         tasks.append(m.edit(view=comp))
-        tasks.append(self.statue_msg.edit(content='Posążek ma frakcja: **{}**{}'.format(
+        tasks.append(self.statue_msg.partial().edit(content='Posążek ma frakcja: **{}**{}'.format(
             faction, ' *(podłożony)*' if planted else '')))
         await asyncio.gather(*tasks)
 
     async def die(self, member: discord.Member):
-        m = self.mbr2msg[member]
+        m = await self.mbr2msg[member]()
         comp = Components.from_message(m)
         await m.edit(content=f'~~{m.content}~~', view=self._player_buttons(comp, dead=True))
 
@@ -366,7 +392,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         """
         tasks = []
         for member in get_player_role().members:
-            m = self.mbr2msg[member]
+            m = await self.mbr2msg[member]()
             if '~~' in m.content:
                 player = self.bot.game.player_map[member]
                 comp = Components.from_message(m).components_list

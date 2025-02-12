@@ -79,7 +79,7 @@ class MyMemberConverterWithUserTransformer(MyMemberConverter, discord.app_comman
             value = get_member(value.id)
         if not isinstance(value, discord.Member):
             raise commands.MemberNotFound(value)
-        if self.player_only and member not in get_player_role().members:
+        if self.player_only and value not in get_player_role().members:
             raise MemberNotPlaying('This person is not playing.')
         return value
 

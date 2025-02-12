@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Optional, Union
 
 import discord
-from discord import app_commands
+from discord import app_commands, AppCommandType
 from discord.ext import commands
 
 from settings import PING_MESSAGE_ID, PING_GREEN_ID, \
@@ -59,7 +59,8 @@ OPTIONS_EMOJI = ['🍓', '🏀', '🐤', '🌵', '🐳', '🍇', '🐷']
 class Management(commands.Cog, name='Dla Adminów'):
     def __init__(self, bot: ManiBot):
         self.bot = bot
-        self.bot.tree.add_command(app_commands.ContextMenu)
+        self.bot.tree.add_command(app_commands.ContextMenu(name='reakcje', callback=self.reactions_msg, 
+                                                           type=AppCommandType.message))
 
     @commands.Cog.listener('on_member_join')
     async def new_member_guild(self, member):
@@ -199,7 +200,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         """Wysyła listę osób, które dodały emoji do pierwszej wiadomości, ale nie zareagowały na drugą
         """
         reaction = discord.utils.get(first.reactions, emoji=emoji)
-        first_users = set(await reaction.users().flatten())
+        first_users = set([user async for user in reaction.users()])
         second_users = set([m for r in second.reactions async for m in r.users()])
         missing = first_users - second_users
         if missing:
@@ -211,7 +212,7 @@ class Management(commands.Cog, name='Dla Adminów'):
     
     @staticmethod
     async def reactions_summary(m: discord.Message) -> list[str]:
-        reactions = [await r.users().flatten() for r in m.reactions]
+        reactions = [user for r in m.reactions async for user in r.users()]
         members = list(set(sum(reactions, start=list())))
         parsed = defaultdict(list)
         for r, users in zip(m.reactions, reactions):

@@ -394,7 +394,7 @@ class HangSummary(DayState, Undoable, ABC):
                     self.special_message = await get_town_channel().send(
                         'Czy Burmistrz chce ułaskawić wieszaną osobę?', view=Components([[
                             Button(ButtonStyle.primary, label='Ułaskaw', custom_id='role_veto'),
-                            Button(ButtonStyle.Destructive, label='Nie', custom_id='hang_role_action_cancel')
+                            Button(ButtonStyle.danger, label='Nie', custom_id='hang_role_action_cancel')
                         ]]))
                     break
         elif self.other:

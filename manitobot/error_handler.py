@@ -43,7 +43,7 @@ ARGS:       {}
 '''
 
 
-def setup(_):
+async def setup(_):
     """Do nothing while loading extension
     """
     pass
@@ -128,7 +128,9 @@ async def handle_game_end(error):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.message.delete(delay=11)
-    err = await handle_error(ctx.send, error)
+    async def send(*args, **kwargs):
+        await ctx.send(*args, ephemeral=True, **kwargs)
+    err = await handle_error(send, error)
     if err:
         report_error(ctx, error)
 
@@ -137,7 +139,7 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_interaction_error(interaction: discord.Interaction, error):
     async def send(content=None, *, reference=None, delete_after=None, **kwargs):
-        if interaction.response.is_done():
+        if not interaction.response.is_done():
             await interaction.response.send_message(content, ephemeral=True, **kwargs)
         else:
             await interaction.followup.send(content, ephemeral=True, **kwargs)

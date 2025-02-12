@@ -185,14 +185,13 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
     async def context_command_add_report(self, interaction: discord.Interaction, member: discord.Member):
         if self.check_member(member):
             await self.invoke_state(interaction, interaction.user, member)
-            await interaction.response.send_message(f'{interaction.user.display_name} zgłosił(a) {member.display_name}',
-                                                    ephemeral=True)
+            await interaction.response.send_message(f'{interaction.user.display_name} zgłosił(a) {member.display_name}')
 
     async def context_command_remove_report(self, interaction: discord.Interaction, member: discord.Member):
         if self.check_member(member):
             await self.invoke_state(interaction, interaction.user, member)
             await interaction.response.send_message(f'{interaction.user.display_name} usunął(-ęła) zgłoszenie '
-                                                    f'{member.display_name}', ephemeral=True)
+                                                    f'{member.display_name}')
 
 
 

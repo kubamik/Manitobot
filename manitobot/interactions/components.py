@@ -128,7 +128,7 @@ class Button(Component):
 
     def to_dict(self):
         d = {
-            'type': discord.ComponentType.button,
+            'type': discord.ComponentType.button.value,
             'disabled': self.disabled,
             'style': int(self.style),
         }
@@ -179,7 +179,7 @@ class Select:
 
     def to_dict(self):
         d = {
-            'type': discord.ComponentType.select,
+            'type': discord.ComponentType.select.value,
             'custom_id': self.custom_id,
             'options': [option.to_dict() for option in self.options],
             'min_values': self.min_values,
@@ -223,12 +223,12 @@ class Components(discord.ui.View):
                         raise ValueError('custom_ids have to be unique in one message')
                     custom_ids.add(c.custom_id)
             return [{
-                'type': discord.ComponentType.action_row,
+                'type': discord.ComponentType.action_row.value,
                 'components': [comp.to_dict() for comp in action]
                 } for action in self.components_list
             ]
 
-        return None
+        return []
 
     @classmethod
     def from_message(cls, message: discord.Message, /, *, timeout: Optional[float] = None) -> Components:

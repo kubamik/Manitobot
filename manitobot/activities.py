@@ -179,9 +179,11 @@ class Activity:
         if hasattr(state, 'peace'):
             await state.peace()
             await self.meantime_send()
-
-    async def del_state_special_msg(self):
+            
+    async def send_refusal(self):
         await send_to_manitou("{} zdecydował nie działać".format(self.name))
+        
+    async def del_state_special_msg(self):
         try:
             await bot.game.day.state.special_message.delete(delay=0)
         except AttributeError:

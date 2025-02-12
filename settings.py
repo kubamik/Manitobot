@@ -3,7 +3,9 @@ import typing
 
 __version__ = '1.7.6'
 
-PROD = True  # True - prod. environment, False - web test hosting, None - local hosting
+PROD = os.environ.get('TEST') != '1'
+LOCAL = os.environ.get('LOCAL') == '1'
+WEB_HOSTED = os.environ.get('WEB') == '1'
 
 if PROD:
     GUILD_ID = 710039683798794270
@@ -117,9 +119,9 @@ else:
     # Emojis
     GUN_ID = 717105928067088384
     FAC2EMOJI = {
-        "Bandyci": 770304712011415563,
+        "Bandyci": 1339233746666389627,
         "Indianie": 770306713735266336,
-        "Ufoki": 770304617895559178,
+        "Ufoki": 1339242153041465345,
         "Inkwizycja": 770303863844241410
     }
     PING_BLUE_ID = None

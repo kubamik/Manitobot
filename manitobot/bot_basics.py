@@ -20,8 +20,8 @@ Skrócona pomoc dla graczy\t\t\t {0}help g'''.format(command_prefix)
         return f'{command_prefix}help HONK?'
 
 
-intents = discord.Intents.default()
-intents.members = True
+intents = discord.Intents.all()
+intents.presences = False
 
 bot = ManiBot(
     command_prefix=commands.when_mentioned_or(command_prefix),
