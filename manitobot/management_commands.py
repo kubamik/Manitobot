@@ -1,3 +1,4 @@
+import asyncio
 import datetime as dt
 from collections import defaultdict
 from typing import Optional, Union
@@ -11,7 +12,7 @@ from settings import PING_MESSAGE_ID, PING_GREEN_ID, \
     OTHER_PING_MESSAGE_ID, BOT_TRAP_CHANNEL_ID, VERIFICATION_CORRECT_EMOJI
 from .basic_models import ManiBot
 from .converters import MyMemberConverter
-from .errors import MissingMembers
+from .errors import MissingMembers, MissingAdministrativePermissions
 from .interactions import ComponentCallback
 from .my_checks import admin_cmd
 from .utility import get_newcomer_role, get_ping_game_role, get_member, get_admin_role, \
@@ -41,27 +42,27 @@ class Management(commands.Cog, name='Dla Adminów'):
 
     @staticmethod
     def verification_callback(is_correct: bool):
-        async def callback(interaction: ComponentInteraction):
-            await interaction.ack(ephemeral=True)
-            if interaction.author in get_verified_role().members:
-                await interaction.send('Jesteś już pomyślnie zweryfikowany(-a).', ephemeral=True)
+        async def callback(interaction: discord.Interaction, _: str):
+            await interaction.response.defer(ephemeral=True , thinking=True)
+            if interaction.user in get_verified_role().members:
+                await interaction.edit_original_response(content='Jesteś już pomyślnie zweryfikowany(-a).')
                 return
 
             if not is_correct:
-                await interaction.author.kick(reason='Nieprawidłowa odpowiedź na weryfikację')
-                await get_system_messages_channel().send(f'Użytkownik {interaction.author.mention} został wyrzucony'
+                await interaction.user.kick(reason='Nieprawidłowa odpowiedź na weryfikację')
+                await get_system_messages_channel().send(f'Użytkownik {interaction.user.mention} został wyrzucony'
                                                          f' za nieprawidłową odpowiedź na weryfikację')
             else:
-                await interaction.send('Zostaniesz zweryfikowany(-a) w ciągu 15 sekund. **Nie wciskaj żadnego '
-                                       'przycisku!**', ephemeral=True)
+                await interaction.edit_original_response(content='Zostaniesz zweryfikowany(-a) w ciągu 15 sekund. '
+                                                                 '**Nie wciskaj żadnego przycisku!**')
                 await asyncio.sleep(15)
                 try:
-                    member = await get_guild().fetch_member(interaction.author.id)
+                    member = await get_guild().fetch_member(interaction.user.id)
                 except discord.NotFound:
                     return
                 if member and member not in get_verified_role().members:
                     await member.add_roles(get_verified_role())
-                    await interaction.send('Zostałeś(-aś) zweryfikowany(-a).', ephemeral=True)
+                    await interaction.followup.send('Zostałeś(-aś) zweryfikowany(-a).', ephemeral=True)
 
         return callback
 
@@ -148,7 +149,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         if (ctx.author in get_admin_role().members or ctx.author in get_mod_role().members
                 or await self.bot.is_owner(ctx.author)):
             return True
-        raise commands.MissingRole(get_admin_role())
+        raise MissingAdministrativePermissions
 
     @commands.command(name='adminuj')
     @admin_cmd()
