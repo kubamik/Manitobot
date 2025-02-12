@@ -7,15 +7,24 @@ from discord.ext import commands
 from . import postacie
 from .basic_models import NotAGame
 from .errors import VotingNotAllowed
-from .my_checks import game_check, playing_cmd, on_voice_check, player_cmd, voting_check
+from .my_checks import game_check, playing_cmd, on_voice_check, player_cmd, voting_check, trusted_cmd
+from .starting import if_game
 from .utility import get_player_role, get_dead_role, get_spectator_role, \
     get_town_channel, send_to_manitou, \
     get_voice_channel, get_manitou_role, playerhelp
 
 
-class DlaGraczy(commands.Cog, name="Dla Graczy"):
+class PlayerCommands(commands.Cog, name="Dla Graczy"):
     def __init__(self,  bot):
         self.bot = bot
+
+    @commands.Cog.listener(name='on_voice_state_update')
+    async def on_voice_state_update(self, member, _, after):
+        if after.channel == get_voice_channel() and if_game():
+            if (not member.display_name.startswith('!') and member not in get_dead_role().members
+                    and member not in get_player_role().members and member not in get_manitou_role().members):
+                with suppress(discord.errors.Forbidden):
+                    await member.edit(nick='!' + member.display_name, mute=True)
 
     @commands.command(name='postać')
     async def role_help(self, ctx, rola: str):
@@ -25,6 +34,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
 
     @commands.command(name='obserwuję', aliases=['obs', 'obserwuje'])
     @playing_cmd(reverse=True)
+    @trusted_cmd()
     async def spectate(self, ctx):
         """/&obs/Zmienia rolę usera na obserwator.
         """
@@ -38,7 +48,7 @@ class DlaGraczy(commands.Cog, name="Dla Graczy"):
 
     @commands.command(name='nie_obserwuję', aliases=['nie_obs', 'nieobs'])
     async def not_spectate(self, ctx):
-        """/&nie_obs/Usuwa userowi rolę spectator.
+        """/&nie_obs/Usuwa userowi rolę obserwator.
         """
         member = ctx.author
         await member.remove_roles(get_spectator_role())

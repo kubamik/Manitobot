@@ -79,7 +79,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         player_messages_getters = []
         for player in players:
             comp = self._player_buttons()
-            msg = await base(f'{cleared_nickname(player.member.display_name)} ({player.role_class.qualified_name})',
+            newcomer_sign = '🔰 ' if player.is_newcomer else ''
+            msg = await base(f'{newcomer_sign}{cleared_nickname(player.member.display_name)} '
+                             f'({player.role_class.qualified_name})',
                              view=comp)
             player_messages_getters.append(self.create_message_getter(msg))
 

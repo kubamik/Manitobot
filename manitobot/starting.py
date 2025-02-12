@@ -16,7 +16,7 @@ from .bot_basics import bot
 from .game import Game
 from .mafia import Mafia
 from .utility import get_player_role, clear_nickname, send_to_manitou, \
-    get_newcommer_role, get_town_channel, cleared_nickname
+    get_newcomer_role, get_town_channel, cleared_nickname, get_voice_channel, get_manitou_role
 
 STARTING_INSTRUCTION = '''{0}
 Witaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. \
@@ -75,8 +75,14 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
 
     tasks = []
     await send_role_list(game)
-    tasks.append(
-        utility.remove_roles(list(set(players) & set(get_newcommer_role().members)), get_newcommer_role()))
+
+    for member in get_voice_channel().members:
+        if member not in get_player_role().members and member not in get_manitou_role().members:
+            if not member.display_name.startswith('!'):
+                tasks.append(member.edit(nick='!' + member.display_name, mute=True))
+            else:
+                tasks.append(member.edit(mute=True))
+
     tasks.append(ctx.bot.change_presence(activity=discord.Game('Ktulu')))
     tasks.append(utility.send_game_channels(RULLER))
     if not retard:

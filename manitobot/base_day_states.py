@@ -1,3 +1,4 @@
+import asyncio
 import random
 import typing
 from abc import ABC
@@ -314,6 +315,16 @@ class SearchSummary(DayState, Undoable, ABC):
         searched_role = get_searched_role()
         await remove_roles(searched_role.members, searched_role)
 
+    async def set_searched(self, searched: list[discord.Member]):
+        tasks = []
+        for member in get_searched_role().members:
+            if member not in searched:
+                tasks.append(member.remove_roles(get_searched_role()))
+        for member in searched:
+            if member not in get_searched_role().members:
+                tasks.append(member.add_roles(get_searched_role()))
+        await asyncio.gather(*tasks)
+
     async def end(self):
         to_search = get_searched_role().members
         if len(to_search) > self.game.searches:
@@ -413,6 +424,13 @@ class HangSummary(DayState, Undoable, ABC):
 
     async def peace(self):
         await self.cleanup()
+
+    async def set_hanged(self, hanged: discord.Member):
+        for member in get_hanged_role().members:
+            if member != hanged:
+                await member.remove_roles(get_hanged_role())
+        if hanged not in get_hanged_role().members:
+            await hanged.add_roles(get_hanged_role())
 
     async def end(self):
         members = get_hanged_role().members

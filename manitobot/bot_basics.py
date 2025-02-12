@@ -16,8 +16,8 @@ Informacje o konkretnej kategorii:\t{0}help <kategoria>
 Skrócona pomoc dla Manitou:\t\t   {0}help m
 Skrócona pomoc dla graczy\t\t\t {0}help g'''.format(command_prefix)
 
-    def command_not_found(self, _):
-        return f'{command_prefix}help HONK?'
+    def command_not_found(self, name: str):
+        return f'Komenda `{name}` nie istnieje lub jest niedostępna'
 
 
 intents = discord.Intents.all()

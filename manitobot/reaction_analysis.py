@@ -46,7 +46,7 @@ class ReactionAnalysis(commands.Cog):
                  datetime.datetime.now().isoformat()))
             await db.commit()
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def all_reactions(self, ctx):
         msg = ''
         async with aiosqlite.connect(DB_FILE) as db:

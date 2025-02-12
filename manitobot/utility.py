@@ -31,10 +31,6 @@ def get_spectator_role() -> discord.Role:
     return get_guild().get_role(SPECTATOR_ROLE_ID)
 
 
-def get_admin_role() -> discord.Role:
-    return get_guild().get_role(ADMIN_ROLE_ID)
-
-
 def get_duel_winner_role() -> discord.Role:
     return get_guild().get_role(DUEL_WINNER_ID)
 
@@ -51,12 +47,12 @@ def get_hanged_role() -> discord.Role:
     return get_guild().get_role(HANGED_ID)
 
 
-def get_newcommer_role() -> discord.Role:
-    return get_guild().get_role(NEWCOMMER_ID)
+def get_verified_role() -> discord.Role:
+    return get_guild().get_role(VERIFIED_ROLE_ID)
 
 
-def get_marketer_role() -> discord.Role:
-    return get_guild().get_role(MARKETER_ROLE_ID)
+def get_newcomer_role() -> discord.Role:
+    return get_guild().get_role(NEWCOMER_ROLE_ID)
 
 
 def get_qualified_manitou_role() -> discord.Role:
@@ -64,19 +60,35 @@ def get_qualified_manitou_role() -> discord.Role:
 
 
 def get_ping_poll_role() -> discord.Role:
-    return get_guild().get_role(PING_POLL_ID)
+    return get_guild().get_role(PING_POLL_ROLE_ID)
 
 
 def get_ping_game_role() -> discord.Role:
-    return get_guild().get_role(PING_GAME_ID)
+    return get_guild().get_role(PING_GAME_ROLE_ID)
 
 
 def get_ping_declaration_role() -> discord.Role:
-    return get_guild().get_role(PING_DECLARATION_ID)
+    return get_guild().get_role(PING_DECLARATION_ROLE_ID)
 
 
 def get_ping_other_games_role() -> discord.Role:
-    return get_guild().get_role(PING_OTHER_GAMES_ID)
+    return get_guild().get_role(PING_OTHER_GAMES_ROLE_ID)
+
+
+def get_trusted_role() -> discord.Role:
+    return get_guild().get_role(TRUSTED_ROLE_ID)
+
+
+def get_ex_admin_role() -> discord.Role:
+    return get_guild().get_role(EX_ADMIN_ROLE_ID)
+
+
+def get_mod_role() -> discord.Role:
+    return get_guild().get_role(MOD_ROLE_ID)
+
+
+def get_admin_role() -> discord.Role:
+    return get_guild().get_role(ADMIN_ROLE_ID)
 
 
 def get_control_panel() -> discord.TextChannel:
@@ -107,6 +119,10 @@ def get_sets_channel() -> discord.TextChannel:
     return get_guild().get_channel(SET_CHANNEL_ID)
 
 
+def get_system_messages_channel() -> discord.TextChannel:
+    return get_guild().get_channel(SYSTEM_MESSAGES_CHANNEL_ID)
+
+
 def get_election_backup_channel() -> discord.TextChannel:
     return bot.get_channel(ELECTION_BACKUP_CHANNEL_ID)
 
@@ -125,19 +141,26 @@ def on_voice(ctx: commands.Context) -> bool:
     return ctx.author in get_voice_channel().members
 
 
-def if_manitou(ctx: commands.Context) -> bool:
+def is_trusted_member(member: discord.Member) -> bool:
+    return (member in get_trusted_role().members
+            or member in get_ex_admin_role().members
+            or member in get_mod_role().members
+            or member in get_admin_role().members)
+
+
+def is_manitou(ctx: commands.Context) -> bool:
     return ctx.author in get_manitou_role().members
 
 
-def if_player(ctx: commands.Context) -> bool:
+def is_player(ctx: commands.Context) -> bool:
     return ctx.author in get_player_role().members
 
 
-def if_qualified_manitou(ctx: commands.Context) -> bool:
+def is_qualified_manitou(ctx: commands.Context) -> bool:
     return ctx.author in get_qualified_manitou_role().members
 
 
-def czy_trup(ctx: commands.Context) -> bool:
+def is_dead(ctx: commands.Context) -> bool:
     return ctx.author in get_dead_role().members
 
 
