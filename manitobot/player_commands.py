@@ -19,12 +19,13 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
         self.bot = bot
 
     @commands.Cog.listener(name='on_voice_state_update')
-    async def on_voice_state_update(self, member, _, after):
-        if after.channel == get_voice_channel() and if_game():
-            if (not member.display_name.startswith('!') and member not in get_dead_role().members
-                    and member not in get_player_role().members and member not in get_manitou_role().members):
-                with suppress(discord.errors.Forbidden):
-                    await member.edit(nick='!' + member.display_name, mute=True)
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if before.channel != after.channel and after.channel == get_voice_channel() and if_game():
+            if (member not in get_dead_role().members and member not in get_player_role().members 
+                    and member not in get_manitou_role().members):
+                if not member.display_name.startswith('!') or not after.mute:
+                    with suppress(discord.errors.Forbidden):
+                        await member.edit(nick='!' + member.display_name.removeprefix('!'), mute=True)
 
     @commands.command(name='postać')
     async def role_help(self, ctx, rola: str):

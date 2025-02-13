@@ -5,6 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 
+import manitobot.interactions
 from settings import FRAKCJE_CATEGORY_ID, NIEPUBLICZNE_CATEGORY_ID, RULLER
 from .bot_basics import bot
 from .errors import GameEnd, MyBaseException, InvalidRequest
@@ -73,10 +74,12 @@ def report_interaction_error(inter, error):
 async def handle_error(send, error):
     if isinstance(error, (MyBaseException, InvalidRequest)):
         await send(error.msg, delete_after=10)
+    elif isinstance(error, manitobot.interactions.CustomIdNotFound):
+        await send("Komponent nieobsługiwany")
     elif isinstance(error, commands.CommandNotFound):
         await send('Komenda nie istnieje', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, discord.Forbidden):
-        await send('Chcem coś zrobić, ale nie mogem.', delete_after=10)
+        await send('Bot nie ma uprawnień do wykonania czynności.', delete_after=10)
     elif isinstance(error, commands.CommandInvokeError) and \
             isinstance(error.original, discord.HTTPException) and error.original.code == 10062:
         await send('Przekroczono dopuszczalny czas na odpowiedź. Spróbuj ponownie')

@@ -179,21 +179,18 @@ async def startup():
     else:
         token = os.environ.get('TEST_TOKEN')
 
-    try:
-        await bot.add_cog(dev_commands.DevCommands(bot))
-        await bot.add_cog(funny_commands.Funny(bot))
-        await bot.add_cog(manitou_commands.DlaManitou(bot))
-        await bot.add_cog(start_commands.Starting(bot))
-        await bot.add_cog(player_commands.DlaGraczy(bot))
-        await bot.add_cog(management_commands.Management(bot))
-        await bot.add_cog(marketing_commands.Marketing(bot))
-        await bot.add_cog(election_commands.Election(bot))
-        await bot.add_cog(daily_commands.DailyCommands(bot))
-        await bot.load_extension('manitobot.error_handler')
-        bot.get_command('g').help = playerhelp()
-        bot.get_command('m').help = manitouhelp()
-    except AttributeError:
-        pass
+    await bot.add_cog(dev_commands.DevCommands(bot))
+    await bot.add_cog(funny_commands.Funny(bot))
+    await bot.add_cog(manitou_commands.DlaManitou(bot))
+    await bot.add_cog(start_commands.Starting(bot))
+    await bot.add_cog(player_commands.PlayerCommands(bot))
+    await bot.add_cog(management_commands.Management(bot))
+    await bot.add_cog(marketing_commands.Marketing(bot))
+    await bot.add_cog(election_commands.Election(bot))
+    await bot.add_cog(daily_commands.DailyCommands(bot))
+    await bot.load_extension('manitobot.error_handler')
+    bot.get_command('g').help = playerhelp()
+    bot.get_command('m').help = manitouhelp()
 
     await bot.start(token)
 

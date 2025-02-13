@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-__version__ = '1.7.6'
+__version__ = '1.8.0'
 
 PROD = os.environ.get('TEST') != '1'
 LOCAL = os.environ.get('LOCAL') == '1'
@@ -56,9 +56,9 @@ if PROD:
     NOTATNIK_MANITOU_CHANNEL_ID = 1294288047394787419
     ANKIETAWKA_CHANNEL_ID = 710050073181945896
     FAC2CHANN_ID: typing.Dict[str, int] = {
-        "Bandyci": 1294274775941910538,
+        "Bandyci": 1339574497094664213,
         "Indianie": 1294274808892096555,
-        "Ufoki": 1294274846057955338,
+        "Ufoki": 1339574605253447681,
         "Inkwizycja": 1294281671385813023
     }
     CONTROL_PANEL_ID = 770344422625378325
