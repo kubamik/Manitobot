@@ -1,9 +1,8 @@
 from datetime import date
-from enum import member
 from typing import Optional, List, Any
 
 import discord
-from discord import AppCommandType, Interaction
+from discord import Interaction
 from discord.ext import commands
 
 from .errors import MemberNotPlaying
