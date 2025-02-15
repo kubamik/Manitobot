@@ -40,7 +40,7 @@ async def message_change(before, after):
 
 @bot.after_invoke
 async def check_marked(ctx):
-    if not any(sys.exc_info()):
+    if not any(sys.exc_info()) and not ctx.command_failed:
         try:
             await ctx.message.add_reaction('✅')
         except discord.NotFound:

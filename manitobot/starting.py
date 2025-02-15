@@ -35,7 +35,7 @@ ROLES_FILE = 'Postacie.txt'
 async def send_role_list(game):
     roles_file = open(ROLES_FILE, 'w')
     msg = "\nPostacie:\n"
-    roles_file.write("Postacie:\n")
+    roles_file.write("Osoba\tRola\n")
     players = get_player_role().members
     for member in sorted(players, key=lambda m: m.display_name.lower()):
         msg += "{};\t{}\n".format(cleared_nickname(member.display_name), game.player_map[member].role)
