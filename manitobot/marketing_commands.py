@@ -6,6 +6,7 @@ import pytz
 from discord.ext import commands
 
 from settings import REFERENCE_TIMEZONE, ADMIN_ROLE_ID
+from .errors import MissingAdministrativePermissions
 from .my_checks import poll_channel_only
 from .surveys import survey, declarations, WEEKD, ANKIETKA_PING
 from .utility import get_ankietawka_channel, get_ping_poll_role, get_admin_role, get_mod_role
@@ -25,7 +26,7 @@ class Marketing(commands.Cog):
     async def cog_check(self, ctx: commands.Context):
         if ctx.author in get_admin_role().members or ctx.author in get_mod_role().members:
             return True
-        raise commands.MissingRole(get_admin_role())
+        raise MissingAdministrativePermissions
 
     @commands.command(name='ankietka')
     @poll_channel_only()
@@ -34,11 +35,11 @@ class Marketing(commands.Cog):
         Argumenty start i koniec należy podać jako dwuliterowe skróty dni tygodnia lub ich numery 1 (pn) - 7 (nd).
         """
         if isinstance(start, str):
-            start = WEEKD_MAP.get(start.lower())
+            start: int = WEEKD_MAP.get(start.lower())
         else:
             start -= 1
         if isinstance(koniec, str):
-            koniec = WEEKD_MAP.get(koniec.lower())
+            koniec: int = WEEKD_MAP.get(koniec.lower())
         else:
             koniec -= 1
         if start is None or koniec is None or start < 0 or koniec < 0 or start > 6 or koniec > 6:

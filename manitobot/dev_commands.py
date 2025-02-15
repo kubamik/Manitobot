@@ -3,14 +3,15 @@ import datetime as dt
 import discord
 from discord.ext import commands
 
-from settings import LOG_FILE, FULL_LOG_FILE, __version__
+from settings import LOG_FILE, FULL_LOG_FILE, __version__, GUILD_ID
+from .basic_models import ManiBot
 from .converters import MyMemberConverter
 
 started_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class DevCommands(commands.Cog, name='Development'):
-    def __init__(self, bot):
+    def __init__(self, bot: ManiBot):
         self.bot = bot
 
     async def cog_check(self, ctx):
@@ -22,6 +23,12 @@ class DevCommands(commands.Cog, name='Development'):
     async def execute(self, _, *, string):
         """ⒹUruchamia podany kod"""
         exec(string)
+        
+    @commands.command()
+    async def sync_commands(self, _):
+        """ⒹSynchronizuje komendy aplikacji"""
+        self.bot.tree.copy_global_to(guild=GUILD_ID)
+        await self.bot.tree.sync(guild=GUILD_ID)
 
     @staticmethod
     async def send_logs(ctx, full=False):

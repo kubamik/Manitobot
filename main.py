@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-
+import asyncio
 import logging
 import os
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from manitobot import start_commands, manitou_commands, funny_commands, \
-    management_commands, dev_commands, player_commands, marketing_commands, election_commands, reaction_analysis
+    management_commands, dev_commands, player_commands, marketing_commands, election_commands, daily_commands
 from manitobot.bot_basics import bot
 from manitobot.errors import MyBaseException, VotingNotAllowed
-from manitobot.interactions.interaction import ComponentInteraction
+from manitobot.interactions import CustomIdNotFound, MismatchedComponentCallbackType
 from manitobot.utility import get_member, get_guild, get_nickname, playerhelp, manitouhelp
-from settings import LOSER_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD
+from settings import LOSER_ROLE_ID, LOG_FILE, RULLER, FULL_LOG_FILE, PROD, WEB_HOSTED, LOCAL
+
+log_command: logging.Logger
+log_interaction_command: logging.Logger
+log_components: logging.Logger
 
 
 @bot.event
@@ -55,18 +60,19 @@ async def you_lost(ctx):
     await ctx.send("Przegrałem!")
 
 
-@bot.component_callback('add_vote')
-async def get_vote(ctx: ComponentInteraction):
+@bot.component_callback('add_vote', component_type=discord.ComponentType.select)
+async def get_vote(interaction: discord.Interaction, _, values):
     try:
-        await ctx.ack(ephemeral=True)
-        if ctx.message.id != bot.game.day.state.vote_msg.id:
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer(ephemeral=True, thinking=True)
+        if interaction.message.id != bot.game.day.state.vote_msg.id:
             raise VotingNotAllowed
         content = await bot.game.day.state.register_vote(
-            ctx.author, ctx.values)
+            interaction.user, values)
     except AttributeError:
         raise VotingNotAllowed from None
     else:
-        await ctx.send(content, ephemeral=True)
+        await interaction.edit_original_response(content=content)
 
 
 @bot.listen('on_message')
@@ -83,7 +89,7 @@ async def my_message(m):
     except MyBaseException as e:
         await m.channel.send(e.msg)
     except AttributeError:
-        await m.channel.send('Nie rozumiem. Nie trwa teraz żadne głosowanie')
+        await m.channel.send('Użyj `&help`, aby wyświetlić dostępne polecenia')
     else:
         await m.author.send(content)
 
@@ -105,82 +111,88 @@ async def on_command(ctx):
             '{0.author} (<@!{0.author.id}>) used {0.command.name} by {0.message.content!r}'
             .format(ctx))
 
-
 @bot.event
-async def on_command_interaction(interaction):
-    try:
-        try:
-            interaction.command = bot.app_commands[interaction.command_id]
-        except (KeyError, AttributeError):
-            raise commands.CommandNotFound(interaction.name)
-    except Exception as error:
-        bot.dispatch('interaction_error', interaction, error)
-    else:
-        await bot.invoke_app_command(interaction)
-        log_app_command.info(
-            '{0.author} (<@!{0.author.id}>) used {0.name} with {0.kwargs}/{0.target}'
+async def on_interaction(interaction: discord.Interaction):
+    if (interaction.type != discord.InteractionType.component
+            and isinstance(interaction.command, app_commands.ContextMenu)):
+        log_interaction_command.info(
+            '{0.user} (<@!{0.user.id}>) used {0.command.name}'
             .format(interaction))
 
 
 @bot.event
-async def on_component_interaction(interaction):
+async def on_component_interaction(interaction: discord.Interaction):
     if not hasattr(bot, 'component_callbacks'):
         bot.component_callbacks = dict()
-    callback = bot.component_callbacks.get(interaction.custom_id)
+    inner_data = interaction.data
+    custom_id = inner_data.get('custom_id')
+    component_type = discord.ComponentType(inner_data.get('component_type'))
+    callback = bot.component_callbacks.get(custom_id)
     try:
         if not callback:
-            raise commands.CommandNotFound(interaction.custom_id)
-        await callback.callback(interaction)
+            raise CustomIdNotFound(custom_id)
+        if callback.component_type != component_type:
+            raise MismatchedComponentCallbackType(callback.component_type, component_type)
+        if component_type == discord.ComponentType.button:
+            await callback.callback(interaction, custom_id)
+        elif component_type == discord.ComponentType.select:
+            values = inner_data.get('values', list())
+            await callback.callback(interaction, custom_id, values)
     except Exception as exc:
-        interaction.dispatch('interaction_error', interaction, exc)
+        bot.dispatch('interaction_error', interaction, exc)
     finally:
-        log_interaction.info(
-            '{0.author} (<@!{0.author.id}>) used {0.custom_id} in {0.message.content!r}'
-            .format(interaction))
+        log_components.info(
+            '{0.user} (<@!{0.user.id}>) used {1} in {0.message.content!r} ({0.message.channel.id}/{0.message.id})'
+            .format(interaction, custom_id))
 
 
-if __name__ == '__main__':
+async def startup():
     logging.basicConfig(
         filename=FULL_LOG_FILE,
         format='%(asctime)s - %(name)s:%(levelname)s:%(message)s',
-        level=logging.INFO)
-    handler = logging.FileHandler(filename=LOG_FILE)
+        level=logging.INFO, 
+        encoding='utf8')
+    handler = logging.FileHandler(filename=LOG_FILE, encoding='utf8')
     formatter = logging.Formatter(
-        fmt=f'{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s')
+        fmt=f'\n{RULLER}\n\n%(asctime)s - %(levelname)s:\n%(message)s')
     handler.setFormatter(formatter)
     handler.setLevel(logging.WARNING)
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
-    log_command = logging.getLogger('command')
-    log_app_command = logging.getLogger('app_command')
-    log_interaction = logging.getLogger('interaction')
 
-    if PROD is None:
+    global log_command, log_interaction_command, log_components
+    log_command = logging.getLogger('command')
+    log_interaction_command = logging.getLogger('interaction_command')
+    log_components = logging.getLogger('components')
+
+    discord.utils.setup_logging(handler=handler, formatter=formatter)
+
+    if LOCAL:
         from dotenv import load_dotenv
         load_dotenv()
-
-    token = os.environ.get('TOKEN')
-
-    if PROD is False:
+    elif WEB_HOSTED:
         from manitobot.keep_alive import keep_alive
         keep_alive()
 
-    try:
-        bot.add_cog(dev_commands.DevCommands(bot))
-        bot.add_cog(funny_commands.Funny(bot))
-        bot.add_cog(manitou_commands.DlaManitou(bot))
-        bot.add_cog(start_commands.Starting(bot))
-        bot.add_cog(player_commands.PlayerCommands(bot))
-        bot.add_cog(management_commands.Management(bot))
-        bot.add_cog(marketing_commands.Marketing(bot))
-        bot.add_cog(election_commands.Election(bot))
-        bot.add_cog(reaction_analysis.ReactionAnalysis(bot))
-        bot.load_extension('manitobot.error_handler')
-        bot.load_extension('manitobot.day_app_commands')
-        bot.get_command('g').help = playerhelp()
-        bot.get_command('m').help = manitouhelp()
-    except AttributeError:
-        pass
+    if PROD:
+        token = os.environ.get('TOKEN')
+    else:
+        token = os.environ.get('TEST_TOKEN')
 
-    bot.loop.create_task(bot.overwrite_app_commands())
-    bot.run(token)
+    await bot.add_cog(dev_commands.DevCommands(bot))
+    await bot.add_cog(funny_commands.Funny(bot))
+    await bot.add_cog(manitou_commands.DlaManitou(bot))
+    await bot.add_cog(start_commands.Starting(bot))
+    await bot.add_cog(player_commands.PlayerCommands(bot))
+    await bot.add_cog(management_commands.Management(bot))
+    await bot.add_cog(marketing_commands.Marketing(bot))
+    await bot.add_cog(election_commands.Election(bot))
+    await bot.add_cog(daily_commands.DailyCommands(bot))
+    await bot.load_extension('manitobot.error_handler')
+    bot.get_command('g').help = playerhelp()
+    bot.get_command('m').help = manitouhelp()
+
+    await bot.start(token)
+
+if __name__ == '__main__':
+    asyncio.run(startup())

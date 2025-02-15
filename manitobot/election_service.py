@@ -1,9 +1,13 @@
 import datetime as dt
+import functools
 import sqlite3
 from collections import namedtuple
+from collections.abc import Callable
+from typing import Any
 
 import aiosqlite
 import discord
+from typing_extensions import TypeVar, Awaitable
 
 from settings import ELECTION_DB_PATH
 
@@ -13,6 +17,7 @@ Election = namedtuple('Election', 'name from_date to_date message confirmation_m
 
 
 def connect_db(func):
+    @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         db = None
         try:
@@ -73,7 +78,7 @@ def get_current_elections():
 
 
 @connect_db
-async def create_election(db, name, election_id, from_date, to_date, message,
+async def create_election(db: aiosqlite.core.Connection, name, election_id, from_date, to_date, message,
                           confirmation_message, min_votes_count, max_votes_count, channel_id, candidates):
     await db.execute('''
         INSERT INTO elections (
@@ -144,7 +149,7 @@ async def register_election_vote(db, user_id, election_id, candidates_ids):
         await db.execute('''DELETE FROM votes WHERE user_id = ? AND election_id = ?''', (user_id, election_id))
     for candidate_id in candidates_ids:
         await db.execute('''INSERT INTO votes (user_id, election_id, candidate_id) VALUES (?, ?, ?) ''',
-                         (user_id, election_id, candidate_id))
+                         (user_id, election_id, int(candidate_id)))
     await db.commit()
 
 

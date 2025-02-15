@@ -35,7 +35,7 @@ ROLES_FILE = 'Postacie.txt'
 async def send_role_list(game):
     roles_file = open(ROLES_FILE, 'w')
     msg = "\nPostacie:\n"
-    roles_file.write("Postacie:\n")
+    roles_file.write("Osoba\tRola\n")
     players = get_player_role().members
     for member in sorted(players, key=lambda m: m.display_name.lower()):
         msg += "{};\t{}\n".format(cleared_nickname(member.display_name), game.player_map[member].role)
@@ -68,7 +68,7 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
         if not retard:
             button = role_cls.reveal_button()
             tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, postacie.get_role_details(role, role)),
-                                     components=button))
+                                     view=button))
 
     game.make_factions(roles, faction_data)
     await asyncio.gather(*tasks, return_exceptions=True)

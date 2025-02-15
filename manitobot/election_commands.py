@@ -15,8 +15,7 @@ from .election_service import create_election, query_election, check_voting_righ
     setup_election_db, start_election, get_candidates, set_election_message_id, end_election, get_election_results, \
     get_current_elections, get_confirmation_message, get_election, Candidate
 from .interactions import Select, SelectOption
-from .interactions.components import ComponentMessage, ComponentCallback
-from .interactions.interaction import ComponentInteraction
+from .interactions.components import ComponentCallback, Components
 from .my_checks import admin_cmd
 from .utility import get_election_backup_channel
 
@@ -39,7 +38,7 @@ class Election(commands.Cog, name='Wybory'):
                 loop.call_soon(loop.create_task, self.start_election(election_id))
             elif end_date > now:
                 self.bot.add_component_callback(ComponentCallback(f'election-vote-{election_id}',
-                                                                  self.register_vote))
+                                                                  self.register_vote, discord.ComponentType.select))
                 loop.call_later(end_date.timestamp() - datetime.datetime.now().timestamp(), loop.create_task,
                                 self.end_election(election_id))
 
@@ -63,18 +62,19 @@ class Election(commands.Cog, name='Wybory'):
         await ctx.send(f'Wylosowany numer KWW {komitet} to 4.')
 
     @staticmethod
-    async def register_vote(ctx: ComponentInteraction):
-        await ctx.ack(ephemeral=True)
-        votes = ctx.values
-        election_id = ctx.custom_id.removeprefix('election-vote-')
-        if not (await check_voting_rights(ctx.author, election_id)):
-            await ctx.send('Nie masz prawa głosu w tych wyborach', ephemeral=True)
+    async def register_vote(interaction: discord.Interaction, custom_id: str, votes: list[str]):
+        # noinspection PyTypeChecker
+        resp: discord.InteractionResponse = interaction.response
+        await resp.defer(ephemeral=True)
+        election_id = custom_id.removeprefix('election-vote-')
+        if not (await check_voting_rights(interaction.user, election_id)):
+            await interaction.edit_original_response(content='Nie masz prawa głosu w tych wyborach')
             return
 
-        await register_election_vote(ctx.author.id, election_id, votes)
+        await register_election_vote(interaction.user.id, election_id, votes)
         message = await get_confirmation_message(election_id, votes)
-        await get_election_backup_channel().send(ctx.author.mention + ': ' + ', '.join(votes))
-        await ctx.send(message)
+        await get_election_backup_channel().send(interaction.user.mention + ': ' + ', '.join(votes))
+        await interaction.edit_original_response(content=message)
 
     @commands.command(name='wybory')
     @admin_cmd()
@@ -168,7 +168,7 @@ class Election(commands.Cog, name='Wybory'):
         select = self.create_select(candidates, election_id, min_votes, max_votes)
 
         try:
-            msg = await channel.send(message, components=[[select]])
+            msg = await channel.send(message, view=Components([[select]]))
         except Exception:
             logging.exception('Error while sending election message')
             raise
@@ -177,7 +177,8 @@ class Election(commands.Cog, name='Wybory'):
         loop = self.bot.loop
         loop.call_later(end.timestamp() - datetime.datetime.now().timestamp(), loop.create_task,
                         self.end_election(election_id))
-        self.bot.add_component_callback(ComponentCallback(f'election-vote-{election_id}', self.register_vote))
+        self.bot.add_component_callback(ComponentCallback(f'election-vote-{election_id}', self.register_vote, 
+                                                          discord.ComponentType.select))
 
     async def end_election(self, election_id):
         await self.bot.wait_until_ready()
@@ -191,7 +192,7 @@ class Election(commands.Cog, name='Wybory'):
             emoji_id=None, emoji=None, text='Placeholder', description=None, id=1,
         )], election_id, 1, 1)
         select.disabled = True
-        await message.edit(components=[[select]])
+        await message.edit(view=Components([[select]]))
 
         self.bot.remove_component_callback(f'election-vote-{election_id}')
 

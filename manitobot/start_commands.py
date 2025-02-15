@@ -12,8 +12,9 @@ from settings import RULLER, NON_ADMIN_ROLES_COLOURS
 from .basic_models import ManiBot
 from .f_database import factions_roles
 from .interactions import ComponentCallback, Select, SelectOption, Button
-from .interactions.components import ButtonStyle
-from .interactions.interaction import ComponentInteraction
+from discord import ButtonStyle
+
+from .interactions.components import Components
 from .my_checks import manitou_cmd, game_check, ktulu_check, qualified_manitou_cmd, sets_channel_only
 from .errors import NoSuchSet, WrongRolesNumber, WrongSetNameError, SetExists, NotAuthor, TooLongText
 from .game import Game
@@ -35,18 +36,18 @@ class Starting(commands.Cog, name='Początkowe'):
         self.sets_names = sklady.setup_sets_db()
         self.set_create_ops = {}
         self.sets_under_creation = []
-        self.bot.add_component_callback(ComponentCallback('modify_set_town', self.modify_set))
-        self.bot.add_component_callback(ComponentCallback('modify_set_bandians', self.modify_set))
-        self.bot.add_component_callback(ComponentCallback('modify_set_inqufo', self.modify_set))
-        self.bot.add_component_callback(ComponentCallback('modify_set_other', self.modify_set))
+        self.bot.add_component_callback(ComponentCallback('modify_set_town', self.modify_set, discord.ComponentType.select))
+        self.bot.add_component_callback(ComponentCallback('modify_set_bandians', self.modify_set, discord.ComponentType.select))
+        self.bot.add_component_callback(ComponentCallback('modify_set_inqufo', self.modify_set, discord.ComponentType.select))
+        self.bot.add_component_callback(ComponentCallback('modify_set_other', self.modify_set, discord.ComponentType.select))
         self.bot.add_component_callback(ComponentCallback('set_create_confirm', self.confirm_set_creation))
         self.bot.add_component_callback(ComponentCallback('set_create_cancel', self.cancel_set_creation))
 
     async def add_cogs(self):
         try:
-            self.bot.add_cog(roles_commands.PoleceniaPostaci(self.bot))
-            self.bot.add_cog(daily_commands.DailyCommands(self.bot))
-            self.bot.add_cog(control_panel.ControlPanel(self.bot))
+            await self.bot.add_cog(roles_commands.PoleceniaPostaci(self.bot))
+
+            await self.bot.add_cog(control_panel.ControlPanel(self.bot))
         except discord.errors.ClientException:
             pass
         self.bot.get_command('g').help = playerhelp()
@@ -70,10 +71,6 @@ class Starting(commands.Cog, name='Początkowe'):
         await voice_channel.set_permissions(get_guild().default_role, overwrite=overwrite)
 
     async def add_cogs_lite(self):
-        try:
-            self.bot.add_cog(daily_commands.DailyCommands(self.bot))
-        except discord.errors.ClientException:
-            pass
         self.bot.get_command('g').help = playerhelp()
         self.bot.get_command('m').help = manitouhelp()
         p = discord.Permissions().all()
@@ -108,28 +105,27 @@ class Starting(commands.Cog, name='Początkowe'):
                 self.sets_names.insert(0, set_name)
 
     @staticmethod
-    def _set_creating_components(ops):
+    def _set_creating_components(ops) -> Components:
         town = factions_roles['Miasto']
         bandians = factions_roles['Bandyci'] + factions_roles['Indianie']
         inqufo = factions_roles['Ufoki'] + factions_roles['Inkwizycja']
         other = factions_roles['Murzyni'] + factions_roles['Bogowie'] + factions_roles['Inni']
-        return [
-            [Select('modify_set_town', [SelectOption(r, r, default=r in ops[2]) for r in town], 'Miasto', 0, len(town))],
-            [Select('modify_set_bandians', [SelectOption(r, r, default=r in ops[3]) for r in bandians], 'Bandyci/Indianie', 0, len(bandians))
+        return Components([
+            [Select('modify_set_town', [SelectOption(r.replace('_', ' '), r, default=r in ops[2]) for r in town], 'Miasto', 0, len(town))],
+            [Select('modify_set_bandians', [SelectOption(r.replace('_', ' '), r, default=r in ops[3]) for r in bandians], 'Bandyci/Indianie', 0, len(bandians))
              ],
-            [Select('modify_set_inqufo', [SelectOption(r, r, default=r in ops[4]) for r in inqufo], 'Inkwizycja/Ufoki', 0, len(inqufo))],
-            [Select('modify_set_other', [SelectOption(r, r, default=r in ops[5]) for r in other], 'Inni', 0, len(other))],
-            [Button(ButtonStyle.Success, label='Zatwierdź', emoji='✅', custom_id='set_create_confirm'),
-             Button(ButtonStyle.Destructive, label='Anuluj', emoji='❌', custom_id='set_create_cancel')]
-        ]
+            [Select('modify_set_inqufo', [SelectOption(r.replace('_', ' '), r, default=r in ops[4]) for r in inqufo], 'Inkwizycja/Ufoki', 0, len(inqufo))],
+            [Select('modify_set_other', [SelectOption(r.replace('_', ' '), r, default=r in ops[5]) for r in other], 'Inni', 0, len(other))],
+            [Button(ButtonStyle.success, label='Zatwierdź', emoji='✅', custom_id='set_create_confirm'),
+             Button(ButtonStyle.danger, label='Anuluj', emoji='❌', custom_id='set_create_cancel')]
+        ])
 
-    async def modify_set(self, ctx: ComponentInteraction):
-        user_id = ctx.author.id
-        author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
+    async def modify_set(self, interaction: discord.Interaction, c_id: str, values: List[str]):
+        user_id = interaction.user.id
+        author_id = int(re.findall('Autor: <@!?([0-9]+)>', interaction.message.content)[-1])
         if user_id != author_id:
             raise NotAuthor
         op_data = self.set_create_ops[user_id]
-        c_id = ctx.custom_id
         idx = 2
         for i, fac in enumerate(['town', 'bandians', 'inqufo', 'other']):
             if c_id.endswith(fac):
@@ -137,24 +133,28 @@ class Starting(commands.Cog, name='Początkowe'):
                 break
         else:
             raise KeyError('Wrong id')
-        op_data[idx] = ctx.values
-        new_content = ctx.message.content.partition('\n\n')[0]
+        op_data[idx] = values
+        new_content = interaction.message.content.partition('\n\n')[0]
         roles = []
         for i in range(2, 6):
             roles += op_data[i]
         new_content += '\n\n' + print_list(roles)
-        await ctx.edit_message(content=new_content, components=self._set_creating_components(op_data))
+        # noinspection PyTypeChecker
+        resp: discord.InteractionResponse = interaction.response
+        await resp.edit_message(content=new_content, view=self._set_creating_components(op_data))
 
-    async def confirm_set_creation(self, ctx: ComponentInteraction):
-        user_id = ctx.author.id
-        author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
+    async def confirm_set_creation(self, interaction: discord.Interaction, _: str):
+        user_id = interaction.user.id
+        author_id = int(re.findall('Autor: <@!?([0-9]+)>', interaction.message.content)[-1])
+        # noinspection PyTypeChecker
+        resp: discord.InteractionResponse = interaction.response
         if user_id != author_id:
             raise NotAuthor
         name, description, town, bandians, inqufo, other, handle, _ = self.set_create_ops.get(user_id)
         set_roles = town + bandians + inqufo + other
         set_len = str(len(set_roles))
         if set_len == '0':
-            await ctx.respond('Skład nie może być pusty', ephemeral=True)
+            await resp.send_message('Skład nie może być pusty', ephemeral=True)
             return
         self.set_create_ops.pop(user_id)
         handle.cancel()
@@ -171,10 +171,10 @@ class Starting(commands.Cog, name='Początkowe'):
         self.sets_under_creation.remove(old_name)
         new_content = f'{RULLER}\nNazwa: **{name}**\nOpis: `{description}`\nAutor: <@!{user_id}>\n' \
                       + print_list(set_roles) + '\n' + RULLER
-        await ctx.edit_message(content=new_content, components=[])
+        await resp.edit_message(content=new_content, view=None)
 
-    async def cancel_set_creation(self, ctx: ComponentInteraction):
-        user_id = ctx.author.id
+    async def cancel_set_creation(self, ctx: discord.Interaction, _: str):
+        user_id = ctx.user.id
         author_id = int(re.findall('Autor: <@!?([0-9]+)>', ctx.message.content)[-1])
         if user_id != author_id:
             raise NotAuthor
@@ -213,7 +213,7 @@ class Starting(commands.Cog, name='Początkowe'):
 
         ops = [name, description, [], [], [], []]
         msg = await ctx.send(f'**Dodawanie składu**\nNazwa: **{name}**\nOpis: `{description}`\nAutor: <@!{user_id}>',
-                             components=self._set_creating_components(ops))
+                             view=self._set_creating_components(ops))
         handle = loop.call_later(60 * 15, loop.create_task, self.clean_set_creating(user_id))
         self.set_create_ops[user_id] = ops + [handle, msg]
 
@@ -440,7 +440,7 @@ class Starting(commands.Cog, name='Początkowe'):
             role = player.role
             button = player.role_class.button()
             tasks.append(member.send(STARTING_INSTRUCTION.format(RULLER, post.get_role_details(role, role)),
-                                     components=button))
+                                     view=button))
         await asyncio.gather(*tasks)
         await send_role_list(game)
         if not game.message:

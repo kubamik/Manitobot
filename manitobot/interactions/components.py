@@ -1,74 +1,35 @@
+from __future__ import annotations
+
+import abc
 import inspect
-from enum import IntEnum
+from abc import abstractmethod
+from typing import Optional, overload, Literal, List
 
 import discord
-
-
-class ComponentMessage:
-    """Like discord.Message but with support for message components
-    """
-    components = None
-
-    def __init__(self, *, state, channel, data):
-        self.component_data = data.pop('components', list())
-        self.message = discord.Message(state=state, channel=channel, data=data)
-        self._handle_components()
-
-    def _handle_components(self):
-        self.components = list()
-        for action in self.component_data:
-            self.components.append(
-                [Button.from_dict(comp) if comp['type'] == ComponentTypes.Button else Select.from_dict(comp)
-                 for comp in action['components']])
-
-    @classmethod
-    def from_message(cls, message, data=None, components=None):
-        self = object.__new__(cls)
-        self.message = message
-        if data is not None:
-            self.component_data = data.pop('components', list())
-            self._handle_components()
-        elif components:
-            self.component_data = None
-            self.components = components
-        return self
-
-    def __getattr__(self, item):
-        return getattr(self.message, item)
-
-    async def edit(self, **fields):
-        await self.message.edit(**fields)
-        if 'components' in fields:
-            self.components = fields['components']
-
-    def _update(self, data):
-        self.component_data = data.pop('components', list())
-        self.message._update(data)
-        self._handle_components()
-
-
-class ComponentTypes(IntEnum):
-    ActionRow = 1
-    Button = 2
-    Select = 3
-
-
-class ButtonStyle(IntEnum):
-    Primary = 1
-    Secondary = 2
-    Success = 3
-    Destructive = 4
-    Link = 5
+from collections.abc import Callable, Awaitable
 
 
 class ComponentCallback:
-    def __init__(self, custom_id, callback):
+    @overload
+    def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str], Awaitable[None]], 
+                 component_type: Literal[discord.ComponentType.button] = discord.ComponentType.button):
+        ...
+    @overload
+    def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str, List[str]], Awaitable[None]], 
+                 component_type: Literal[discord.ComponentType.select]):
+        ...
+    
+    def __init__(self, custom_id: str, callback: Callable, component_type: discord.ComponentType = discord.ComponentType.button):
         if len(custom_id) > 100:
-            raise discord.InvalidArgument('custom_id cannot be longer than 100 characters')
+            raise ValueError('custom_id cannot be longer than 100 characters')
         if not inspect.iscoroutinefunction(callback):
             raise TypeError('component callback has to be a coroutine')
+        if component_type not in (discord.ComponentType.button, discord.ComponentType.select):
+            raise ValueError('component_type has to be one of ComponentType.button or ComponentType.select')
+
         self.custom_id = str(custom_id)
         self.callback = callback
+        self.component_type = component_type
 
 
 class SelectOption:
@@ -110,13 +71,34 @@ class SelectOption:
             data['emoji'] = discord.PartialEmoji.from_dict(data['emoji'])
         return cls(**data)
 
+    @classmethod
+    def from_discord_option(cls, option: discord.SelectOption):
+        return cls(label=option.label, value=option.value, description=option.description, emoji=option.emoji,
+                   default=option.default)
 
-class Button:
+
+class Component(abc.ABC):
+    @abstractmethod
+    def to_dict(self):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_dict(cls, data):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_discord_component(cls, component: discord.Component):
+        pass
+
+
+class Button(Component):
     def __init__(self, style, label=None, emoji=None, url=None, disabled=False, custom_id=None, **_):
-        if not isinstance(style, ButtonStyle):
+        if not isinstance(style, discord.ButtonStyle):
             raise TypeError('style has to be one of ButtonStyle')
         if label and len(label) > 80:
-            raise discord.InvalidArgument('label cannot be longer than 80 characters')
+            raise ValueError('label cannot be longer than 80 characters')
         if emoji and not isinstance(emoji, (discord.PartialEmoji, str, discord.Emoji)):
             raise TypeError('emoji has to be the type of PartialEmoji')
         elif emoji:
@@ -127,15 +109,15 @@ class Button:
         if not isinstance(disabled, bool):
             raise TypeError('disabled must be boolean')
 
-        if url and style is not ButtonStyle.Link:
-            raise discord.InvalidArgument('url cannot be passed when not using Link style')
-        elif not url and style is ButtonStyle.Link:
-            raise discord.InvalidArgument('url nas to be passed when using Link style')
+        if url and style is not discord.ButtonStyle.link:
+            raise ValueError('url cannot be passed when not using Link style')
+        elif not url and style is discord.ButtonStyle.link:
+            raise ValueError('url nas to be passed when using Link style')
 
-        if not custom_id and style is not ButtonStyle.Link:
-            raise discord.InvalidArgument('custom_id has to be passed when not using Link style')
+        if not custom_id and style is not discord.ButtonStyle.link:
+            raise ValueError('custom_id has to be passed when not using Link style')
         if url and custom_id:
-            raise discord.InvalidArgument('cannot provide both custom_id and url')
+            raise ValueError('cannot provide both custom_id and url')
 
         self.custom_id = str(custom_id)
         self.disabled = disabled
@@ -146,7 +128,7 @@ class Button:
 
     def to_dict(self):
         d = {
-            'type': ComponentTypes.Button,
+            'type': discord.ComponentType.button.value,
             'disabled': self.disabled,
             'style': int(self.style),
         }
@@ -164,17 +146,22 @@ class Button:
     def from_dict(cls, data):
         data = data.copy()
         data.pop('type')
-        data['style'] = ButtonStyle(data['style'])
+        data['style'] = discord.ButtonStyle(data['style'])
         data['emoji'] = data.get('emoji') and discord.PartialEmoji.from_dict(data.get('emoji'))
         return cls(**data)
+
+    @classmethod
+    def from_discord_component(cls, button: discord.Button):
+        return cls(style=button.style, label=button.label, emoji=button.emoji, url=button.url,
+                   disabled=button.disabled, custom_id=button.custom_id)
 
 
 class Select:
     def __init__(self, custom_id, options, placeholder=None, min_values=1, max_values=1, disabled=False, **_):
         if len(options) > 25:
-            raise discord.InvalidArgument('options cannot have more than 25 elements')
+            raise ValueError('options cannot have more than 25 elements')
         if len(options) < max_values or min_values > max_values or min_values < 0:
-            raise discord.InvalidArgument('wrong value of min_values/max_values')
+            raise ValueError('wrong value of min_values/max_values')
         if (placeholder and not isinstance(placeholder, str)) or not isinstance(min_values, int) \
                 or not isinstance(max_values, int) or not isinstance(disabled, bool):
             raise TypeError('Wrong types')
@@ -192,7 +179,7 @@ class Select:
 
     def to_dict(self):
         d = {
-            'type': ComponentTypes.Select,
+            'type': discord.ComponentType.select.value,
             'custom_id': self.custom_id,
             'options': [option.to_dict() for option in self.options],
             'min_values': self.min_values,
@@ -209,3 +196,52 @@ class Select:
         data.pop('type')
         data['options'] = [SelectOption.from_dict(option) for option in data['options']]
         return cls(**data)
+
+    @classmethod
+    def from_discord_component(cls, select: discord.SelectMenu):
+        return cls(custom_id=select.custom_id, options=[SelectOption.from_discord_option(option)
+                                                        for option in select.options],
+                   placeholder=select.placeholder, min_values=select.min_values, max_values=select.max_values,
+                   disabled=select.disabled)
+
+
+class Components(discord.ui.View):
+    """
+    Class to *mock* discord.ui.View to put components in messages
+    """
+
+    def __init__(self, components):
+        super().__init__()
+        self.components_list = components
+
+    def to_components(self):
+        if self.components_list:
+            custom_ids = set()
+            for action in self.components_list:
+                for c in action:
+                    if c.custom_id in custom_ids:
+                        raise ValueError('custom_ids have to be unique in one message')
+                    custom_ids.add(c.custom_id)
+            return [{
+                'type': discord.ComponentType.action_row.value,
+                'components': [comp.to_dict() for comp in action]
+                } for action in self.components_list
+            ]
+
+        return []
+
+    @classmethod
+    def from_message(cls, message: discord.Message, /, *, timeout: Optional[float] = None) -> Components:
+        components = []
+        for action in message.components:
+            if action.type == discord.ComponentType.action_row:
+                components.append([])
+                for comp in action.children:
+                    if comp.type == discord.ComponentType.button:
+                        components[-1].append(Button.from_discord_component(comp))
+                    elif comp.type == discord.ComponentType.select:
+                        components[-1].append(Select.from_discord_component(comp))
+        return cls(components)
+
+    def is_finished(self):
+        return True
