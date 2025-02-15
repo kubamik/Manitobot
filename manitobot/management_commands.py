@@ -3,6 +3,7 @@ import datetime as dt
 import random
 import re
 from collections import defaultdict
+from contextlib import suppress
 from typing import Optional, Union
 
 import discord
@@ -127,6 +128,8 @@ class Management(commands.Cog, name='Dla Adminów'):
                                                  allowed_mentions=discord.AllowedMentions.none()
                                                  )
         if is_trusted_member(message.author):
+            with suppress(discord.Forbidden):
+                await message.author.timeout(dt.timedelta(minutes=5), reason='Użycie kanału bot_trap')
             await message.author.send('Nie używaj tego kanału. Potraktuj to jako upomnienie.')
         else:
             await message.author.ban(reason='Użycie kanału bot_trap')
