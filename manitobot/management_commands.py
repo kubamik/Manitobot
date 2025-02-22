@@ -303,10 +303,10 @@ class Management(commands.Cog, name='Dla Adminów'):
         if not channel_id:
             await ctx.send(content)
         else:
-            try:
-                await ctx._state.http.send_message(channel_id, content)
-            except discord.HTTPException:
+            channel = get_guild().get_channel_or_thread(channel_id)
+            if channel is None:
                 raise commands.BadArgument('Wrong channel id')
+            await channel.send(content)
         await ctx.message.delete()
 
     @commands.command(name='dodaj_reakcje', aliases=['emojis'])

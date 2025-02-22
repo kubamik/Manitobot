@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-__version__ = '1.8.0'
+__version__ = '1.8.1'
 
 PROD = os.environ.get('TEST') != '1'
 LOCAL = os.environ.get('LOCAL') == '1'
@@ -91,7 +91,7 @@ if PROD:
     # Messages
     PING_MESSAGE_ID = 891966724767899729
     OTHER_PING_MESSAGE_ID = 1208193767568572497
-    VERIFICATION_MESSAGE_ID = None
+    VERIFICATION_MESSAGE_ID = 1342549202563235935
 
 else:
     GUILD_ID = 694111942729662474
