@@ -52,9 +52,20 @@ class Management(commands.Cog, name='Dla Adminów'):
             return
 
         if custom_id != CORRECT_VERIFICATION_ID:
-            await interaction.user.kick(reason='Nieprawidłowa odpowiedź na weryfikację')
-            await get_system_messages_channel().send(f'Użytkownik {interaction.user.mention} został wyrzucony'
-                                                     f' za nieprawidłową odpowiedź na weryfikację')
+            begin_date = dt.datetime.now(dt.UTC) - dt.timedelta(days=7)
+            kicks = [a async for a in get_guild().audit_logs(
+                limit=None, after=begin_date, user=get_guild().me, action=discord.AuditLogAction.kick)
+                     if a.target.id == interaction.user.id]
+            if not kicks:
+                # Not kicked in a week - kick as a warning
+                await interaction.user.kick(reason='Nieprawidłowa odpowiedź na weryfikację')
+                await get_system_messages_channel().send(f'Użytkownik {interaction.user.mention} został wyrzucony'
+                                                         f' za nieprawidłową odpowiedź na weryfikację')
+            else:
+                # Kicked in a week - ban
+                await interaction.user.ban(reason='Nieprawidłowa odpowiedź na weryfikację')
+                await get_system_messages_channel().send(f'Użytkownik {interaction.user.mention} został zbanowany'
+                                                         f' za kolejną nieprawidłową odpowiedź na weryfikację')
         else:
             await interaction.edit_original_response(content='Zostaniesz zweryfikowany(-a) w ciągu 15 sekund. '
                                                              '**Nie wciskaj żadnego przycisku!**')
@@ -183,7 +194,7 @@ class Management(commands.Cog, name='Dla Adminów'):
         """Edytuje wiadomość weryfikacyjną. Uwaga! Przed użyciem dokładnie zapoznaj się z instrukcją.
         
         Komenda edytuje wiadomość weryfikacyjną z emotkami. 
-        Jeżeli pożądana jest edycja treści wiadomości weryfikacyjnej należy wysłać wiadomość o docelowej treści i w odpowiedzi na nią użyć tej komendy.
+        Jeżeli pożądana jest edycja treści wiadomości weryfikacyjnej należy wysłać wiadomość o docelowej treści (na dowolny kanał) i w odpowiedzi na nią użyć tej komendy.
         Jeśli chcesz użyć gotowej wiadomości musisz wpisać nazwę właściwej emotki tak jak opisano poniżej.
         
         Po komendzie należy wpisać emoji, które ma być poprawne, następnie spację i nazwę tego emoji w narzędniku (jeśli nie chcesz edytować całej treści wiadomości). 
