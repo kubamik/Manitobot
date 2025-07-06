@@ -353,7 +353,7 @@ class Management(commands.Cog, name='Dla Adminów'):
 
     @staticmethod
     async def reactions_summary(m: discord.Message) -> list[str]:
-        reactions = [user for r in m.reactions async for user in r.users()]
+        reactions = [[user async for user in r.users()] for r in m.reactions]
         members = list(set(sum(reactions, start=list())))
         parsed = defaultdict(list)
         for r, users in zip(m.reactions, reactions):

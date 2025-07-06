@@ -95,8 +95,8 @@ def get_control_panel() -> discord.TextChannel:
     return get_guild().get_channel(CONTROL_PANEL_ID)
 
 
-def get_ankietawka_channel() -> discord.TextChannel:
-    return get_guild().get_channel(ANKIETAWKA_CHANNEL_ID)
+def get_announcements_channel() -> discord.TextChannel:
+    return get_guild().get_channel(ANNOUNCEMENTS_CHANNEL_ID)
 
 
 def get_manitou_notebook() -> discord.TextChannel:

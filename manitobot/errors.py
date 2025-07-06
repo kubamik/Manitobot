@@ -2,7 +2,7 @@ import abc
 
 from discord.ext import commands
 
-from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID, ANKIETAWKA_CHANNEL_ID
+from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID, ANNOUNCEMENTS_CHANNEL_ID
 
 
 class MyBaseException(abc.ABC, Exception):
@@ -222,7 +222,7 @@ class NotSetsChannel(MyCheckFailure):
 
 
 class NotPollChannel(MyCheckFailure):
-    msg = f'Tej komendy można używać tylko na kanale <#{ANKIETAWKA_CHANNEL_ID}>'
+    msg = f'Tej komendy można używać tylko na kanale <#{ANNOUNCEMENTS_CHANNEL_ID}>'
 
 
 class VotingInProgress(commands.CheckFailure, MyBaseException):

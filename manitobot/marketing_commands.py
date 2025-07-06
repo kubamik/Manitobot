@@ -9,7 +9,7 @@ from settings import REFERENCE_TIMEZONE, ADMIN_ROLE_ID
 from .errors import MissingAdministrativePermissions
 from .my_checks import poll_channel_only
 from .surveys import survey, declarations, WEEKD, ANKIETKA_PING
-from .utility import get_ankietawka_channel, get_ping_poll_role, get_admin_role, get_mod_role
+from .utility import get_announcements_channel, get_ping_poll_role, get_admin_role, get_mod_role
 
 WEEKD_MAP = {WEEKD[i]: i for i in range(7)}
 
@@ -31,7 +31,7 @@ class Marketing(commands.Cog):
     @commands.command(name='ankietka')
     @poll_channel_only()
     async def survey(self, ctx, start: Union[int, str], koniec: Union[int, str]):
-        """Wysyła na kanał #ankietawkowołacz ankietkę na podane dni tygodnia.
+        """Wysyła na kanał #ogłoszenia ankietkę na podane dni tygodnia.
         Argumenty start i koniec należy podać jako dwuliterowe skróty dni tygodnia lub ich numery 1 (pn) - 7 (nd).
         """
         if isinstance(start, str):
@@ -48,14 +48,14 @@ class Marketing(commands.Cog):
 
         text, emoji = survey(start, koniec, pytz.timezone(REFERENCE_TIMEZONE))
 
-        msg = await get_ankietawka_channel().send(text)
+        msg = await get_announcements_channel().send(text)
         for e in emoji:
             await msg.add_reaction(e)
 
     @commands.command(name='deklaracje')
     @poll_channel_only()
     async def declarations(self, ctx, dzien: Union[int, str], *godziny: int):
-        """Wysyła na kanał #ankietawkowołacz deklaracje na podany dzień tygodnia.
+        """Wysyła na kanał #ogłoszenia deklaracje na podany dzień tygodnia.
         Argument `dzien` należy podać jako dwuliterowy skrót dnia tygodnia lub jego numer 1 (pn) - 7 (nd).
         Argument `godziny` należy podać jako godziny rozdzielone spacjami.
         """
@@ -72,13 +72,13 @@ class Marketing(commands.Cog):
 
         text, emoji = declarations(dzien, pytz.timezone(REFERENCE_TIMEZONE), godziny)
 
-        msg = await get_ankietawka_channel().send(text)
+        msg = await get_announcements_channel().send(text)
         for e in emoji:
             await msg.add_reaction(e)
 
     @staticmethod
     async def _find_ping_in_messages_today(ping: discord.Role) -> bool:
-        async for message in get_ankietawka_channel().history(
+        async for message in get_announcements_channel().history(
                 after=dt.datetime.now(pytz.timezone(REFERENCE_TIMEZONE)).replace(
                     hour=0, minute=0, second=0, microsecond=0)):
             if ping in message.role_mentions:
