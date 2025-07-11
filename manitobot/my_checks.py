@@ -14,7 +14,8 @@ from .errors import AuthorNotPlaying, GameNotStarted, WrongGameType, \
 from .starting import if_game
 from .utility import is_manitou, get_manitou_role, get_player_role, on_voice, \
     get_town_channel, is_player, is_qualified_manitou, get_qualified_manitou_role, get_sets_channel, \
-    get_announcements_channel, get_admin_role, get_trusted_role, get_ex_admin_role, get_mod_role, is_trusted_member
+    get_announcements_channel, get_admin_role, get_trusted_role, get_ex_admin_role, get_mod_role, is_trusted_member, \
+    is_dead
 
 
 # ===================== Game checks =====================
@@ -85,7 +86,7 @@ def playing_cmd(reverse=False) -> Callable:
     def predicate(ctx: commands.Context) -> bool:
         if not reverse and ctx.author not in ctx.bot.game.player_map:
             raise AuthorNotPlaying
-        elif reverse and if_game() and ctx.author in ctx.bot.game.player_map:
+        elif reverse and if_game() and ctx.author in ctx.bot.game.player_map and not is_dead(ctx):
             raise AuthorPlaying
         return True
 
