@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-__version__ = '1.8.5'
+__version__ = '1.8.6'
 
 PROD = os.environ.get('TEST') != '1'
 LOCAL = os.environ.get('LOCAL') == '1'
@@ -42,7 +42,7 @@ if PROD:
         MOD_ROLE_ID: 0x6c71c4,
         EX_ADMIN_ROLE_ID: 0x268bd2
     }
-    ADMIN_ROLE_COLOUR = 0x4a412a
+    ADMIN_ROLE_COLOUR = 0xc91512
 
     HOISTED_NON_ADMIN_ROLES = {
         QUALIFIED_MANITOU_ROLE_ID,
@@ -52,7 +52,7 @@ if PROD:
 
     # Channels
     TOWN_CHANNEL_ID = 1294275336976072855
-    VOICE_CHANNEL_ID = 1294299950552973413
+    VOICE_CHANNEL_ID = 1294271220035879054
     NOTATNIK_MANITOU_CHANNEL_ID = 1294288047394787419
     ANNOUNCEMENTS_CHANNEL_ID = 1294280283662581780
     FAC2CHANN_ID: typing.Dict[str, int] = {
