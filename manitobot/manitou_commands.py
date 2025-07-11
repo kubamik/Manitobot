@@ -97,7 +97,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
                 tasks.append(member.edit(mute=True))
         await asyncio.gather(*tasks)
 
-    @commands.command(aliases=['MU'], enabled=False)
+    @commands.command(aliases=['MU'])
     @manitou_cmd()
     async def mass_unmute(self, _):
         """ⓂUnmutuje graczy niebędących Manitou
@@ -268,11 +268,6 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             await self.bot.game.end()
             await self.remove_cogs()
             self.bot.game = NotAGame()
-            tasks = []
-            for member in get_voice_channel().members:
-                if member.voice and member.voice.mute:
-                    tasks.append(member.edit(mute=False))
-            await asyncio.gather(*tasks)
             await get_town_channel().send('Gra została zakończona')
 
     @commands.command(name='end')
@@ -332,11 +327,11 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
         tasks = []
         async with ctx.typing():
-            for member in dead_role.members + player_role.members:
+            for member in set(dead_role.members + player_role.members + get_voice_channel().members):
                 roles = [r for r in member.roles if r not in to_delete]
                 if member in get_voice_channel().members:
                     roles.append(player_role)
-                tasks.append(member.edit(roles=roles))
+                tasks.append(member.edit(roles=roles, mute=False))
             await self.remove_cogs()
             await asyncio.gather(*tasks)
 
