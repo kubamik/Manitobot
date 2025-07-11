@@ -11,7 +11,7 @@ from .my_checks import game_check, playing_cmd, on_voice_check, player_cmd, voti
 from .starting import if_game
 from .utility import get_player_role, get_dead_role, get_spectator_role, \
     get_town_channel, send_to_manitou, \
-    get_voice_channel, get_manitou_role, playerhelp
+    get_voice_channel, get_manitou_role, playerhelp, is_dead
 
 
 class PlayerCommands(commands.Cog, name="Dla Graczy"):
@@ -40,10 +40,12 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
         """/&obs/Zmienia rolę usera na obserwator.
         """
         member = ctx.author
-        await member.remove_roles(get_player_role(), get_dead_role())
+        if not if_game():
+            await member.remove_roles(get_player_role(), get_dead_role())
+
         await member.add_roles(get_spectator_role())
         nickname = member.display_name
-        if not nickname.startswith('!'):
+        if not nickname.startswith('!') and not is_dead(ctx):
             with suppress(discord.errors.Forbidden):
                 await member.edit(nick='!' + nickname)
 

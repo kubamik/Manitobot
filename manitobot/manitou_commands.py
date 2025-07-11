@@ -270,7 +270,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             self.bot.game = NotAGame()
             tasks = []
             for member in get_voice_channel().members:
-                if member.voice.mute:
+                if member.voice and member.voice.mute:
                     tasks.append(member.edit(mute=False))
             await asyncio.gather(*tasks)
             await get_town_channel().send('Gra została zakończona')
