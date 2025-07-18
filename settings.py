@@ -1,7 +1,7 @@
 import os.path
 import typing
 
-__version__ = '1.8.7'
+__version__ = '1.8.8'
 
 PROD = os.environ.get('TEST') != '1'
 LOCAL = os.environ.get('LOCAL') == '1'
