@@ -84,7 +84,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         results = self.bot.game.day.state.results_embed()
         await send_to_manitou(embed=results)
 
-    @commands.command(aliases=['MM'], enabled=False)
+    @commands.command(aliases=['MM'])
     @manitou_cmd()
     async def mass_mute(self, _):
         """ⓂMutuje graczy niebędących Manitou
@@ -329,9 +329,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         async with ctx.typing():
             for member in set(dead_role.members + player_role.members + get_voice_channel().members):
                 roles = [r for r in member.roles if r not in to_delete]
-                if member in get_voice_channel().members:
+                if member in dead_role.members + player_role.members and member in get_voice_channel().members:
                     roles.append(player_role)
-                tasks.append(member.edit(roles=roles, mute=False))
+                if member in get_voice_channel().members:
+                    tasks.append(member.edit(roles=roles, mute=False))
+                else:
+                    tasks.append(member.edit(roles=roles))
             await self.remove_cogs()
             await asyncio.gather(*tasks)
 

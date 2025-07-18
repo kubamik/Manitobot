@@ -109,10 +109,12 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
         send = get_control_panel().send
         day_message = await self.day_message()
-        self.day_message = await send(day_message.content, view=Components.from_message(day_message))
+        msg = await send(day_message.content, view=Components.from_message(day_message))
+        self.day_message = self.create_message_getter(msg)
         
         statue_msg = await self.statue_msg()
-        self.statue_msg = await send(statue_msg.content)
+        msg = await send(statue_msg.content)
+        self.statue_msg = self.create_message_getter(msg)
 
     @staticmethod
     def _day_night_button(day: bool) -> Components:
@@ -341,10 +343,11 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             comp = components.components_list
             if comp and comp[0] and comp[0][0].style is ButtonStyle.danger:
                 tasks.append(msg.edit(view=self._player_buttons(components, sleep=False)))
-        tasks.append(self.bot.game.day.state.set_msg_edit_callback(self.edit_day_message))
-        tasks.append(self.bot.game.day.state.async_init())
-        tasks.append(self.add_state_buttons())
         await asyncio.gather(*tasks)
+        await self.bot.game.day.state.set_msg_edit_callback(self.edit_day_message)
+        await self.bot.game.day.state.async_init()
+        await self.add_state_buttons()
+        
 
     async def evening(self):
         tasks = list()
