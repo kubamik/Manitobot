@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import itertools
 import logging
 import os
 
@@ -178,6 +179,16 @@ async def startup():
         token = os.environ.get('TOKEN')
     else:
         token = os.environ.get('TEST_TOKEN')
+        
+    muters_tokens = []
+    for i in itertools.count(1):
+        token = os.environ.get(f'MUTER{i}_TOKEN')
+        if token is None:
+            break
+        else:
+            muters_tokens.append(token)
+            
+    bot.initialize_muting(muters_tokens)
 
     await bot.add_cog(dev_commands.DevCommands(bot))
     await bot.add_cog(funny_commands.Funny(bot))

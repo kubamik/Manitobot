@@ -57,8 +57,10 @@ class Game:
         self.night = None
         self.day_num += 1
         tasks = []
+        if bot.muting:
+            tasks.append(bot.muting.unmute_members(get_player_role().members))
         for player in self.player_map.values():
-            tasks.append(player.new_day())
+            tasks.append(player.new_day(unmute=bot.muting is None))
         try:
             self.town_win()
         except GameEnd:
@@ -93,7 +95,9 @@ class Game:
         self.nights.append(self.night)
         await self.panel.evening()
         await get_town_channel().set_permissions(get_player_role(), send_messages=False)
-        await asyncio.gather(*(player.new_night() for player in self.player_map.values()))
+        if bot.muting:
+            await bot.muting.mute_members(get_player_role().members)
+        await asyncio.gather(*(player.new_night(mute=bot.muting is None) for player in self.player_map.values()))
         self.evening_bandits_win()
 
     def make_factions(self, roles, _) -> None:

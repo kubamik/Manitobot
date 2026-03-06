@@ -26,6 +26,10 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
                 if not member.display_name.startswith('!') or not after.mute:
                     with suppress(discord.errors.Forbidden):
                         await member.edit(nick='!' + member.display_name.removeprefix('!'), mute=True)
+            if (member in get_dead_role().members or member in get_player_role().members and self.bot.game.night_now) \
+                    and not after.mute:
+                with suppress(discord.errors.Forbidden):
+                    await member.edit(mute=True)
 
     @commands.command(name='postać')
     async def role_help(self, ctx, rola: str):

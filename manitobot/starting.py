@@ -75,12 +75,17 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
 
     tasks = []
     await send_role_list(game)
+    
+    if ctx.bot.muting:
+        tasks.append(ctx.bot.muting.mute_members(list(
+            set(get_voice_channel().members) - set(get_player_role().members)
+            - set(get_manitou_role().members))))
 
     for member in get_voice_channel().members:
         if member not in get_player_role().members and member not in get_manitou_role().members:
             if not member.display_name.startswith('!'):
                 tasks.append(member.edit(nick='!' + member.display_name, mute=True))
-            else:
+            elif not ctx.bot.muting:
                 tasks.append(member.edit(mute=True))
 
     tasks.append(ctx.bot.change_presence(activity=discord.Game('Ktulu')))

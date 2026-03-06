@@ -404,7 +404,7 @@ class Starting(commands.Cog, name='Początkowe'):
 
         present = voice_members - player_members - observer_members - manitou_members
         if present:
-            msg += "\n**Obecni:**"
+            msg += "\n**Obecni:**\n"
         for m in present:
             msg += "*{}* jest na kanale głosowym a nie ma roli *Gram*, *Obserwator*, *Manitou*\n".format(m.display_name)
 

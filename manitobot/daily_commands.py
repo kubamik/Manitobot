@@ -108,7 +108,7 @@ class DailyCommands(commands.Cog, name='Polecenia dzienne', description=''):
 
     # ======================== Duel commands =========================
 
-    @commands.hybrid_command(name='wyzywam')
+    @commands.hybrid_command(name='wyzywam', aliases=['bęcki'])
     @app_commands.describe(osoba="Wyzywana osoba")
     @player_cmd()
     @town_only()

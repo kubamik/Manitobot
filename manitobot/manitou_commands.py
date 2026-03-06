@@ -89,25 +89,30 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     async def mass_mute(self, _):
         """ⓂMutuje graczy niebędących Manitou
         """
-        tasks = []
-        players = get_player_role().members
-        for member in get_voice_channel().members:
-            if member in players and member not in get_manitou_role().members \
-                    and not member.voice.self_mute and not member.voice.mute:
-                tasks.append(member.edit(mute=True))
-        await asyncio.gather(*tasks)
+        members = [m for m in get_player_role().members if m not in  get_manitou_role().members]
+        if self.bot.muting:
+            await self.bot.muting.mute_members(members)
+        else:
+            tasks = []
+            for member in get_voice_channel().members:
+                if member in members and member.voice and not member.voice.self_mute and not member.voice.mute:
+                    tasks.append(member.edit(mute=True))
+            await asyncio.gather(*tasks)
 
     @commands.command(aliases=['MU'])
     @manitou_cmd()
     async def mass_unmute(self, _):
         """ⓂUnmutuje graczy niebędących Manitou
         """
-        tasks = []
         players = get_player_role().members
-        for member in get_voice_channel().members:
-            if member in players and member.voice.mute:
-                tasks.append(member.edit(mute=False))
-        await asyncio.gather(*tasks)
+        if self.bot.muting:
+            await self.bot.muting.unmute_members(players)
+        else:
+            tasks = []
+            for member in get_voice_channel().members:
+                if member in players and member.voice.mute:
+                    tasks.append(member.edit(mute=False))
+            await asyncio.gather(*tasks)
 
     @commands.command(name='set_manitou_channel', aliases=['m_channel'])
     @manitou_cmd()
@@ -149,10 +154,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             utility.remove_roles(dead_role.members + player_role.members + spec_role.members
                                  + manit_role.members, dead_role, player_role, spec_role, manit_role)
         ]
+        if self.bot.muting:
+            tasks.append(self.bot.muting.unmute_members(get_voice_channel().members))
         for member in get_guild().members:
             if member.id != self.bot.user.id:
                 tasks.append(clear_nickname(member))
-            if member.voice and member.voice.mute:
+            if self.bot.muting is None and member.voice and member.voice.mute:
                 tasks.append(member.edit(mute=False))
         async with ctx.typing():
             await self.remove_cogs()
@@ -302,7 +309,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         msg = manitouhelp()
         await ctx.send(f'```fix\n{msg}```')
 
-    @commands.command(name='random')
+    @commands.command(name='random', aliases=['dice', 'd'])
     @manitou_cmd()
     async def random(self, ctx, n: int):
         """ⓂLosuje liczbę naturalną z przedziału [1, n]"""
@@ -327,12 +334,17 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
         tasks = []
         async with ctx.typing():
+            if self.bot.muting:
+                tasks.append(self.bot.muting.unmute_members(get_voice_channel().members))
             for member in set(dead_role.members + player_role.members + get_voice_channel().members):
                 roles = [r for r in member.roles if r not in to_delete]
                 if member in dead_role.members + player_role.members and member in get_voice_channel().members:
                     roles.append(player_role)
                 if member in get_voice_channel().members:
-                    tasks.append(member.edit(roles=roles, mute=False))
+                    if self.bot.muting:
+                        tasks.append(member.edit(roles=roles))
+                    else:
+                        tasks.append(member.edit(roles=roles, mute=False))
                 else:
                     tasks.append(member.edit(roles=roles))
             await self.remove_cogs()

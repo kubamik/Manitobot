@@ -1,10 +1,12 @@
 import typing
+from typing import override
 
 import discord.ext.commands
 from discord.ext import commands
 
 from .errors import GameNotStarted
 from .interactions import ComponentCallback
+from .muting import Muting
 
 if typing.TYPE_CHECKING:
     from .game import Game
@@ -17,10 +19,26 @@ class NotAGame:
 
 
 class ManiBot(discord.ext.commands.Bot):
+    muting: Muting | None = None
+    
     def __init__(self, *args, **kwargs):
         super(ManiBot, self).__init__(*args, **kwargs)
         self.game: typing.Union[Game, Mafia, NotAGame] = NotAGame()
         self.component_callbacks = dict()
+        
+    def initialize_muting(self, muting_tokens: list[str]):
+        """Initialize muting clients with given tokens"""
+        if not self.muting and muting_tokens:
+            self.muting = Muting(muting_tokens)
+        else:
+            raise RuntimeError('Muting already initialized')
+        
+    @override
+    async def start(self, token: str, *, reconnect: bool = True):
+        if self.muting:
+            await self.muting.login_bots()
+        await super().start(token, reconnect=reconnect)
+        
 
     def add_component_callback(self, callback):
         if not isinstance(callback, ComponentCallback):
