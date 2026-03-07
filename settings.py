@@ -1,11 +1,19 @@
+import importlib.metadata
 import os.path
 import typing
+from importlib.metadata import PackageNotFoundError
 
-__version__ = '1.8.8'
+
+try:
+    __version__ = importlib.metadata.version('Manitobot')
+except PackageNotFoundError:
+    __version__ = 'development'
+
 
 PROD = os.environ.get('TEST') != '1'
 LOCAL = os.environ.get('LOCAL') == '1'
 WEB_HOSTED = os.environ.get('WEB') == '1'
+
 
 if PROD:
     GUILD_ID = 710039683798794270

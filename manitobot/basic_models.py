@@ -30,7 +30,7 @@ class ManiBot(discord.ext.commands.Bot):
         """Initialize muting clients with given tokens"""
         if not self.muting and muting_tokens:
             self.muting = Muting(muting_tokens)
-        else:
+        elif not muting_tokens:
             raise RuntimeError('Muting already initialized')
         
     @override

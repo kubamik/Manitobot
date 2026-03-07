@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.13-slim
 RUN pip install poetry~=1.8.0
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
