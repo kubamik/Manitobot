@@ -3,7 +3,7 @@ import itertools
 import re
 from collections import Counter
 from contextlib import suppress
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 
 import discord
 from discord.ext import commands
@@ -15,13 +15,14 @@ from .interactions import ComponentCallback, Select, SelectOption, Button
 from discord import ButtonStyle
 
 from .interactions.components import Components
-from .my_checks import manitou_cmd, game_check, ktulu_check, qualified_manitou_cmd, sets_channel_only
+from .my_checks import manitou_cmd, game_check, ktulu_check, qualified_manitou_cmd, sets_channel_only, \
+    admin_or_manitou_cmd
 from .errors import NoSuchSet, WrongRolesNumber, WrongSetNameError, SetExists, NotAuthor, TooLongText
 from .game import Game
 from .postacie import print_list
 from .starting import start_game, STARTING_INSTRUCTION, send_role_list
 from .utility import clear_nickname, playerhelp, manitouhelp, get_admin_role, get_spectator_role, get_dead_role, \
-    get_player_role, get_town_channel, get_voice_channel, get_manitou_role, get_guild
+    get_player_role, get_town_channel, get_voice_channel, get_manitou_role, get_guild, cleared_nickname
 from . import control_panel, roles_commands, sklady, daily_commands, postacie as post, election_service
 
 
@@ -371,6 +372,7 @@ class Starting(commands.Cog, name='Początkowe'):
             raise NoSuchSet
         await self.start_game(ctx, *(sklady.get_set(set_name)[-1] + list(dodatkowe)))
 
+
     @commands.command()
     @manitou_cmd()
     @game_check(reverse=True)
@@ -384,6 +386,30 @@ class Starting(commands.Cog, name='Początkowe'):
         async with ctx.typing():
             await self.add_cogs()
             await start_game(ctx, *roles, retard=True)
+
+
+    @commands.command(aliases=['braki'])
+    @admin_or_manitou_cmd()
+    async def missing(self, ctx, emoji: Union[discord.Emoji, str], message: discord.Message):
+        """Sprawdza brakujące osoby na kanale głosowym w stosunku do osób, które zareagowały wskazaną reakcją na podaną przez ID/link wiadomość (deklaracje)
+        """
+        async with ctx.typing():
+            msg = ''
+
+            reaction = discord.utils.get(message.reactions, emoji=emoji)
+            if reaction is not None:
+                voice_members = set(get_voice_channel().members)
+                reaction_members = set([user async for user in reaction.users()])
+                missing_members = reaction_members - voice_members
+                if missing_members:
+                    msg = f'**Brakujące osoby na {emoji}:**\n- '
+                    msg += '\n- '.join([f'{m.display_name}' for m in missing_members])
+
+        if not msg:
+            msg = 'Wszyscy zadeklarowani są obecni'
+
+        await ctx.send(msg)
+
 
     @commands.command()
     @manitou_cmd()
@@ -412,12 +438,13 @@ class Starting(commands.Cog, name='Początkowe'):
             msg += '\n'
         for m in observer_members:
             if not m.display_name.startswith('!') and m not in player_members:
-                msg += "*{}* ma rolę *Obserwator* a nie jest oznaczony poprzez `!`\n".format(m.display_name)
+                msg += "*{}* ma rolę *Obserwator* a nie jest oznaczony(-a) poprzez `!`\n".format(m.display_name)
 
         if msg:
             await ctx.send(msg)
         else:
             await ctx.send("Wszyscy grający są na kanale głosowym")
+
 
     @commands.command()
     @manitou_cmd()
@@ -466,6 +493,8 @@ class Starting(commands.Cog, name='Początkowe'):
         """Służy do wyrejestrowania się z gry.
         """
         await ctx.author.remove_roles(get_player_role(), get_dead_role())
+        await clear_nickname(ctx.author)
+
 
     @commands.command(aliases=['manit'])
     @game_check(reverse=True)
@@ -474,6 +503,9 @@ class Starting(commands.Cog, name='Początkowe'):
         """ⓂPrzyznaje rolę manitou
         """
         await ctx.author.add_roles(get_manitou_role())
+        cleared_nick = cleared_nickname(ctx.author.display_name)
+        if not cleared_nick.startswith('*'):
+            await ctx.author.edit(nick='*' + cleared_nick)
 
     @commands.command(aliases=['nmanit', 'notmanitou'])
     @game_check(reverse=True)
@@ -482,3 +514,4 @@ class Starting(commands.Cog, name='Początkowe'):
         """ⓂUsuwa rolę manitou
         """
         await ctx.author.remove_roles(get_manitou_role())
+        await clear_nickname(ctx.author)

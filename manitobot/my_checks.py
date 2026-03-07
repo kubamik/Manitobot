@@ -119,6 +119,14 @@ def admin_cmd() -> Callable:
 
     return commands.check(predicate)
 
+def admin_or_manitou_cmd() -> Callable:
+    async def predicate(ctx: commands.Context) -> bool:
+        if ctx.author not in get_admin_role().members and not is_manitou(ctx) and not await ctx.bot.is_owner(ctx.author):
+            raise MissingManitouRole
+        return True
+
+    return commands.check(predicate)
+
 
 def trusted_cmd() -> Callable:
     async def predicate(ctx: commands.Context) -> bool:

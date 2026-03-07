@@ -182,11 +182,11 @@ async def startup():
         
     muters_tokens = []
     for i in itertools.count(1):
-        token = os.environ.get(f'MUTER{i}_TOKEN')
-        if token is None:
+        muter_token = os.environ.get(f'MUTER{i}_TOKEN')
+        if muter_token is None:
             break
         else:
-            muters_tokens.append(token)
+            muters_tokens.append(muter_token)
             
     bot.initialize_muting(muters_tokens)
 
