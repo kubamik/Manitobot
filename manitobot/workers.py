@@ -12,7 +12,6 @@ class Workers:
                           mute: Optional[bool] = None,
                           roles_to_add: Optional[list[discord.Role]] = None,
                           roles_to_remove: Optional[list[discord.Role]] = None,
-
                           ):
         payload: dict[str, Any] = {}
         roles_to_add = roles_to_add or []
@@ -21,8 +20,11 @@ class Workers:
         if nick is not None and member.display_name != nick:
             payload['nick'] = nick
         if roles_to_add or roles_to_remove:
-            payload['roles'] = ([role.id for role in member.roles if role not in roles_to_remove]
-                                + [role.id for role in roles_to_add if role not in member.roles])
+            to_add = set(roles_to_add)
+            to_remove = set(roles_to_remove)
+            current = set(member.roles)
+            if not to_add.issubset(current) or not to_remove.isdisjoint(current):
+                payload['roles'] = [role.id for role in (current - to_remove) | to_add]
         if mute is not None and member.voice and member.voice.mute != mute:
             payload['mute'] = mute
 
@@ -57,10 +59,10 @@ class Workers:
 
     async def _handle_forbidden(self, member: discord.Member, payload: dict[str, Any]):
         # Assuming that the most likely reason for Forbidden is that the bot is below the target member
-        # in the role hierarchy, so we omit the nickname change and muting
-        if 'nick' in payload or 'mute' in payload:
+        # in the role hierarchy, so we omit the nickname change
+        if 'nick' in payload:
+            await member.send('Zmień swój nick na `{}`'.format(payload['nick']))
             payload.pop('nick', None)
-            payload.pop('mute', None)
             if payload:
                 worker = next(self.workers_queue)
                 await worker.http.edit_member(member.guild.id, member.id, **payload)

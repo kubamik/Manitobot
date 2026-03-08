@@ -496,7 +496,7 @@ class Starting(commands.Cog, name='Początkowe'):
         """
         await ctx.bot.workers.edit_member(
             ctx.author, nick=cleared_nickname(ctx.author.display_name),
-            roles_to_add=[get_spectator_role()], roles_to_remove=[get_player_role(), get_dead_role()]
+            roles_to_remove=[get_player_role(), get_dead_role()]
         )
 
 

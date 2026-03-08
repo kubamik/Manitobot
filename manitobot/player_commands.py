@@ -46,7 +46,7 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
         member = ctx.author
         nickname = nickname_without_prefix(member.display_name)
         await ctx.bot.workers.edit_member(
-            member, nick=nickname, roles_to_add=[get_spectator_role()],
+            member, nick='!' + nickname, roles_to_add=[get_spectator_role()],
             roles_to_remove=[get_dead_role(), get_player_role(), get_manitou_role()]
         )
 

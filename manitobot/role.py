@@ -114,10 +114,12 @@ class Role(Activity):
         member = self.player.member
 
         # reset player
-        await member.remove_roles(get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(),
-                                  get_duel_winner_role())
-        await member.add_roles(get_dead_role())
-        await member.edit(mute=True)
+        await bot.workers.edit_member(
+            member, mute=True, roles_to_add=[get_dead_role()],
+            roles_to_remove=[get_player_role(), get_searched_role(), get_hanged_role(), get_duel_loser_role(),
+                                  get_duel_winner_role()]
+        )
+
         nickname = member.display_name
         await get_town_channel().send('Ginie **{}**'.format(nickname))
 

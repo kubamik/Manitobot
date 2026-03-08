@@ -45,8 +45,10 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         tasks = []
         for faction in FAC2CHANN_ID:  # TODO: Optimize this
             ch = get_faction_channel(faction)
-            tasks.append(ch.edit(sync_permissions=True))
-        tasks.append(get_town_channel().edit(sync_permissions=True))
+            if not ch.permissions_synced:
+                tasks.append(ch.edit(sync_permissions=True))
+        if not get_town_channel().permissions_synced:
+            tasks.append(get_town_channel().edit(sync_permissions=True))
 
         tasks.append(get_admin_role().edit(permissions=p, colour=ADMIN_ROLE_COLOUR, hoist=HOIST_ADMIN))
         guild = get_guild()
@@ -329,11 +331,12 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         hanged_role = get_hanged_role()
         newcomer_role = get_newcomer_role()
         to_remove = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
+        players = set().union(player_role.members, dead_role.members)
         tasks = []
-        for member in set().union(dead_role.members, player_role.members, get_voice_channel().members):
+        for member in set().union(players, get_voice_channel().members):
             tasks.append(self.bot.workers.edit_member(
                 member, nick=nicknames_to_change.get(member), mute=False, roles_to_remove=to_remove,
-                roles_to_add=[player_role] if member.voice is not None else []
+                roles_to_add=[player_role] if member.voice and member in players is not None else []
             ))
         await self.remove_cogs()
         await asyncio.gather(*tasks)
