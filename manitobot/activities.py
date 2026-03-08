@@ -247,7 +247,7 @@ class Activity:
         if self.revealed:
             raise InvalidRequest("Nie możesz więcej użyć tej zdolności")
 
-    async def reveal(self, dead=False, verbose=True):
+    async def reveal(self, dead=False, verbose=True, change_nick=True):
         self.revealed = True
         member = self.player.member
         nickname: str = member.display_name
@@ -256,17 +256,18 @@ class Activity:
         if verbose:
             await get_town_channel().send("**{}** to **{}**".format(nickname.replace('+', ''),
                                                                     self.name.replace('_', ' ')))
-        try:
-            await member.edit(nick=nickname + "({})".format(self.name.replace('_', ' ')))
-        except discord.errors.Forbidden:
-            pass
-        except discord.HTTPException:
-            role = list(self.name.split('_'))
-            role[0] = role[0][:3] + '.'
-            if len(nickname + '({})'.format(" ".join(role))) < 32:
-                await member.edit(nick=nickname + '({})'.format(" ".join(role)))
-            else:
-                await member.send(f"Wepchnij jakoś swoją rolę ({' '.join(role)}) do nicka")
+        if change_nick:
+            try:
+                await member.edit(nick=nickname + "({})".format(self.name.replace('_', ' ')))
+            except discord.errors.Forbidden:
+                pass
+            except discord.HTTPException:
+                role = list(self.name.split('_'))
+                role[0] = role[0][:3] + '.'
+                if len(nickname + '({})'.format(" ".join(role))) < 32:
+                    await member.edit(nick=nickname + '({})'.format(" ".join(role)))
+                else:
+                    await member.send(f"Wepchnij jakoś swoją rolę ({' '.join(role)}) do nicka")
 
     def if_duel(self):
         if self.member is not None:

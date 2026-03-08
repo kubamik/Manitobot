@@ -268,7 +268,7 @@ class Starting(commands.Cog, name='Początkowe'):
         self.sets_names.remove(name)
 
     @commands.command(aliases=['składy', 'sets'])
-    async def setlist(self, ctx, count: int = None):
+    async def setlist(self, ctx, count: Optional[int] = None):
         """/&składy/Wypisuje listę predefiniowanych składów, jeśli podana zostanie liczba graczy to wypisuje składy
         dla danej liczby graczy wraz z autorami i opisami
         """
@@ -479,39 +479,47 @@ class Starting(commands.Cog, name='Początkowe'):
 
     @commands.command(name='gram')
     @game_check(reverse=True)
-    async def register(self, ctx):
+    async def register_as_player(self, ctx):
         """Służy do zarejestrowania się do gry.
         """
         member = ctx.author
-        await clear_nickname(member)
-        await member.remove_roles(get_spectator_role(), get_dead_role())
-        await member.add_roles(get_player_role())
+        await ctx.bot.workers.edit_member(
+            member, nick=cleared_nickname(member.display_name),
+            roles_to_add=[get_player_role()], roles_to_remove=[get_spectator_role(), get_dead_role()]
+        )
+        await member.create_dm()  # force DM channel creation, so the bot can send role later without delay
 
     @commands.command(name='nie_gram', aliases=['niegram'])
     @game_check(reverse=True)
-    async def deregister(self, ctx):
+    async def unregister_as_player(self, ctx):
         """Służy do wyrejestrowania się z gry.
         """
-        await ctx.author.remove_roles(get_player_role(), get_dead_role())
-        await clear_nickname(ctx.author)
+        await ctx.bot.workers.edit_member(
+            ctx.author, nick=cleared_nickname(ctx.author.display_name),
+            roles_to_add=[get_spectator_role()], roles_to_remove=[get_player_role(), get_dead_role()]
+        )
 
 
-    @commands.command(aliases=['manit'])
+    @commands.command(name='manitou', aliases=['manit'])
     @game_check(reverse=True)
     @qualified_manitou_cmd()
-    async def manitou(self, ctx):
+    async def register_as_manitou(self, ctx):
         """ⓂPrzyznaje rolę manitou
         """
-        await ctx.author.add_roles(get_manitou_role())
-        cleared_nick = cleared_nickname(ctx.author.display_name)
-        if not cleared_nick.startswith('*'):
-            await ctx.author.edit(nick='*' + cleared_nick)
+        nick = cleared_nickname(ctx.author.display_name)
+        if not nick.startswith('*'):
+            nick = '*' + nick
+        await ctx.bot.workers.edit_member(
+            ctx.author, nick=nick, roles_to_add=[get_manitou_role()],
+            roles_to_remove=[get_spectator_role(), get_dead_role(), get_spectator_role()]
+        )
 
-    @commands.command(aliases=['nmanit', 'notmanitou'])
+    @commands.command(name='not_manitou', aliases=['nmanit', 'notmanitou'])
     @game_check(reverse=True)
     @manitou_cmd()
-    async def not_manitou(self, ctx):
+    async def unregister_as_manitou(self, ctx):
         """ⓂUsuwa rolę manitou
         """
-        await ctx.author.remove_roles(get_manitou_role())
-        await clear_nickname(ctx.author)
+        await ctx.bot.workers.edit_member(
+            ctx.author, nick=cleared_nickname(ctx.author.display_name), roles_to_remove=[get_manitou_role()]
+        )

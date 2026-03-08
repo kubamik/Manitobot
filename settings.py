@@ -1,12 +1,11 @@
 import importlib.metadata
 import os.path
 import typing
-from importlib.metadata import PackageNotFoundError
 
 
 try:
     __version__ = importlib.metadata.version('Manitobot')
-except PackageNotFoundError:
+except importlib.metadata.PackageNotFoundError:
     __version__ = 'development'
 
 

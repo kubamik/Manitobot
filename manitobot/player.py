@@ -1,7 +1,13 @@
+from contextlib import suppress
+from typing import TYPE_CHECKING, Optional
+
 import discord
 
+from manitobot.bot_basics import bot
 from manitobot.utility import get_newcomer_role
 
+if TYPE_CHECKING:
+    from .role import Role
 
 class Player:
 
@@ -12,36 +18,24 @@ class Player:
         self.sleeped = False
         self.protected = False
         self.killing_protected = False
-        self.role_class = None
+        self.role_class: Optional[Role] = None
         self.follower = None
 
     @property
     def is_newcomer(self):
         return self.member in get_newcomer_role().members
 
-    async def new_day(self, unmute: bool = False):
+    def new_day(self):
         self.sleeped = False
         self.protected = False
         self.killing_protected = False
 
-        if unmute and self.role_class.alive and self.member.voice and self.member.voice.mute:
-            try:
-                await self.member.edit(mute=False)
-            except discord.errors.Forbidden:
-                pass
-
-    async def new_night(self, mute: bool = False):
+    async def new_night(self):
         nickname = self.member.display_name
         if '#' in nickname:
-            try:
+            with suppress(discord.Forbidden):
                 await self.member.edit(nick=nickname.replace('#', ''))
-            except discord.errors.Forbidden:
-                pass
-        if mute and self.member.voice and not self.member.voice.mute:
-            try:
-                await self.member.edit(mute=True)
-            except discord.errors.Forbidden:
-                pass
+
 
     def sleep(self):
         self.sleeped = True

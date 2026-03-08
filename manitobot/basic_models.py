@@ -1,12 +1,11 @@
 import typing
-from typing import override
 
 import discord.ext.commands
 from discord.ext import commands
 
 from .errors import GameNotStarted
 from .interactions import ComponentCallback
-from .muting import Muting
+from .workers import Workers
 
 if typing.TYPE_CHECKING:
     from .game import Game
@@ -19,26 +18,21 @@ class NotAGame:
 
 
 class ManiBot(discord.ext.commands.Bot):
-    muting: Muting | None = None
     
     def __init__(self, *args, **kwargs):
         super(ManiBot, self).__init__(*args, **kwargs)
         self.game: typing.Union[Game, Mafia, NotAGame] = NotAGame()
         self.component_callbacks = dict()
-        
-    def initialize_muting(self, muting_tokens: list[str]):
-        """Initialize muting clients with given tokens"""
-        if not self.muting and muting_tokens:
-            self.muting = Muting(muting_tokens)
-        elif not muting_tokens:
-            raise RuntimeError('Muting already initialized')
-        
-    @override
-    async def start(self, token: str, *, reconnect: bool = True):
-        if self.muting:
-            await self.muting.login_bots()
-        await super().start(token, reconnect=reconnect)
-        
+        self.workers: Workers = Workers(self)
+
+    async def start_with_workers(self, token: str, workers_tokens: list[str]):
+        """Starts bot with worker clients"""
+        if workers_tokens:
+            self.workers = Workers(self, workers_tokens)
+            await self.workers.login_bots()
+
+        await self.start(token)
+
 
     def add_component_callback(self, callback):
         if not isinstance(callback, ComponentCallback):
@@ -53,11 +47,11 @@ class ManiBot(discord.ext.commands.Bot):
         if custom_id in self.component_callbacks:
             self.component_callbacks.pop(custom_id)
 
-    def component_callback(self, custom_id, component_type=discord.ComponentType.button):
+    def component_callback(self, custom_id: str, component_type=discord.ComponentType.button):
         """Decorator converting function passed into ComponentCallback and registering it into bot"""
 
         def decorator(func):
-            callback = ComponentCallback(custom_id, func, component_type)
+            callback = ComponentCallback(custom_id, func, component_type) # type: ignore
             self.add_component_callback(callback)
             return callback
 

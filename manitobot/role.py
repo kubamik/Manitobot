@@ -152,6 +152,21 @@ class Role(Activity):
     def qualified_name(self) -> str:
         return self.name.replace('_', ' ')
 
+    @property
+    def short_name(self) -> str:
+        return self.name.split('_')[-1]
+
+    @property
+    def revealed_nickname(self) -> str:
+        player_nick = nickname_without_suffix(self.player.member.display_name)
+        nick = "{}({})".format(player_nick, self.qualified_name)
+        if len(nick) <= 32:
+            return nick
+        nick = "{}({})".format(player_nick, self.short_name)
+        if len(nick) <= 32:
+            return player_nick
+        return '{}({})'.format(player_nick[:32-len(self.short_name)-2], self.short_name)
+
     def work(self):
         if bot.game.day_num < self.ability_start:
             return False

@@ -1,5 +1,6 @@
 import asyncio
 from random import randint
+from timeit import timeit
 from typing import Union
 from time import time
 
@@ -8,7 +9,7 @@ import typing
 from discord.ext import commands
 
 from settings import FAC2CHANN_ID, CONFIG, ADMIN_ROLE_COLOUR, HOIST_ADMIN, NON_ADMIN_ROLES_COLOURS, \
-    HOISTED_NON_ADMIN_ROLES
+    HOISTED_NON_ADMIN_ROLES, PROD
 from . import postacie, daily_commands
 from . import utility
 from .basic_models import NotAGame, ManiBot
@@ -23,7 +24,7 @@ from .utility import playerhelp, manitouhelp, get_faction_channel, \
     get_manitou_role, get_voice_channel, get_member, get_dead_role, \
     get_spectator_role, get_guild, clear_nickname, send_to_manitou, \
     get_duel_winner_role, get_duel_loser_role, \
-    get_searched_role, get_hanged_role, get_control_panel, get_newcomer_role
+    get_searched_role, get_hanged_role, get_control_panel, get_newcomer_role, cleared_nickname
 
 
 class DlaManitou(commands.Cog, name="Dla Manitou"):
@@ -32,6 +33,9 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         self.bot = bot
 
     async def remove_cogs(self):
+        if self.bot.get_cog('Panel Sterowania') is None:
+            return
+
         rm_cog = self.bot.remove_cog
         await rm_cog('Polecenia postaci i frakcji')
         await rm_cog('Panel Sterowania')
@@ -90,14 +94,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂMutuje graczy niebędących Manitou
         """
         members = [m for m in get_player_role().members if m not in  get_manitou_role().members]
-        if self.bot.muting:
-            await self.bot.muting.mute_members(members)
-        else:
-            tasks = []
-            for member in get_voice_channel().members:
-                if member in members and member.voice and not member.voice.self_mute and not member.voice.mute:
-                    tasks.append(member.edit(mute=True))
-            await asyncio.gather(*tasks)
+        await self.bot.workers.mute_members(members)
 
     @commands.command(aliases=['MU'])
     @manitou_cmd()
@@ -105,14 +102,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """ⓂUnmutuje graczy niebędących Manitou
         """
         players = get_player_role().members
-        if self.bot.muting:
-            await self.bot.muting.unmute_members(players)
-        else:
-            tasks = []
-            for member in get_voice_channel().members:
-                if member in players and member.voice.mute:
-                    tasks.append(member.edit(mute=False))
-            await asyncio.gather(*tasks)
+        await self.bot.workers.unmute_members(players)
 
     @commands.command(name='set_manitou_channel', aliases=['m_channel'])
     @manitou_cmd()
@@ -144,23 +134,19 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     @manitou_cmd()
     @game_check(reverse=True)
     async def nuke(self, ctx):
-        """ⓂOdbiera rolę Gram i Trup wszystkim userom
+        """ⓂOdbiera role Żywy, Martwy, Obserwator, Manitou wszystkim osobom oraz czyści nicki
         """
         player_role = get_player_role()
         dead_role = get_dead_role()
         spec_role = get_spectator_role()
         manit_role = get_manitou_role()
-        tasks = [
-            utility.remove_roles(dead_role.members + player_role.members + spec_role.members
-                                 + manit_role.members, dead_role, player_role, spec_role, manit_role)
-        ]
-        if self.bot.muting:
-            tasks.append(self.bot.muting.unmute_members(get_voice_channel().members))
+        to_remove = [player_role, dead_role, spec_role, manit_role]
+        tasks = []
         for member in get_guild().members:
-            if member.id != self.bot.user.id:
-                tasks.append(clear_nickname(member))
-            if self.bot.muting is None and member.voice and member.voice.mute:
-                tasks.append(member.edit(mute=False))
+            if member.bot:
+                continue
+            new_nickname = cleared_nickname(member.display_name)
+            tasks.append(self.bot.workers.edit_member(member, nick=new_nickname, mute=False, roles_to_remove=to_remove))
         async with ctx.typing():
             await self.remove_cogs()
             await asyncio.gather(*tasks)
@@ -265,16 +251,14 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         """
         await ctx.send('Gra została rozpoczęta' if if_game() else 'Gra nie została rozpoczęta')
 
-    @commands.command(hidden=True)
+    @commands.command(name='end_game', hidden=True, enabled=not PROD)
     @manitou_cmd()
     @game_check()
-    async def end_game(self, ctx):
+    async def end_game_only(self, ctx):
         """ⓂKończy grę
         """
         async with ctx.typing():
-            await self.bot.game.end()
-            await self.remove_cogs()
-            self.bot.game = NotAGame()
+            await self.end_game()
             await get_town_channel().send('Gra została zakończona')
 
     @commands.command(name='end')
@@ -297,8 +281,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         except asyncio.TimeoutError:
             await ctx.message.delete(delay=0)
         else:
-            await self.end_game(ctx)
-            await self.reset(ctx)
+            await self.end_and_reset(ctx)
         finally:
             await m.delete(delay=0)
 
@@ -323,7 +306,21 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         timestamp = int(time()) + seconds
         await ctx.send(f'Manitou ogłasza {message} <t:{timestamp}:R>')
 
-    async def reset(self, ctx: commands.Context):
+    async def end_game(self):
+        await self.bot.game.end()
+        await self.remove_cogs()
+        self.bot.game = NotAGame()
+
+    async def end_and_reset(self, ctx: commands.Context):
+        async with ctx.typing():
+            nicknames_to_reveal = self.bot.game.revealed_nicknames()
+            await self.end_game()
+            await self.reset(nicknames_to_reveal)
+            await get_town_channel().send('Gra została zakończona')
+
+    async def reset(self, nicknames_to_change: typing.Optional[dict[discord.Member, str]] = None):
+        if nicknames_to_change is None:
+            nicknames_to_change = {}
         player_role = get_player_role()
         dead_role = get_dead_role()
         winner_role = get_duel_winner_role()
@@ -331,31 +328,23 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         searched_role = get_searched_role()
         hanged_role = get_hanged_role()
         newcomer_role = get_newcomer_role()
-        to_delete = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
+        to_remove = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
         tasks = []
-        async with ctx.typing():
-            if self.bot.muting:
-                tasks.append(self.bot.muting.unmute_members(get_voice_channel().members))
-            for member in set(dead_role.members + player_role.members + get_voice_channel().members):
-                roles = [r for r in member.roles if r not in to_delete]
-                if member in dead_role.members + player_role.members and member in get_voice_channel().members:
-                    roles.append(player_role)
-                if member in get_voice_channel().members:
-                    if self.bot.muting:
-                        tasks.append(member.edit(roles=roles))
-                    else:
-                        tasks.append(member.edit(roles=roles, mute=False))
-                else:
-                    tasks.append(member.edit(roles=roles))
-            await self.remove_cogs()
-            await asyncio.gather(*tasks)
+        for member in set().union(dead_role.members, player_role.members, get_voice_channel().members):
+            tasks.append(self.bot.workers.edit_member(
+                member, nick=nicknames_to_change.get(member), mute=False, roles_to_remove=to_remove,
+                roles_to_add=[player_role] if member.voice is not None else []
+            ))
+        await self.remove_cogs()
+        await asyncio.gather(*tasks)
 
     @commands.command(name='revive', aliases=['reset'])
     @manitou_cmd()
     @game_check(reverse=True)
     async def reset_players(self, ctx):
         """Ⓜ/&reset/Przywraca wszystkim trupom rolę gram"""
-        await self.reset(ctx)
+        async with ctx.typing():
+            await self.reset()
 
     @commands.command()
     @manitou_cmd()

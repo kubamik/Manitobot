@@ -57,10 +57,9 @@ class Game:
         self.night = None
         self.day_num += 1
         tasks = []
-        if bot.muting:
-            tasks.append(bot.muting.unmute_members(get_player_role().members))
+        tasks.append(bot.workers.unmute_members(get_player_role().members))
         for player in self.player_map.values():
-            tasks.append(player.new_day(unmute=bot.muting is None))
+            player.new_day()
         try:
             self.town_win()
         except GameEnd:
@@ -95,9 +94,8 @@ class Game:
         self.nights.append(self.night)
         await self.panel.evening()
         await get_town_channel().set_permissions(get_player_role(), send_messages=False)
-        if bot.muting:
-            await bot.muting.mute_members(get_player_role().members)
-        await asyncio.gather(*(player.new_night(mute=bot.muting is None) for player in self.player_map.values()))
+        await bot.workers.mute_members(get_player_role().members)
+        await asyncio.gather(*(player.new_night() for player in self.player_map.values()))
         self.evening_bandits_win()
 
     def make_factions(self, roles, _) -> None:
@@ -120,10 +118,13 @@ class Game:
         tasks = []
         for player in self.player_map.values():
             if not player.role_class.revealed:
-                tasks.append(player.role_class.reveal())
+                await player.role_class.reveal(change_nick=False)
         if self.message:
             tasks.append(self.message.unpin())
         await asyncio.gather(*tasks)
+
+    def revealed_nicknames(self) -> dict[discord.Member, str]:
+        return { member: player.role_class.revealed_nickname for member, player in self.player_map.items() }
 
     async def winning(self, reason: str, faction: str):  # TODO: Change winning mechanism
         c = ':scroll:{}:scroll:\n**WYGRALIŚCIE!**'.format(reason)

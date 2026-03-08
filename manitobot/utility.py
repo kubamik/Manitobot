@@ -4,6 +4,7 @@ from typing import Optional, List
 import discord
 from discord.ext import commands
 from discord.utils import MISSING
+from contextlib import suppress
 
 from .bot_basics import bot, command_prefix
 from .errors import InvalidRequest
@@ -238,14 +239,31 @@ def cleared_nickname(nick: str) -> str:
     return nick
 
 
+def nickname_without_prefix(nick: str) -> str:
+    """Clears prefix from nickname"""
+    return nick[1:] if nick.startswith(('+', '!', '*')) else nick
+
+def nickname_without_suffix(nick: str) -> str:
+    """Clears suffix from nickname"""
+    if '#' in nick:
+        nick = nick.replace('#', '')
+    if all(nick.rpartition('(')):
+        nick = nick.rpartition('(')[0]
+    return nick
+
+
 async def clear_nickname(member: discord.Member) -> None:
     old_nickname = member.display_name
     nick = cleared_nickname(old_nickname)
     if nick != old_nickname:
-        try:
+        with suppress(discord.Forbidden):
             await member.edit(nick=nick)
-        except discord.errors.Forbidden:
-            pass
+
+
+async def clear_nickname_and_set_muted(member: discord.Member, muted: bool = False) -> None:
+    old_nickname = member.display_name
+    nick = cleared_nickname(old_nickname)
+    await bot.workers.edit_member(member, nick=nick, mute=muted)
 
 
 def playing(gracz=-1, *, author=-1):

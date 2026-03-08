@@ -179,16 +179,17 @@ async def startup():
         token = os.environ.get('TOKEN')
     else:
         token = os.environ.get('TEST_TOKEN')
-        
-    muters_tokens = []
+
+    if token is None:
+        raise ValueError('Token unavailable')
+
+    workers_tokens = []
     for i in itertools.count(1):
         muter_token = os.environ.get(f'MUTER{i}_TOKEN')
         if muter_token is None:
             break
         else:
-            muters_tokens.append(muter_token)
-            
-    bot.initialize_muting(muters_tokens)
+            workers_tokens.append(muter_token)
 
     await bot.add_cog(dev_commands.DevCommands(bot))
     await bot.add_cog(funny_commands.Funny(bot))
@@ -203,7 +204,7 @@ async def startup():
     bot.get_command('g').help = playerhelp()
     bot.get_command('m').help = manitouhelp()
 
-    await bot.start(token)
+    await bot.start_with_workers(token, workers_tokens)
 
 if __name__ == '__main__':
     asyncio.run(startup())

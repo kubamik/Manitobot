@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import os
 import secrets
-from random import shuffle
 from typing import List, Tuple, Optional
 
 import discord
@@ -15,8 +14,8 @@ from .basic_models import NotAGame
 from .bot_basics import bot
 from .game import Game
 from .mafia import Mafia
-from .utility import get_player_role, clear_nickname, send_to_manitou, \
-    get_newcomer_role, get_town_channel, cleared_nickname, get_voice_channel, get_manitou_role
+from .utility import get_player_role, send_to_manitou, \
+    get_town_channel, cleared_nickname, get_voice_channel, get_manitou_role
 
 STARTING_INSTRUCTION = '''{0}
 Witaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. \
@@ -52,7 +51,8 @@ async def send_role_list(game):
 
 async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
                      faction_data: Optional[Tuple[List[str], List[str]]] = None, retard: bool = False):
-    players = list(get_player_role().members)
+    players = get_player_role().members
+    manitous = get_manitou_role().members
     faction_data = faction_data or ([], [])
 
     ctx.bot.game = game = Game() if not mafia else Mafia()
@@ -61,9 +61,8 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
     shuffle_roles(shuffled_list)
     tasks = []
 
-    game.roles = roles
+    game.roles = list(roles)
     for member, role in zip(players, shuffled_list):
-        tasks.append(clear_nickname(member))
         role_cls = game.add_pair(member, role)
         if not retard:
             button = role_cls.reveal_button()
@@ -71,25 +70,23 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
                                      view=button))
 
     game.make_factions(roles, faction_data)
+
+    tasks.append(send_role_list(game))
+
+    for member in set().union(get_voice_channel().members, players):
+        mute = member not in manitous
+        nick = cleared_nickname(member.display_name) if member not in manitous else member.display_name
+        if member not in players and member not in manitous:
+            nick = '!' + nick
+        tasks.append(ctx.bot.workers.edit_member(member, nick, mute))
+
     await asyncio.gather(*tasks, return_exceptions=True)
 
-    tasks = []
-    await send_role_list(game)
-    
-    if ctx.bot.muting:
-        tasks.append(ctx.bot.muting.mute_members(list(
-            set(get_voice_channel().members) - set(get_player_role().members)
-            - set(get_manitou_role().members))))
+    tasks = [
+        ctx.bot.change_presence(activity=discord.Game('Ktulu')),
+        utility.send_game_channels(RULLER)
+    ]
 
-    for member in get_voice_channel().members:
-        if member not in get_player_role().members and member not in get_manitou_role().members:
-            if not member.display_name.startswith('!'):
-                tasks.append(member.edit(nick='!' + member.display_name, mute=True))
-            elif not ctx.bot.muting:
-                tasks.append(member.edit(mute=True))
-
-    tasks.append(ctx.bot.change_presence(activity=discord.Game('Ktulu')))
-    tasks.append(utility.send_game_channels(RULLER))
     if not retard:
         team = game.print_list(list(roles), faction_data)
         game.message = msg = await get_town_channel().send('Rozdałem karty. Liczba graczy: {}\n'

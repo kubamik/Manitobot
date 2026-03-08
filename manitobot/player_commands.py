@@ -11,7 +11,7 @@ from .my_checks import game_check, playing_cmd, on_voice_check, player_cmd, voti
 from .starting import if_game
 from .utility import get_player_role, get_dead_role, get_spectator_role, \
     get_town_channel, send_to_manitou, \
-    get_voice_channel, get_manitou_role, playerhelp, is_dead
+    get_voice_channel, get_manitou_role, playerhelp, is_dead, nickname_without_prefix, cleared_nickname
 
 
 class PlayerCommands(commands.Cog, name="Dla Graczy"):
@@ -41,30 +41,24 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
     @playing_cmd(reverse=True)
     @trusted_cmd()
     async def spectate(self, ctx):
-        """/&obs/Zmienia rolę usera na obserwator.
+        """/&obs/Zmienia rolę usera na obserwator - tylko dla Weteranów Ktulu
         """
         member = ctx.author
-        if not if_game():
-            await member.remove_roles(get_player_role(), get_dead_role())
+        nickname = nickname_without_prefix(member.display_name)
+        await ctx.bot.workers.edit_member(
+            member, nick=nickname, roles_to_add=[get_spectator_role()],
+            roles_to_remove=[get_dead_role(), get_player_role(), get_manitou_role()]
+        )
 
-        await member.add_roles(get_spectator_role())
-        nickname = member.display_name
-        if not nickname.startswith('!') and not is_dead(ctx):
-            with suppress(discord.errors.Forbidden):
-                await member.edit(nick='!' + nickname)
 
-    @commands.command(name='nie_obserwuję', aliases=['nie_obs', 'nieobs'])
+    @commands.command(name='nie_obserwuję', aliases=['nie_obserwuje', 'nieobserwuje', 'nie_obs', 'nieobs'])
     async def not_spectate(self, ctx):
         """/&nie_obs/Usuwa userowi rolę obserwator.
         """
         member = ctx.author
-        await member.remove_roles(get_spectator_role())
-        nickname = member.display_name
-        if nickname.startswith('!'):
-            try:
-                await member.edit(nick=nickname[1:])
-            except discord.errors.Forbidden:
-                pass
+        nickname = cleared_nickname(member.display_name)
+        await ctx.bot.workers.edit_member(member, nick=nickname, roles_to_remove=[get_spectator_role()])
+
 
     @commands.command(name='pax')
     @game_check()
@@ -100,13 +94,11 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
             await send_to_manitou('Ktoś rozpoczął bunt.')
 
         if len(self.bot.game.rioters) >= len(count) * 0.67:
-            tasks.append(get_town_channel().send('**Doszło do buntu\nGra została zakończona**'))
+            await get_town_channel().send('**Doszło do buntu\nKończenie gry...**')
             for manitou in get_manitou_role().members:
                 tasks.append(manitou.remove_roles(get_manitou_role()))
-            tasks.append(self.bot.game.end())
             manit = self.bot.cogs['Dla Manitou']
-            tasks.append(manit.reset(ctx))
-            self.bot.game = NotAGame()
+            tasks.append(manit.end_and_reset(ctx))
         if tasks:
             await asyncio.gather(*tasks)
         await ctx.message.add_reaction('👊')
