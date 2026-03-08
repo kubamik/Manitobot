@@ -2,6 +2,7 @@ import asyncio
 from typing import Optional, List
 
 import discord
+from discord import ButtonStyle
 from discord.ext import commands
 from discord.utils import MISSING
 from contextlib import suppress
@@ -9,6 +10,7 @@ from contextlib import suppress
 from .bot_basics import bot, command_prefix
 from .errors import InvalidRequest
 from settings import *
+from .interactions import Button
 from .interactions.components import Components
 
 
@@ -264,6 +266,17 @@ async def clear_nickname_and_set_muted(member: discord.Member, muted: bool = Fal
     old_nickname = member.display_name
     nick = cleared_nickname(old_nickname)
     await bot.workers.edit_member(member, nick=nick, mute=muted)
+
+
+def create_yes_no_components(yes_id: str) -> Components:
+    return Components([[
+        Button(style=ButtonStyle.green, label='Tak', custom_id=yes_id),
+        Button(style=ButtonStyle.red, label='Nie', custom_id='discard')
+    ]])
+
+@bot.button_callback('discard')
+async def discard_callback(interaction: discord.Interaction, _: str):
+    await interaction.message.delete(delay=0)
 
 
 def playing(gracz=-1, *, author=-1):

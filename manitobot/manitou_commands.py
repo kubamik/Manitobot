@@ -6,6 +6,8 @@ from time import time
 
 import discord
 import typing
+
+from discord import ComponentType
 from discord.ext import commands
 
 from settings import FAC2CHANN_ID, CONFIG, ADMIN_ROLE_COLOUR, HOIST_ADMIN, NON_ADMIN_ROLES_COLOURS, \
@@ -15,6 +17,7 @@ from . import utility
 from .basic_models import NotAGame, ManiBot
 from .daynight import Day, PartialDay
 from .errors import MembersNotPlaying
+from .interactions import ComponentCallback
 from .my_checks import manitou_cmd, game_check, mafia_check, ktulu_check, day_only, voting_check, state_check
 from .converters import MyMemberConverter
 from .postacie import get_role_details
@@ -24,13 +27,21 @@ from .utility import playerhelp, manitouhelp, get_faction_channel, \
     get_manitou_role, get_voice_channel, get_member, get_dead_role, \
     get_spectator_role, get_guild, clear_nickname, send_to_manitou, \
     get_duel_winner_role, get_duel_loser_role, \
-    get_searched_role, get_hanged_role, get_control_panel, get_newcomer_role, cleared_nickname
+    get_searched_role, get_hanged_role, get_control_panel, get_newcomer_role, cleared_nickname, create_yes_no_components
 
 
 class DlaManitou(commands.Cog, name="Dla Manitou"):
 
     def __init__(self, bot: ManiBot):
         self.bot = bot
+
+    async def cog_load(self) -> None:
+        self.bot.add_component_callback(
+            ComponentCallback('end-game', self.do_end_and_reset, ComponentType.button)
+        )
+
+    async def cog_unload(self) -> None:
+        self.bot.remove_component_callback('end-game')
 
     async def remove_cogs(self):
         if self.bot.get_cog('Panel Sterowania') is None:
@@ -263,29 +274,17 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
             await self.end_game()
             await get_town_channel().send('Gra została zakończona')
 
+    async def do_end_and_reset(self, interaction: discord.Interaction, _: str):
+        await interaction.response.defer(ephemeral=True)
+        await interaction.message.delete(delay=0)
+        await self.end_and_reset(interaction.channel)
+
     @commands.command(name='end')
     @manitou_cmd()
     @game_check()
     async def end_reset(self, ctx):
-        """ⓂResetuje graczy i kończy grę"""
-        m = await ctx.send('Czy na pewno chcesz zakończyć grę?')
-        await m.add_reaction('✅')
-        await m.add_reaction('⛔')
-
-        def check_func(r: discord.Reaction, u: Union[discord.User, discord.Member]):
-            return all([get_member(u.id) in get_manitou_role().members, r.emoji in ('✅', '⛔'),
-                        r.message.id == m.id])
-
-        try:  # TODO: Put this in some public function
-            reaction, _ = await self.bot.wait_for('reaction_add', check=check_func, timeout=60)
-            if reaction.emoji == '⛔':
-                raise asyncio.TimeoutError
-        except asyncio.TimeoutError:
-            await ctx.message.delete(delay=0)
-        else:
-            await self.end_and_reset(ctx)
-        finally:
-            await m.delete(delay=0)
+        """ⓂResetuje graczy i kończy grę. Wymaga dodatkowego potwierdzenia."""
+        await ctx.send('Czy na pewno chcesz zakończyć grę?', view=create_yes_no_components('end-game'), delete_after=60)
 
     @commands.command(name='Manitou_help', aliases=['mhelp'])
     @manitou_cmd()
@@ -313,7 +312,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         await self.remove_cogs()
         self.bot.game = NotAGame()
 
-    async def end_and_reset(self, ctx: commands.Context):
+    async def end_and_reset(self, ctx: discord.abc.Messageable):
         async with ctx.typing():
             nicknames_to_reveal = self.bot.game.revealed_nicknames()
             await self.end_game()
