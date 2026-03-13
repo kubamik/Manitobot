@@ -25,7 +25,7 @@ intents.presences = False
 
 bot = ManiBot(
     command_prefix=commands.when_mentioned_or(command_prefix),
-    help_command=Help(no_category='Pozostałe', verify_checks=True),
+    help_command=Help(no_category='Pozostałe', verify_checks=True, show_parameter_descriptions=False),
     case_insensitive=True,
     intents=intents
 )

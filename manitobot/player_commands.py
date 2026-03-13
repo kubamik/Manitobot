@@ -44,10 +44,12 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
         """/&obs/Zmienia rolę usera na obserwator - tylko dla Weteranów Ktulu
         """
         member = ctx.author
-        nickname = nickname_without_prefix(member.display_name)
+        nickname = member.display_name
+        if not nickname.startswith('!') and (not if_game() or not is_dead(ctx)):
+            nickname = '!' + nickname_without_prefix(nickname)
         await ctx.bot.workers.edit_member(
-            member, nick='!' + nickname, roles_to_add=[get_spectator_role()],
-            roles_to_remove=[get_dead_role(), get_player_role(), get_manitou_role()]
+            member, nick=nickname, roles_to_add=[get_spectator_role()],
+            roles_to_remove=[get_dead_role(), get_player_role(), get_manitou_role()] if not if_game() else []
         )
 
 
@@ -56,7 +58,9 @@ class PlayerCommands(commands.Cog, name="Dla Graczy"):
         """/&nie_obs/Usuwa userowi rolę obserwator.
         """
         member = ctx.author
-        nickname = cleared_nickname(member.display_name)
+        nickname = member.display_name
+        if nickname.startswith('!'):
+            nickname = cleared_nickname(member.display_name)
         await ctx.bot.workers.edit_member(member, nick=nickname, roles_to_remove=[get_spectator_role()])
 
 

@@ -15,7 +15,7 @@ from .bot_basics import bot
 from .game import Game
 from .mafia import Mafia
 from .utility import get_player_role, send_to_manitou, \
-    get_town_channel, cleared_nickname, get_voice_channel, get_manitou_role
+    get_town_channel, cleared_nickname, get_voice_channel, get_manitou_role, get_spectator_role
 
 STARTING_INSTRUCTION = '''{0}
 Witaj, jestem cyfrowym przyjacielem Manitou. Możesz wykorzystać mnie aby ułatwić sobie rozgrywkę. \
@@ -78,7 +78,8 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
         nick = cleared_nickname(member.display_name) if member not in manitous else member.display_name
         if member not in players and member not in manitous:
             nick = '!' + nick
-        tasks.append(ctx.bot.workers.edit_member(member, nick, mute))
+        roles_to_remove = [get_spectator_role()] if member in players else []
+        tasks.append(ctx.bot.workers.edit_member(member, nick, mute, roles_to_remove=roles_to_remove))
 
     await asyncio.gather(*tasks, return_exceptions=True)
 

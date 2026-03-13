@@ -322,6 +322,7 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
     async def reset(self, nicknames_to_change: typing.Optional[dict[discord.Member, str]] = None):
         if nicknames_to_change is None:
             nicknames_to_change = {}
+
         player_role = get_player_role()
         dead_role = get_dead_role()
         winner_role = get_duel_winner_role()
@@ -329,13 +330,19 @@ class DlaManitou(commands.Cog, name="Dla Manitou"):
         searched_role = get_searched_role()
         hanged_role = get_hanged_role()
         newcomer_role = get_newcomer_role()
+        spectator_role = get_spectator_role()
+        to_add = []
+        to_add_if_player = [player_role]
         to_remove = [dead_role, winner_role, loser_role, searched_role, hanged_role, player_role, newcomer_role]
+        to_remove_if_player = to_remove + [spectator_role]
         players = set().union(player_role.members, dead_role.members)
+
         tasks = []
         for member in set().union(players, get_voice_channel().members):
             tasks.append(self.bot.workers.edit_member(
-                member, nick=nicknames_to_change.get(member), mute=False, roles_to_remove=to_remove,
-                roles_to_add=[player_role] if member.voice and member in players is not None else []
+                member, nick=nicknames_to_change.get(member), mute=False,
+                roles_to_remove=to_remove_if_player if member in players else to_remove,
+                roles_to_add=to_add_if_player if member.voice and member in players is not None else to_add
             ))
         await self.remove_cogs()
         await asyncio.gather(*tasks)
