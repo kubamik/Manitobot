@@ -1,4 +1,5 @@
 import asyncio
+import functools
 from contextlib import suppress
 from typing import Dict, Optional, List
 
@@ -7,6 +8,7 @@ from discord.ext import commands
 
 from settings import FAC2EMOJI, EMOJI2COMMAND, REMOVABLE
 from .basic_models import ManiBot
+from .errors import MaxConcurrencyExceeded
 from .interactions import ComponentCallback
 from discord import ButtonStyle
 from .interactions.components import Button, Components
@@ -44,9 +46,27 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         self.mbr2msg: Dict[discord.Member, MessageGetter]
         self.daynight_msg: MessageGetter
         self.emoji2fac: Dict[int, str] = dict()
+        self.lock = asyncio.Lock()
         
     def create_message_getter(self, message: discord.Message) -> MessageGetter:
+        # Used because messages received by `send` method are not in cache, so they aren't updated when edited
         return MessageGetter(self.bot, message)
+
+    def ensure_single_execution(self, coro):
+        """Decorator to ensure that only one instance of function is running at a time, others will be terminated with
+        exception. Used to prevent race conditions, especially when buttons are pressed multiple times in a short time
+        """
+        @functools.wraps(coro)
+        async def wrapper(*args, **kwargs):
+            if self.lock.locked():
+                raise MaxConcurrencyExceeded()
+            try:
+                await self.lock.acquire()
+                return await coro(*args, **kwargs)
+            finally:
+                self.lock.release()
+
+        return wrapper
 
     async def cog_unload(self):
         rm = self.bot.remove_component_callback
@@ -222,6 +242,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
         await self.edit_day_message(view=new_components)
 
     def register_callbacks(self):
+        @self.ensure_single_execution
         async def put_sleep(interaction: discord.Interaction, _: str):
             m_id = interaction.message.id
             player = self.msg2mbr[m_id]
@@ -236,6 +257,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
         self.bot.add_component_callback(ComponentCallback('sleep', put_sleep))
 
+        @self.ensure_single_execution
         async def unsleep(interaction: discord.Interaction, _: str):
             m_id = interaction.message.id
             player = self.msg2mbr[m_id]
@@ -249,6 +271,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
         self.bot.add_component_callback(ComponentCallback('unsleep', unsleep))
 
+        @self.ensure_single_execution
         async def confirm_kill(interaction: discord.Interaction, _: str):
             m_id = interaction.message.id
             player = self.msg2mbr[m_id]
@@ -258,6 +281,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             await self.bot.game.player_map[player].role_class.die()
         self.bot.add_component_callback(ComponentCallback('confirm_kill', confirm_kill))
 
+        @self.ensure_single_execution
         async def cancel_kill(interaction: discord.Interaction, _: str):
             comp = Components.from_message(interaction.message)
             if len(comp.components_list) == 2:
@@ -268,6 +292,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
 
         self.bot.add_component_callback(ComponentCallback('cancel_kill', cancel_kill))
 
+        @self.ensure_single_execution
         async def kill(interaction: discord.Interaction, _: str):
             comp = Components.from_message(interaction.message)
             m_id = interaction.message.id
@@ -283,6 +308,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                     await followup.send("**Uwaga!**\nTrwa dzień", ephemeral=True)
         self.bot.add_component_callback(ComponentCallback('kill', kill))
 
+        @self.ensure_single_execution
         async def statue_give(interaction: discord.Interaction, _: str):
             m_id = interaction.message.id
             player = self.msg2mbr[m_id]
@@ -292,6 +318,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             await self.bot.game.statue.give(player)
         self.bot.add_component_callback(ComponentCallback('statue', statue_give))
 
+        @self.ensure_single_execution
         async def day(interaction: discord.Interaction, _: str):
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
@@ -299,6 +326,7 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             await self.bot.game.new_day()
         self.bot.add_component_callback(ComponentCallback('day', day))
 
+        @self.ensure_single_execution
         async def night(interaction: discord.Interaction, _: str):
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
@@ -306,7 +334,8 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
             await self.bot.game.new_night()
         self.bot.add_component_callback(ComponentCallback('night', night))
 
-        async def temp(interaction: discord.Interaction, command: str):
+        @self.ensure_single_execution
+        async def day_state_command(interaction: discord.Interaction, command: str):
             # noinspection PyTypeChecker
             resp: discord.InteractionResponse = interaction.response
             await resp.defer(thinking=False)
@@ -315,8 +344,9 @@ class ControlPanel(commands.Cog, name='Panel Sterowania'):
                 await self.change_removable(command)
 
         for _, name in EMOJI2COMMAND.values():
-            self.bot.add_component_callback(ComponentCallback(name, temp))
+            self.bot.add_component_callback(ComponentCallback(name, day_state_command))
 
+        @self.ensure_single_execution
         async def faction_action(interaction: discord.Interaction, custom_id: str):
             emoji_id, _, action = custom_id.partition('-')
             fac = self.emoji2fac.get(int(emoji_id))

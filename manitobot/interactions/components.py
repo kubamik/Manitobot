@@ -12,7 +12,7 @@ from collections.abc import Callable, Awaitable
 class ComponentCallback:
     @overload
     def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str], Awaitable[None]], 
-                 component_type: Literal[discord.ComponentType.button]):
+                 component_type: Literal[discord.ComponentType.button] = discord.ComponentType.button):
         ...
     @overload
     def __init__(self, custom_id: str, callback: Callable[[discord.Interaction, str, List[str]], Awaitable[None]], 

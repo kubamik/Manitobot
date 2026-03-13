@@ -6,10 +6,7 @@ from settings import TOWN_CHANNEL_ID, SET_CHANNEL_ID, ANNOUNCEMENTS_CHANNEL_ID
 
 
 class MyBaseException(abc.ABC, Exception):
-    @property
-    @abc.abstractmethod
-    def msg(self):
-        pass
+    msg: str
 
 
 class MyCommandError(MyBaseException, abc.ABC, commands.CommandError):
@@ -254,3 +251,7 @@ class TooMuchPing(MyCheckFailure):
 
 class MissingMembers(MyCommandError):
     msg = 'Podaj listę osób'
+
+
+class MaxConcurrencyExceeded(MyCheckFailure):
+    msg = 'Ta lub inna operacja jest w toku. Spróbuj ponownie za chwilę'
