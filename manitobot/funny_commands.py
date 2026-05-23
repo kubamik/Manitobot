@@ -50,3 +50,27 @@ class Funny(commands.Cog, name='HONK'):
     @commands.command(name='_DUBIDUBIDUBA', hidden=True)
     async def honk13(self, ctx):
         await ctx.send("AAAAAGEEEENT PEEEEEEE!!!")
+
+    @commands.command(name='psps', hidden=True)
+    async def psps(self, ctx):
+        await ctx.send("Miau")
+
+    @commands.command(name='swiatHumana', hidden=True)
+    async def swiatHumana(self, ctx):
+        await ctx.send("Cale jedzenie spłonęło i ludzie prowadzją wojnę by zjadać się nawzajem.")
+
+    @commands.command(name='antySwiatHumana', hidden=True)
+    async def antySwiatHumana(self, ctx):
+        await ctx.send("Wolno zjadać inicjatorów konfliktow zbrojnych (Wielkie nosy i Miłośników hard basu). Wojna i głód skończyły się.")
+
+    @commands.command(name='ziemniaki', hidden=True)
+    async def ziemniaki(self, ctx):
+        await ctx.send("@596098327280353291 Wstaw ziemniaki o 17:45")
+
+    @commands.command(name='ziemniaki', hidden=True)
+    async def ziemniaki(self, ctx):
+        await ctx.send("@596098327280353291 Wstaw ziemniaki o 17:45")
+
+    @commands.command(name='ziemniaki?', hidden=True)
+    async def ziemniaki2(self, ctx):
+        await ctx.send("Wstawiłeś ziemniaki @596098327280353291 ?")
