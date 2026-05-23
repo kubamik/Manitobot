@@ -511,7 +511,7 @@ class Starting(commands.Cog, name='Początkowe'):
             nick = '*' + nick
         await ctx.bot.workers.edit_member(
             ctx.author, nick=nick, roles_to_add=[get_manitou_role()],
-            roles_to_remove=[get_spectator_role(), get_dead_role(), get_spectator_role()]
+            roles_to_remove=[get_player_role(), get_dead_role(), get_spectator_role()]
         )
 
     @commands.command(name='not_manitou', aliases=['nmanit', 'notmanitou'])

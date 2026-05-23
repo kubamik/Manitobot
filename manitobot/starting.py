@@ -100,9 +100,9 @@ async def start_game(ctx: commands.Context, *roles: str, mafia: bool = False,
 
 def shuffle_roles(roles: list[str]):
     n = len(roles)
-    for i in range(n):
+    for i in range(n - 1):
         idx = secrets.randbelow(n - i)
-        roles[idx], roles[-1] = roles[-1], roles[idx]
+        roles[idx], roles[-i-1] = roles[-i-1], roles[idx]
 
 
 def if_game():

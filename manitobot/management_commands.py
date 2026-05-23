@@ -12,7 +12,8 @@ from discord.ext import commands
 
 from settings import PING_MESSAGE_ID, PING_GREEN_ID, \
     PING_BLUE_ID, GUILD_ID, PING_YELLOW_ID, SYSTEM_MESSAGES_CHANNEL_ID, PING_PINK_ID, \
-    OTHER_PING_MESSAGE_ID, BOT_TRAP_CHANNEL_ID, VERIFICATION_MESSAGE_ID, VERIFICATION_CHANNEL_ID
+    OTHER_PING_MESSAGE_ID, BOT_TRAP_CHANNEL_ID, VERIFICATION_MESSAGE_ID, VERIFICATION_CHANNEL_ID, \
+    MEME_PART_2_MESSAGE, MEME_PART_1_MESSAGE
 from .basic_models import ManiBot
 from .converters import MyMemberConverter
 from .errors import MissingMembers, MissingAdministrativePermissions
@@ -354,6 +355,32 @@ class Management(commands.Cog, name='Dla Adminów'):
                 msg = f'Nie ma brakujących osób na {emoji}'
 
         await ctx.send(msg)
+
+    @staticmethod
+    async def _convert_message(ctx: commands.Context, arg: str):
+        converter = commands.MessageConverter()
+        msg = await converter.convert(ctx, arg)
+        file = await msg.attachments[0].to_file() if msg.attachments else None
+        return msg.content, file
+
+    @classmethod
+    async def _send_converted_message(cls, ctx: commands.Context, arg: str):
+        content, file = await cls._convert_message(ctx, arg)
+        if content and file:
+            await ctx.send(content, file=file)
+        elif content:
+            await ctx.send(content)
+        elif file:
+            await ctx.send(file=file)
+
+    @commands.command(name='human')
+    async def human(self, ctx: commands.Context):
+        """Przyzywa Humana
+        """
+        await self._send_converted_message(ctx, MEME_PART_1_MESSAGE)
+        async with ctx.typing():
+            await asyncio.sleep(2)
+            await self._send_converted_message(ctx, MEME_PART_2_MESSAGE)
 
     @staticmethod
     async def reactions_summary(m: discord.Message) -> list[str]:
