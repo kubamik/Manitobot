@@ -55,18 +55,10 @@ class Funny(commands.Cog, name='HONK'):
     async def psps(self, ctx):
         await ctx.send("Miau")
 
-    @commands.command(name='swiat_humana', hidden=True)
+    @commands.command(name='swiat_humana', hidden=True, aliases=['swiathumana'])
     async def swiatHumana(self, ctx):
         await ctx.send("Całe jedzenie spłonęło i ludzie prowadzą wojnę by zjadać się nawzajem.")
 
-    @commands.command(name='swiathumana', hidden=True)
-    async def swiatHumana2(self, ctx):
-        await ctx.send("Całe jedzenie spłonęło i ludzie prowadzą wojnę by zjadać się nawzajem.")
-
-    @commands.command(name='anty_swiat_humana', hidden=True)
+    @commands.command(name='anty_swiat_humana', hidden=True, aliases=['anty_swiathumana', 'antyswiathumana', 'antyswiat_humana'])
     async def antySwiatHumana(self, ctx):
-        await ctx.send("Wolno zjadać inicjatorów konfliktów zbrojnych (Wielkie nosy i Miłośników hard basu). Wojna i głód skończyły się.")
-
-    @commands.command(name='antyswiathumana', hidden=True)
-    async def antySwiatHumana2(self, ctx):
         await ctx.send("Wolno zjadać inicjatorów konfliktów zbrojnych (Wielkie nosy i Miłośników hard basu). Wojna i głód skończyły się.")
